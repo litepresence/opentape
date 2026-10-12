@@ -143,7 +143,10 @@ export function initUI(v) {
     }
     renderPriceAxis(priceAxis, state, geom);
     renderTimeAxis(timeAxis, rows, state, geom);
-    const last = rows[rows.length - 1];
+    const effN = (state.replayIndex != null && Number.isFinite(state.replayIndex))
+      ? Math.max(1, Math.min(rows.length, state.replayIndex + 1))
+      : rows.length;
+    const last = rows[effN - 1];
     const ohlc = document.querySelector('#ohlc');
     if (ohlc) ohlc.textContent = `O ${last.o.toFixed(0)} H ${last.h.toFixed(0)} L ${last.l.toFixed(0)} C ${last.c.toFixed(0)}`;
     const sell = document.querySelector('#sell');
@@ -284,7 +287,10 @@ export function initUI(v) {
       const pal = PAL[st.theme] || PAL.light;
       drawCrosshair(ctx, mx, my, geom, pal);
       const idx = hitTest(mx, st.visible, geom.left, geom.width, rows);
-      updateOhlc(rows[idx]);
+      const effCap = (st.replayIndex != null && Number.isFinite(st.replayIndex))
+        ? Math.max(0, Math.min(rows.length - 1, st.replayIndex))
+        : rows.length - 1;
+      updateOhlc(rows[Math.min(idx, effCap)]);
     });
     overlay.addEventListener('mouseleave', () => {
       const ctx = overlay.getContext('2d');
@@ -292,7 +298,12 @@ export function initUI(v) {
       const st = v.get();
       drawDrawings(ctx, st.drawings, st, geomFor());
       drawAlerts(ctx, st.alerts, st, geomFor());
-      if (rows.length) updateOhlc(rows[rows.length - 1]);
+      if (rows.length) {
+        const n = (st.replayIndex != null && Number.isFinite(st.replayIndex))
+          ? Math.max(1, Math.min(rows.length, st.replayIndex + 1))
+          : rows.length;
+        updateOhlc(rows[n - 1]);
+      }
     });
     overlay.addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -379,6 +390,146 @@ export function initUI(v) {
       });
       rangeHost.appendChild(b);
       rangeHost.appendChild(document.createTextNode(' '));
+    });
+  }
+
+  // Task 7: indicators dialog, replay, symbol/timeframe switching, chart-type toggle.
+  const TF_ORDER = ['D', '1W', '1H'];
+  const TF_CCXT = { D: '1d', '1D': '1d', '1W': '1w', '1H': '1h' };
+  const tfLabel = () => {
+    const t = v.get().timeframe;
+    if (t === '1D') return 'D';
+    return TF_ORDER.includes(t) ? t : 'D';
+  };
+  const normalizeSymbol = (input) => {
+    const s = String(input || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (!s) return null;
+    if (s.includes('/')) return s;
+    for (const q of ['USDT', 'USD', 'EUR', 'BTC']) {
+      if (s.length > q.length && s.endsWith(q)) return s.slice(0, -q.length) + '/' + q;
+    }
+    return s;
+  };
+  const resetScale = () => {
+    let mn = Infinity, mx = -Infinity;
+    for (const r of rows) { if (r.l < mn) mn = r.l; if (r.h > mx) mx = r.h; }
+    const pad = (mx - mn) * 0.08;
+    const visible = { from: rows[0].t, to: rows[rows.length - 1].t };
+    const price = { min: Math.floor((mn - pad) / 1000) * 1000, max: Math.ceil((mx + pad) / 1000) * 1000 };
+    fullVisible = { ...visible };
+    fullPrice = { ...price };
+    v.set({ visible, price, replayIndex: null });
+  };
+  const reload = async (symbol, ccxtTf) => {
+    rows = await fetchOHLCV({ symbol, timeframe: ccxtTf });
+    resetScale();
+    const symBtn = document.querySelector('#sym');
+    if (symBtn) symBtn.textContent = String(symbol).replace('/', '');
+  };
+  // Indicators <dialog> with SMA20/SMA50/EMA20/RSI checkboxes.
+  if (!document.querySelector('#ind-dialog')) {
+    const cur = v.get();
+    if (!cur.indicators) v.set({ indicators: { sma20: false, sma50: false, ema20: false, rsi: false } });
+    if (!cur.chartType) v.set({ chartType: 'candles' });
+    const dlg = document.createElement('dialog');
+    dlg.id = 'ind-dialog';
+    dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:6px;font:13px sans-serif">'
+      + '<label><input type="checkbox" data-ind="sma20"> SMA 20</label>'
+      + '<label><input type="checkbox" data-ind="sma50"> SMA 50</label>'
+      + '<label><input type="checkbox" data-ind="ema20"> EMA 20</label>'
+      + '<label><input type="checkbox" data-ind="rsi"> RSI</label>'
+      + '<button value="close">Close</button></form>';
+    document.body.appendChild(dlg);
+    dlg.querySelectorAll('input[data-ind]').forEach((cb) => {
+      cb.checked = !!(v.get().indicators || {})[cb.dataset.ind];
+      cb.addEventListener('change', () => {
+        v.set({ indicators: { ...(v.get().indicators || {}), [cb.dataset.ind]: cb.checked } });
+      });
+    });
+    document.querySelector('#ind-btn')?.addEventListener('click', () => {
+      dlg.querySelectorAll('input[data-ind]').forEach((cb) => {
+        cb.checked = !!(v.get().indicators || {})[cb.dataset.ind];
+      });
+      if (typeof dlg.showModal === 'function') dlg.showModal();
+      else dlg.setAttribute('open', '');
+    });
+  }
+  // Replay mode: hides bars after replayIndex, step buttons <- / ->.
+  const replayBtn = document.querySelector('#replay-btn');
+  if (replayBtn && !replayBtn.dataset.bound) {
+    replayBtn.dataset.bound = '1';
+    let bar = null;
+    const exitReplay = () => {
+      v.set({ replayIndex: null });
+      if (bar) { bar.remove(); bar = null; }
+      replayBtn.classList.remove('active');
+    };
+    const step = (d) => {
+      const st = v.get();
+      if (st.replayIndex == null) return;
+      const nx = Math.max(0, Math.min(rows.length - 1, st.replayIndex + d));
+      v.set({ replayIndex: nx });
+      if (bar) {
+        const label = bar.querySelector('[data-rp="pos"]');
+        if (label) label.textContent = `${nx + 1} / ${rows.length}`;
+      }
+    };
+    replayBtn.addEventListener('click', () => {
+      const st = v.get();
+      if (st.replayIndex != null) { exitReplay(); return; }
+      if (!rows.length) return;
+      const start = rows.length > 30 ? rows.length - 30 : Math.floor(rows.length / 2);
+      v.set({ replayIndex: start });
+      replayBtn.classList.add('active');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'replay-bar';
+        bar.style.cssText = 'display:flex;gap:6px;align-items:center;padding:4px 8px;font:12px sans-serif';
+        bar.innerHTML = '<button data-rp="back">&lt;-</button><span data-rp="pos"></span><button data-rp="fwd">-&gt;</button><button data-rp="exit">Exit</button>';
+        bar.querySelector('[data-rp="back"]').addEventListener('click', () => step(-1));
+        bar.querySelector('[data-rp="fwd"]').addEventListener('click', () => step(1));
+        bar.querySelector('[data-rp="exit"]').addEventListener('click', exitReplay);
+        document.querySelector('#chart-wrap')?.prepend(bar);
+      }
+      step(0);
+    });
+  }
+  // Symbol search: re-fetch + reset visible.
+  const symBtn = document.querySelector('#sym');
+  if (symBtn && !symBtn.dataset.bound) {
+    symBtn.dataset.bound = '1';
+    symBtn.addEventListener('click', async () => {
+      if (typeof prompt === 'undefined') return;
+      const cur = v.get().symbol || 'BTC/USD';
+      const ans = prompt('Symbol (e.g. BTC/USD, ETH/USD):', cur);
+      if (!ans) return;
+      const sym = normalizeSymbol(ans);
+      if (!sym) return;
+      v.set({ symbol: sym });
+      await reload(sym, TF_CCXT[tfLabel()] || '1d');
+    });
+  }
+  // Timeframe D/1W/1H -> ccxt 1d/1w/1h.
+  const tfBtn = [...document.querySelectorAll('#topbar button')].find((b) => b.textContent === 'D' || TF_ORDER.includes(b.textContent));
+  if (tfBtn && !tfBtn.dataset.bound) {
+    tfBtn.dataset.bound = '1';
+    if (!TF_ORDER.includes(tfBtn.textContent) && tfBtn.textContent !== 'D') { /* leave custom labels */ }
+    tfBtn.textContent = tfLabel();
+    tfBtn.addEventListener('click', async () => {
+      const next = TF_ORDER[(TF_ORDER.indexOf(tfLabel()) + 1) % TF_ORDER.length];
+      v.set({ timeframe: next });
+      tfBtn.textContent = next;
+      await reload(v.get().symbol || 'BTC/USD', TF_CCXT[next]);
+    });
+  }
+  // Chart-type toggle: candles / bars / line.
+  const ctBtn = document.querySelector('#ctype');
+  if (ctBtn && !ctBtn.dataset.bound) {
+    ctBtn.dataset.bound = '1';
+    const ORDER = ['candles', 'bars', 'line'];
+    ctBtn.addEventListener('click', () => {
+      const next = ORDER[(ORDER.indexOf(v.get().chartType || 'candles') + 1) % ORDER.length];
+      v.set({ chartType: next });
     });
   }
 }
