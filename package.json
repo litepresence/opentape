@@ -1,0 +1,14 @@
+{
+  "name": "tv-clone",
+  "type": "module",
+  "scripts": {
+    "proxy": "node server/proxy.js",
+    "test": "node --test tooling/*.test.mjs tests/*.test.mjs"
+  },
+  "dependencies": {
+    "ccxt": "^4.3.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}
