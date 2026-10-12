@@ -1,0 +1,13 @@
+<!doctype html><html data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BTCUSD · TradingView Clone</title><link rel="stylesheet" href="styles.css">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('tv-theme')||'light'}catch(e){}</script>
+</head><body>
+<header id="topbar"><button id="menu">☰</button><button id="sym">BTCUSD</button><button>💎</button><button>+</button><button>D</button><button id="ctype">🕯</button><button id="ind-btn">Indicators</button><button id="alert-btn">Alert</button><button id="replay-btn">Replay</button><button>↩</button><button>↪</button><span style="flex:1"></span><button id="theme-btn">🌙</button><button>Save ▾</button></header>
+<div id="main"><nav id="rail"><button data-tool="cross" class="active">✛</button><button data-tool="trend">╱</button><button data-tool="fib">F</button><button data-tool="brush">🖌</button><button data-tool="shape">▭</button><button data-tool="text">T</button><button data-tool="emoji">🙂</button><button data-tool="ruler">📏</button><button data-tool="zoom">⊕</button><button data-tool="magnet">🧲</button><button data-tool="lock">🔒</button><button data-tool="hide">👁</button><button data-tool="del">🗑</button><button data-tool="measure">📐</button><button data-tool="extra">⋯</button></nav>
+<section id="chart-wrap"><div id="ohlc-head"><span>₿ Bitcoin / U.S. Dollar · 1D · Bitstamp</span> <span id="ohlc"></span><span id="sell">82474 SELL</span><span id="buy">82474 BUY</span></div>
+<div id="mid"><div id="canvas-stack"><canvas id="base" width="1600" height="800"></canvas><canvas id="overlay" width="1600" height="800"></canvas></div><div id="price-axis"></div></div>
+<div id="time-axis"></div>
+<footer id="rangebar"><span>1D 5D 1M 3M 6M YTD 1Y 5Y All</span><span style="flex:1"></span><span id="clock">--:--:--</span><span>UTC ⚙</span></footer></section></div>
+<script type="module">import {view} from './js/viewstate.js';import {initUI} from './js/ui.js';initUI(view);</script>
+</body></html>

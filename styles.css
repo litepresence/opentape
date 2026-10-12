@@ -1,0 +1,104 @@
+/* styles.css — Task 3 shell chrome: light default + dark via [data-theme] */
+:root {
+  --bg: #fff;
+  --grid: #e0e3eb;
+  --text: #131722;
+  --up: #089981;
+  --down: #F23645;
+  --topbar-h: 48px;
+  --rail-w: 48px;
+  --axis-w: 72px;
+  --timeaxis-h: 28px;
+  --footer-h: 32px;
+  --border: #e0e3eb;
+  --btn-hover: #f0f3fa;
+}
+[data-theme="dark"] {
+  --bg: #131722;
+  --grid: #2a2e39;
+  --text: #d1d4dc;
+  --up: #089981;
+  --down: #F23645;
+  --border: #2a2e39;
+  --btn-hover: #2a2e39;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+button {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+button:hover { background: var(--btn-hover); }
+#topbar {
+  height: var(--topbar-h);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+#topbar #sym { font-weight: 700; }
+#main { flex: 1; display: flex; min-height: 0; }
+#rail {
+  width: var(--rail-w);
+  min-width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  padding: 4px;
+  gap: 1px;
+  overflow-y: auto;
+}
+#rail button { font-size: 15px; padding: 6px 0; text-align: center; }
+#rail button.active { background: var(--btn-hover); outline: 1px solid var(--grid); }
+#chart-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#ohlc-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+#sell, #buy {
+  padding: 3px 10px;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 600;
+}
+#sell { background: var(--down); }
+#buy { background: var(--up); }
+#mid { flex: 1; display: flex; min-height: 0; }
+#canvas-stack { flex: 1; position: relative; min-width: 0; }
+#canvas-stack canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#price-axis { width: var(--axis-w); min-width: 72px; border-left: 1px solid var(--border); }
+#time-axis { height: var(--timeaxis-h); min-height: 28px; border-top: 1px solid var(--border); }
+#rangebar {
+  height: var(--footer-h);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+#clock { font-variant-numeric: tabular-nums; }
