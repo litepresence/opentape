@@ -2,15 +2,115 @@
 import { fetchOHLCV } from './data.js';
 import { renderBase, PAL } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
-import { hitTest, drawCrosshair } from './overlay.js';
+import { hitTest, drawCrosshair, drawDrawings, drawAlerts } from './overlay.js';
+import { snapPrice, serialize, deserialize, addDrawing } from './drawings.js';
+
+const LAYOUT_KEY = 'tv-clone-layout-v1';
 
 export function initUI(v) {
   document.documentElement.dataset.theme = v.get().theme;
   document.querySelector('#theme-btn')?.addEventListener('click', () => v.toggleTheme());
+  // Task 6 state: magnet, pending 2-click anchor, undo/redo stacks.
+  let magnetOn = true;
+  let pending = null;
+  const undoStack = [];
+  const redoStack = [];
+  const tForX = (x, vis, left, width) => vis.from + ((x - left) / Math.max(1, width)) * (vis.to - vis.from);
+  const pForY = (y, pr, top, height) => pr.min + (1 - (y - top) / Math.max(1, height)) * (pr.max - pr.min);
+  const saveLayout = () => {
+    try {
+      const s = v.get();
+      localStorage.setItem(LAYOUT_KEY, serialize({ drawings: s.drawings || [], alerts: s.alerts || [] }));
+    } catch {}
+  };
+  const loadLayout = () => {
+    try {
+      const raw = localStorage.getItem(LAYOUT_KEY);
+      if (!raw) return null;
+      const parsed = deserialize(raw);
+      if (Array.isArray(parsed)) return { drawings: parsed, alerts: [] };
+      return { drawings: parsed.drawings || [], alerts: parsed.alerts || [] };
+    } catch { return null; }
+  };
+  const pushHistory = () => {
+    const s = v.get();
+    undoStack.push(serialize({ drawings: s.drawings || [], alerts: s.alerts || [] }));
+    if (undoStack.length > 100) undoStack.shift();
+    redoStack.length = 0;
+  };
+  const undo = () => {
+    if (!undoStack.length) return;
+    const s = v.get();
+    redoStack.push(serialize({ drawings: s.drawings || [], alerts: s.alerts || [] }));
+    const prev = deserialize(undoStack.pop());
+    v.set({ drawings: prev.drawings || [], alerts: prev.alerts || [], selectedId: null });
+    saveLayout();
+  };
+  const redo = () => {
+    if (!redoStack.length) return;
+    const s = v.get();
+    undoStack.push(serialize({ drawings: s.drawings || [], alerts: s.alerts || [] }));
+    const nxt = deserialize(redoStack.pop());
+    v.set({ drawings: nxt.drawings || [], alerts: nxt.alerts || [], selectedId: null });
+    saveLayout();
+  };
+  const persisted = loadLayout();
+  if (persisted) v.set({ drawings: persisted.drawings, alerts: persisted.alerts });
   document.querySelectorAll('#rail button').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('#rail button').forEach(x => x.classList.remove('active'));
-    b.classList.add('active'); v.set({ tool: b.dataset.tool });
+    const tool = b.dataset.tool;
+    if (tool === 'magnet') {
+      magnetOn = !magnetOn;
+      b.classList.toggle('active', magnetOn);
+      return;
+    }
+    if (tool === 'del') {
+      const s = v.get();
+      if (!s.drawings.length && !s.alerts.length) return;
+      pushHistory();
+      if (s.selectedId) {
+        v.set({
+          drawings: s.drawings.filter(d => d.id !== s.selectedId),
+          alerts: (s.alerts || []).filter(a => a.id !== s.selectedId),
+          selectedId: null,
+        });
+      } else {
+        v.set({ drawings: s.drawings.slice(0, -1) });
+      }
+      saveLayout();
+      return;
+    }
+    document.querySelectorAll('#rail button').forEach(x => { if (x.dataset.tool !== 'magnet') x.classList.remove('active'); });
+    b.classList.add('active'); v.set({ tool });
+    pending = null;
   }));
+  // Magnet button reflects default-on state.
+  document.querySelector('#rail button[data-tool="magnet"]')?.classList.add('active');
+  // Topbar undo/redo (↩ ↪) + keyboard.
+  document.querySelectorAll('#topbar button').forEach(b => {
+    if (b.textContent === '↩') b.addEventListener('click', undo);
+    if (b.textContent === '↪') b.addEventListener('click', redo);
+  });
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    else if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const s = v.get();
+      if (!s.selectedId && !s.drawings.length) return;
+      pushHistory();
+      if (s.selectedId) {
+        v.set({
+          drawings: s.drawings.filter(d => d.id !== s.selectedId),
+          alerts: (s.alerts || []).filter(a => a.id !== s.selectedId),
+          selectedId: null,
+        });
+      } else {
+        v.set({ drawings: s.drawings.slice(0, -1) });
+      }
+      saveLayout();
+    }
+  });
   setInterval(() => { const el = document.querySelector('#clock'); if (el) el.textContent = new Date().toISOString().slice(11, 19); }, 1000);
 
   // Task 4: fetch OHLCV + render base canvas + axes; re-render on ViewState changes.
@@ -24,12 +124,23 @@ export function initUI(v) {
   const geomFor = () => base
     ? { left: 0, top: 0, width: base.width, height: base.height }
     : { left: 0, top: 0, width: 1600, height: 800 };
+  const maybeSnap = (p, geom, state) => {
+    if (!magnetOn || !rows.length) return p;
+    const span = state.price.max - state.price.min;
+    const tol = (span / Math.max(1, geom.height)) * 8;
+    return snapPrice(p, rows, tol);
+  };
   function renderAll(state) {
     if (!base || !rows.length || !state.visible || !state.price) return;
     const geom = geomFor();
     renderBase(base.getContext('2d'), state, rows, geom);
     // Pan/zoom invalidates hover — clear overlay so no stale crosshair lingers.
-    if (overlay) overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+    if (overlay) {
+      const octx = overlay.getContext('2d');
+      octx.clearRect(0, 0, overlay.width, overlay.height);
+      drawDrawings(octx, state.drawings, state, geom);
+      drawAlerts(octx, state.alerts, state, geom);
+    }
     renderPriceAxis(priceAxis, state, geom);
     renderTimeAxis(timeAxis, rows, state, geom);
     const last = rows[rows.length - 1];
@@ -72,20 +183,93 @@ export function initUI(v) {
     const ohlc = document.querySelector('#ohlc');
     if (ohlc && row) ohlc.textContent = `O ${row.o.toFixed(0)} H ${row.h.toFixed(0)} L ${row.l.toFixed(0)} C ${row.c.toFixed(0)}`;
   };
+  const DRAW_TOOLS = new Set(['trend', 'fib', 'text', 'horizontal', 'shape', 'brush']);
   if (overlay) {
     let dragging = false;
     let startX = 0;
     let startVis = null;
+    let dragAlertId = null;
+    const alertAtY = (my, state, geom) => {
+      for (const a of state.alerts || []) {
+        const y = geom.top + (1 - (a.price - state.price.min) / (state.price.max - state.price.min)) * geom.height;
+        if (Math.abs(y - my) <= 8) return a;
+      }
+      return null;
+    };
     overlay.addEventListener('mousedown', (e) => {
+      const st = v.get();
+      if (!rows.length || !st.visible || !st.price) return;
+      const geom = geomFor();
+      const { mx, my } = toCanvas(e);
+      // Alert drag takes priority over pan/draw.
+      const hitA = alertAtY(my, st, geom);
+      if (hitA) {
+        pushHistory();
+        dragAlertId = hitA.id;
+        v.set({ selectedId: hitA.id });
+        return;
+      }
+      const tool = st.tool || 'cross';
+      if (DRAW_TOOLS.has(tool)) {
+        const t = tForX(mx, st.visible, geom.left, geom.width);
+        const p = maybeSnap(pForY(my, st.price, geom.top, geom.height), geom, st);
+        const normTool = tool === 'shape' || tool === 'brush' ? 'horizontal' : tool;
+        if (normTool === 'trend' || normTool === 'fib') {
+          if (!pending) { pending = { type: normTool, p1: { t, p } }; }
+          else {
+            pushHistory();
+            addDrawing(v, { type: pending.type, p1: pending.p1, p2: { t, p } });
+            v.set({ selectedId: v.get().drawings[v.get().drawings.length - 1]?.id });
+            pending = null;
+            saveLayout();
+          }
+        } else if (normTool === 'horizontal') {
+          pushHistory();
+          addDrawing(v, { type: 'horizontal', price: p });
+          v.set({ selectedId: v.get().drawings[v.get().drawings.length - 1]?.id });
+          saveLayout();
+        } else if (normTool === 'text') {
+          const text = typeof prompt !== 'undefined' ? prompt('Text:') : null;
+          if (!text) return;
+          pushHistory();
+          addDrawing(v, { type: 'text', t, p, text });
+          saveLayout();
+        }
+        return;
+      }
       dragging = true; startX = e.clientX;
       const s = v.get(); startVis = s.visible ? { ...s.visible } : null;
+      // Select drawing on click (cross tool): nearest trend endpoint / horizontal within 8px.
+      let bestId = null, bd = 8;
+      for (const d of s.drawings || []) {
+        if (d.type === 'horizontal') {
+          const y = geom.top + (1 - (d.price - s.price.min) / (s.price.max - s.price.min)) * geom.height;
+          const dist = Math.abs(y - my);
+          if (dist <= bd) { bd = dist; bestId = d.id; }
+        } else if ((d.type === 'trend' || d.type === 'fib') && d.p1) {
+          const pts = [d.p1, d.p2].filter(Boolean);
+          for (const pt of pts) {
+            const dx = (pt.t - st.visible.from) / (st.visible.to - st.visible.from) * geom.width + geom.left - mx;
+            const dy = (geom.top + (1 - (pt.p - s.price.min) / (s.price.max - s.price.min)) * geom.height) - my;
+            const dist = Math.hypot(dx, dy);
+            if (dist <= 12) { bestId = d.id; bd = 0; }
+          }
+        }
+      }
+      if (bestId) v.set({ selectedId: bestId });
     });
-    window.addEventListener('mouseup', () => { dragging = false; startVis = null; });
+    window.addEventListener('mouseup', () => { dragging = false; startVis = null; dragAlertId = null; });
     overlay.addEventListener('mousemove', (e) => {
       const st = v.get();
       if (!rows.length || !st.visible || !st.price) return;
       const geom = geomFor();
       const { mx, my } = toCanvas(e);
+      if (dragAlertId) {
+        const p = pForY(my, st.price, geom.top, geom.height);
+        v.set({ alerts: (st.alerts || []).map(a => a.id === dragAlertId ? { ...a, price: p } : a) });
+        saveLayout();
+        return;
+      }
       if (dragging && startVis) {
         const dx = (e.clientX - startX) * (geom.width / Math.max(1, overlay.getBoundingClientRect().width));
         const span = startVis.to - startVis.from;
@@ -95,6 +279,8 @@ export function initUI(v) {
       }
       const ctx = overlay.getContext('2d');
       ctx.clearRect(0, 0, overlay.width, overlay.height);
+      drawDrawings(ctx, st.drawings, st, geom);
+      drawAlerts(ctx, st.alerts, st, geom);
       const pal = PAL[st.theme] || PAL.light;
       drawCrosshair(ctx, mx, my, geom, pal);
       const idx = hitTest(mx, st.visible, geom.left, geom.width, rows);
@@ -103,6 +289,9 @@ export function initUI(v) {
     overlay.addEventListener('mouseleave', () => {
       const ctx = overlay.getContext('2d');
       ctx.clearRect(0, 0, overlay.width, overlay.height);
+      const st = v.get();
+      drawDrawings(ctx, st.drawings, st, geomFor());
+      drawAlerts(ctx, st.alerts, st, geomFor());
       if (rows.length) updateOhlc(rows[rows.length - 1]);
     });
     overlay.addEventListener('wheel', (e) => {
@@ -131,6 +320,24 @@ export function initUI(v) {
     }, { passive: false });
     overlay.addEventListener('dblclick', () => {
       if (fullVisible && fullPrice) v.set({ visible: { ...fullVisible }, price: { ...fullPrice } });
+    });
+  }
+  // Task 6: click price axis adds a draggable alert line; persisted under same key.
+  if (priceAxis && !priceAxis.dataset.alertBound) {
+    priceAxis.dataset.alertBound = '1';
+    priceAxis.style.cursor = 'pointer';
+    priceAxis.addEventListener('click', (e) => {
+      const st = v.get();
+      if (!rows.length || !st.visible || !st.price) return;
+      const geom = geomFor();
+      const rect = priceAxis.getBoundingClientRect();
+      const my = (e.clientY - rect.top) * (geom.height / Math.max(1, rect.height));
+      const p = pForY(geom.top + my, st.price, geom.top, geom.height);
+      pushHistory();
+      const cur = v.get().alerts || [];
+      const id = 'a' + Date.now();
+      v.set({ alerts: [...cur, { id, price: p }], selectedId: id });
+      saveLayout();
     });
   }
   // Range footer: turn "1D 5D 1M ..." span into buttons; set visible window.
