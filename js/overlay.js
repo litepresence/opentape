@@ -15,7 +15,7 @@ export function drawCrosshair(ctx, mx, my, geom, pal) {
 export function drawDrawings(ctx, drawings, state, geom) {
   if (!drawings || !drawings.length || !state.visible || !state.price) return;
   ctx.save();
-  ctx.font = '11px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.font = '11px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
   for (const d of drawings) {
     const sel = d.id === state.selectedId;
     ctx.strokeStyle = sel ? '#2962FF' : '#787b86';
@@ -56,7 +56,7 @@ export function drawDrawings(ctx, drawings, state, geom) {
 export function drawAlerts(ctx, alerts, state, geom) {
   if (!alerts || !alerts.length || !state.price) return;
   ctx.save();
-  ctx.font = '11px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.font = '11px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
   for (const a of alerts) {
     if (!Number.isFinite(a.price)) continue;
     const y = yForPrice(a.price, state.price, geom.top, geom.height);
