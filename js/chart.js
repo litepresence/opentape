@@ -36,14 +36,74 @@ export function applyTransform(rows, state) {
     });
   } catch { return rows; }
 }
-export function xForTime(t, vis, left, width) { return left + ((t - vis.from) / (vis.to - vis.from)) * width; }
-export function yForPrice(p, pr, top, height) { return top + (1 - (p - pr.min) / (pr.max - pr.min)) * height; }
-export function niceTicks(min, max, n = 7) { const step0 = (max - min) / n; const mag = 10 ** Math.floor(Math.log10(step0)); const norm = step0 / mag; const step = (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag; const out = []; for (let v = Math.ceil(min / step) * step; v <= max; v += step) out.push(v); return out; }
-function replayCut(rows, state) {
-  if (state.replayIndex != null && Number.isFinite(state.replayIndex)) {
-    return Math.max(0, Math.min(rows.length, state.replayIndex + 1));
-  }
-  return rows.length;
+export function xForTime(t, vis, left, width) {
+  if (!Number.isFinite(t) || !vis || !Number.isFinite(vis.from) || !Number.isFinite(vis.to) || !(vis.to > vis.from)) return NaN;
+  return left + ((t - vis.from) / (vis.to - vis.from)) * width;
+}
+export function yForPrice(p, pr, top, height) {
+  if (!Number.isFinite(p) || !pr || !Number.isFinite(pr.min) || !Number.isFinite(pr.max) || !(pr.max > pr.min)) return NaN;
+  return top + (1 - (p - pr.min) / (pr.max - pr.min)) * height;
+}
+// Slice full rows to the visible time window before layout. All layers
+// (candles, axes, drawings, hitTest) operate on this same sliced array so
+// pan/zoom/range changes cannot desync them. Index-based x is kept:
+// step = width / sliced.length.
+export function visibleRows(rows, vis) {
+  if (!Array.isArray(rows) || !rows.length) return Array.isArray(rows) ? rows : [];
+  if (!vis || !Number.isFinite(vis.from) || !Number.isFinite(vis.to) || !(vis.to > vis.from)) return rows;
+  return rows.filter((r) => r && Number.isFinite(r.t) && r.t >= vis.from && r.t <= vis.to);
+}
+// Replay hides bars after replayIndex. replayIndex addresses full rows;
+// map it onto the visible slice via the slice offset.
+export function replayCount(full, rows, offset, state) {
+  if (state.replayIndex == null || !Number.isFinite(state.replayIndex)) return rows.length;
+  const cap = Math.max(0, Math.min(full.length, Math.floor(state.replayIndex) + 1));
+  return Math.max(0, Math.min(rows.length, cap - offset));
+}
+// Index of the first sliced row inside the full array (filter preserves
+// identity, so indexOf is exact; falls back to 0 for foreign arrays).
+export function sliceOffset(full, sliced) {
+  if (!Array.isArray(full) || !Array.isArray(sliced) || !sliced.length) return 0;
+  const i = full.indexOf(sliced[0]);
+  return i >= 0 ? i : 0;
+}
+// Canonical candle x for slot i of an n-slot sliced layout.
+export function candleX(i, n, left, width) {
+  if (!Number.isFinite(i) || !Number.isFinite(n) || !(n > 0)) return NaN;
+  const step = width / Math.max(1, n);
+  return left + i * step + step / 2;
+}
+// Time -> x via the sliced index layout (keeps candles/axes/drawings/
+// hitTest on one mapping). Interpolates between bar slots for arbitrary t.
+export function xForRowTime(t, sliced, left, width) {
+  if (!Number.isFinite(t) || !Array.isArray(sliced) || !sliced.length) return NaN;
+  const n = sliced.length;
+  const step = width / Math.max(1, n);
+  if (n === 1) return left + width / 2;
+  if (t <= sliced[0].t) return left + step / 2;
+  if (t >= sliced[n - 1].t) return left + (n - 1) * step + step / 2;
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (sliced[mid].t <= t) lo = mid; else hi = mid; }
+  const t0 = sliced[lo].t, t1 = sliced[hi].t;
+  const frac = (t1 > t0) ? (t - t0) / (t1 - t0) : 0;
+  return left + (lo + frac) * step + step / 2;
+}
+// Inverse of xForRowTime: canvas x -> time via sliced slots.
+export function timeForX(x, sliced, left, width) {
+  if (!Array.isArray(sliced) || !sliced.length) return NaN;
+  const n = sliced.length;
+  const step = width / Math.max(1, n);
+  if (n === 1) return sliced[0].t;
+  let f = (x - left) / step - 0.5;
+  if (f <= 0) return sliced[0].t;
+  if (f >= n - 1) return sliced[n - 1].t;
+  const j = Math.floor(f), frac = f - j;
+  const t0 = sliced[j].t, t1 = sliced[j + 1].t;
+  return t0 + frac * (t1 - t0);
+}
+export function niceTicks(min, max, n = 7) {
+  if (!Number.isFinite(min) || !Number.isFinite(max) || !(max > min)) return [];
+  const step0 = (max - min) / n; const mag = 10 ** Math.floor(Math.log10(step0)); const norm = step0 / mag; const step = (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag; const out = []; for (let v = Math.ceil(min / step) * step; v <= max; v += step) out.push(v); return out;
 }
 function drawIndLine(ctx, vals, n, state, geom, rows, color) {
   ctx.save(); ctx.strokeStyle = color; ctx.setLineDash([]); ctx.lineWidth = 1.5;
@@ -106,31 +166,38 @@ function drawPaneLine(ctx, vals, n, scale, geom, rows, color, paneTop, paneHeigh
   ctx.stroke(); ctx.restore();
 }
 export function renderBase(ctx, state, rows, geom) {
-  rows = applyTransform(rows, state);
+  const full = applyTransform(rows, state);
+  // Model (a): slice to the visible window BEFORE layout; every layer
+  // (candles, indicators, studies, axes, drawings, hitTest) operates on
+  // this same sliced array with index-based x (step = width / sliced.length).
+  const vrows = visibleRows(full, state.visible);
+  const offset = sliceOffset(full, vrows);
   const pal = PAL[state.theme] || PAL.light;
   const { left, top, width, height } = geom;
   ctx.fillStyle = pal.bg; ctx.fillRect(left, top, width, height);
   ctx.strokeStyle = pal.grid; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
-  for (const p of niceTicks(state.price.min, state.price.max)) { const y = Math.round(yForPrice(p, state.price, top, height)) + .5; ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke(); }
-  // Replay: hide bars after replayIndex; x positions stay pinned to full rows.
-  const n = replayCut(rows, state);
-  const step = width / Math.max(1, rows.length);
+  if (state.price && Number.isFinite(state.price.min) && Number.isFinite(state.price.max) && state.price.max > state.price.min) {
+    for (const p of niceTicks(state.price.min, state.price.max)) { const y = Math.round(yForPrice(p, state.price, top, height)) + .5; ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke(); }
+  }
+  // Replay: replayIndex addresses full rows; map onto the slice via offset.
+  const n = replayCount(full, vrows, offset, state);
+  const step = width / Math.max(1, vrows.length);
   const bw = Math.max(2, step * 0.6);
   const vh = height * 0.15;
   const chartType = state.chartType || 'candles';
   const xAt = (i) => left + i * step + step / 2;
-  const vmax = Math.max(1, ...rows.map(q => q.v));
+  const vmax = Math.max(1, ...vrows.map(q => q.v));
   if (chartType === 'line') {
     ctx.strokeStyle = '#2962FF'; ctx.setLineDash([]); ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < n; i++) {
-      const x = xAt(i), y = yForPrice(rows[i].c, state.price, top, height);
+      const x = xAt(i), y = yForPrice(vrows[i].c, state.price, top, height);
       if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.stroke();
   } else if (chartType === 'bars') {
     for (let i = 0; i < n; i++) {
-      const r = rows[i];
+      const r = vrows[i];
       const x = xAt(i);
       const col = r.c >= r.o ? pal.up : pal.down;
       ctx.strokeStyle = col; ctx.setLineDash([]); ctx.lineWidth = 1;
@@ -146,7 +213,7 @@ export function renderBase(ctx, state, rows, geom) {
     }
   } else {
     for (let i = 0; i < n; i++) {
-      const r = rows[i];
+      const r = vrows[i];
       const x = xAt(i);
       const col = r.c >= r.o ? pal.up : pal.down;
       ctx.strokeStyle = col; ctx.setLineDash([]); ctx.lineWidth = 1;
@@ -162,9 +229,9 @@ export function renderBase(ctx, state, rows, geom) {
   }
   // Indicator overlays (colored lines) on base canvas.
   const ind = state.indicators || {};
-  if (ind.sma20) drawIndLine(ctx, sma(rows, 20), n, state, geom, rows, IND_COLORS.sma20);
-  if (ind.sma50) drawIndLine(ctx, sma(rows, 50), n, state, geom, rows, IND_COLORS.sma50);
-  if (ind.ema20) drawIndLine(ctx, ema(rows, 20), n, state, geom, rows, IND_COLORS.ema20);
+  if (ind.sma20) drawIndLine(ctx, sma(vrows, 20), n, state, geom, vrows, IND_COLORS.sma20);
+  if (ind.sma50) drawIndLine(ctx, sma(vrows, 50), n, state, geom, vrows, IND_COLORS.sma50);
+  if (ind.ema20) drawIndLine(ctx, ema(vrows, 20), n, state, geom, vrows, IND_COLORS.ema20);
   // Task 9 studies: overlay/multiline/bands on the price pane.
   const metaById = (id) => STUDIES.find(s => s.id === id);
   const active = (state.studies || []).filter(id => metaById(id));
@@ -172,23 +239,23 @@ export function renderBase(ctx, state, rows, geom) {
     const meta = metaById(id);
     if (meta.kind !== 'overlay' && meta.kind !== 'multiline') continue;
     let series = null;
-    try { series = studyVals(id, rows); } catch { continue; }
+    try { series = studyVals(id, vrows); } catch { continue; }
     meta.lines.forEach((key, k) => {
       const vals = series[key];
       if (!vals) return;
-      if (id === 'psar') drawDots(ctx, vals, n, state, geom, rows, stuColor(id, k));
-      else drawIndLine(ctx, vals, n, state, geom, rows, stuColor(id, k));
+      if (id === 'psar') drawDots(ctx, vals, n, state, geom, vrows, stuColor(id, k));
+      else drawIndLine(ctx, vals, n, state, geom, vrows, stuColor(id, k));
     });
   }
   for (const id of active) {
     const meta = metaById(id);
     if (meta.kind !== 'bands') continue;
     let series = null;
-    try { series = studyVals(id, rows); } catch { continue; }
+    try { series = studyVals(id, vrows); } catch { continue; }
     const [f0, f1] = meta.fill || [];
-    if (f0 && f1 && series[f0] && series[f1]) fillBand(ctx, series[f0], series[f1], n, state, geom, rows, stuColor(id));
+    if (f0 && f1 && series[f0] && series[f1]) fillBand(ctx, series[f0], series[f1], n, state, geom, vrows, stuColor(id));
     meta.lines.forEach((key, k) => {
-      if (series[key]) drawIndLine(ctx, series[key], n, state, geom, rows, stuColor(id, k));
+      if (series[key]) drawIndLine(ctx, series[key], n, state, geom, vrows, stuColor(id, k));
     });
   }
   // Task 9: shared oscillator pane, scaled to the union min/max of active pane series.
@@ -197,13 +264,13 @@ export function renderBase(ctx, state, rows, geom) {
     const meta = metaById(id);
     if (meta.kind !== 'pane') continue;
     let series = null;
-    try { series = studyVals(id, rows); } catch { continue; }
+    try { series = studyVals(id, vrows); } catch { continue; }
     meta.lines.forEach((key, k) => {
       if (series[key]) paneJobs.push({ vals: series[key], color: stuColor(id, k) });
     });
   }
   if (ind.rsi && paneJobs.length === 0) {
-    const vals = rsi(rows, 14);
+    const vals = rsi(vrows, 14);
     const ph = Math.round(height * 0.22), py = top + height - ph;
     ctx.save();
     ctx.fillStyle = state.theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
@@ -215,7 +282,7 @@ export function renderBase(ctx, state, rows, geom) {
     }
     ctx.strokeStyle = IND_COLORS.rsi; ctx.setLineDash([]); ctx.lineWidth = 1.5;
     ctx.beginPath();
-    const rstep = width / Math.max(1, rows.length);
+    const rstep = width / Math.max(1, vrows.length);
     let started = false;
     for (let i = 0; i < n; i++) {
       const v = vals[i];
@@ -226,7 +293,7 @@ export function renderBase(ctx, state, rows, geom) {
     }
     ctx.stroke(); ctx.restore();
   } else if (paneJobs.length) {
-    if (ind.rsi) paneJobs.push({ vals: rsi(rows, 14), color: IND_COLORS.rsi });
+    if (ind.rsi) paneJobs.push({ vals: rsi(vrows, 14), color: IND_COLORS.rsi });
     let mn = Infinity, mx = -Infinity;
     for (const j of paneJobs) {
       for (const v of j.vals) {
@@ -250,10 +317,10 @@ export function renderBase(ctx, state, rows, geom) {
       ctx.beginPath(); ctx.moveTo(left, y0); ctx.lineTo(left + width, y0); ctx.stroke();
       ctx.restore();
     }
-    for (const j of paneJobs) drawPaneLine(ctx, j.vals, n, scale, { left, top, width, height }, rows, j.color, py, ph);
+    for (const j of paneJobs) drawPaneLine(ctx, j.vals, n, scale, { left, top, width, height }, vrows, j.color, py, ph);
   }
   // last-price dotted line (last *visible-in-replay* bar)
-  const last = rows[Math.max(0, n - 1)];
+  const last = vrows[Math.max(0, n - 1)];
   if (last && n > 0) { const y = yForPrice(last.c, state.price, top, height); ctx.strokeStyle = pal.down; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke(); ctx.setLineDash([]); }
 }
 // Task 8: composite base+overlay for PNG export (used by ui.js export button).

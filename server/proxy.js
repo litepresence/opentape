@@ -24,7 +24,16 @@ function send(res, code, obj, extra = {}) {
   res.end(body);
 }
 
-const server = http.createServer(async (req, res) => {
+// Static allowlist: exactly /, /index.html, /styles.css, /js/*, /data/*,
+// /indicators/*. Dot-segments (/(^|/)\./) are denied with 404.
+export function staticDecision(pathname) {
+  if (/(^|\/)\./.test(pathname)) return 404;
+  if (pathname === '/' || pathname === '/index.html' || pathname === '/styles.css') return 200;
+  if (pathname.startsWith('/js/') || pathname.startsWith('/data/') || pathname.startsWith('/indicators/')) return 200;
+  return 404;
+}
+
+export const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://localhost');
   if (u.pathname === '/api/ohlcv') {
     const symbol = u.searchParams.get('symbol') || 'BTC/USD';
@@ -49,8 +58,11 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { ok: true });
   }
   // Minimal static serving so `node server/proxy.js` + http://localhost:8787/ works
-  // (ES modules are blocked on file://). Directory-traversal-safe.
+  // (ES modules are blocked on file://). Directory-traversal-safe + allowlisted.
   if (req.method === 'GET') {
+    if (staticDecision(u.pathname) !== 200) {
+      res.writeHead(404); res.end('not found'); return;
+    }
     try {
       const rel = u.pathname === '/' ? '/index.html' : decodeURIComponent(u.pathname);
       const fsPath = path.normalize(path.join(ROOT, rel));
@@ -68,4 +80,9 @@ const server = http.createServer(async (req, res) => {
   res.writeHead(404); res.end('not found');
 });
 
-server.listen(PORT, () => console.log(`proxy on http://localhost:${PORT}`));
+// Only listen when run directly (`node server/proxy.js`), not when imported
+// by tests (node --test imports this module for staticDecision).
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  server.listen(PORT, () => console.log(`proxy on http://localhost:${PORT}`));
+}

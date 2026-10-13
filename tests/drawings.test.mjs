@@ -19,6 +19,35 @@ test('layout object form {drawings,alerts} round-trips', () => {
   const parsed = deserialize(serialize(layout));
   assert.deepEqual(parsed, layout);
 });
+test('full layout form {drawings,alerts,studies,indicators,chartType,symbol,timeframe} round-trips', () => {
+  const layout = {
+    drawings: [{ id: 'd1', type: 'horizontal', price: 80000 }],
+    alerts: [{ id: 'a1', price: 82000 }],
+    studies: ['sma', 'bbands'],
+    indicators: { sma20: true, sma50: false, ema20: false, rsi: true },
+    chartType: 'bars',
+    symbol: 'ETH/USD',
+    timeframe: '1W',
+  };
+  const parsed = deserialize(serialize(layout));
+  assert.deepEqual(parsed, layout);
+  // Loader keeps new keys when present, defaults otherwise (backward-compat).
+  const loaded = Array.isArray(parsed)
+    ? { drawings: parsed, alerts: [] }
+    : {
+      drawings: parsed.drawings || [],
+      alerts: parsed.alerts || [],
+      studies: parsed.studies,
+      indicators: parsed.indicators,
+      chartType: parsed.chartType,
+      symbol: parsed.symbol,
+      timeframe: parsed.timeframe,
+    };
+  assert.deepEqual(loaded.studies, ['sma', 'bbands']);
+  assert.equal(loaded.chartType, 'bars');
+  assert.equal(loaded.symbol, 'ETH/USD');
+  assert.equal(loaded.timeframe, '1W');
+});
 test('legacy array form loads as drawings-only', () => {
   const legacy = [{ id: 'd1', type: 'horizontal', price: 80000 }];
   const parsed = deserialize(serialize(legacy));

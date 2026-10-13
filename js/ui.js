@@ -1,6 +1,6 @@
 // js/ui.js
-import { fetchOHLCV } from './data.js';
-import { renderBase, PAL, compositeToDataURL } from './chart.js';
+import { fetchOHLCV, normalizeOHLCV } from './data.js';
+import { renderBase, PAL, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts } from './overlay.js';
 import { snapPrice, serialize, deserialize, addDrawing } from './drawings.js';
@@ -17,10 +17,34 @@ export function initUI(v) {
   const redoStack = [];
   const tForX = (x, vis, left, width) => vis.from + ((x - left) / Math.max(1, width)) * (vis.to - vis.from);
   const pForY = (y, pr, top, height) => pr.min + (1 - (y - top) / Math.max(1, height)) * (pr.max - pr.min);
+  const showToast = (msg) => {
+    console.warn(msg);
+    try {
+      let el = document.querySelector('#toast');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'toast';
+        el.style.cssText = 'position:fixed;bottom:48px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:8px 14px;border-radius:4px;font:13px sans-serif;z-index:9999;opacity:0.95';
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+    } catch {}
+  };
+  const layoutFromState = (s) => ({
+    drawings: s.drawings || [],
+    alerts: s.alerts || [],
+    studies: s.studies || [],
+    indicators: s.indicators || {},
+    chartType: s.chartType || 'candles',
+    symbol: s.symbol || 'BTC/USD',
+    timeframe: s.timeframe || '1D',
+  });
   const saveLayout = () => {
     try {
-      const s = v.get();
-      localStorage.setItem(LAYOUT_KEY, serialize({ drawings: s.drawings || [], alerts: s.alerts || [] }));
+      localStorage.setItem(LAYOUT_KEY, serialize(layoutFromState(v.get())));
     } catch {}
   };
   const loadLayout = () => {
@@ -29,7 +53,15 @@ export function initUI(v) {
       if (!raw) return null;
       const parsed = deserialize(raw);
       if (Array.isArray(parsed)) return { drawings: parsed, alerts: [] };
-      return { drawings: parsed.drawings || [], alerts: parsed.alerts || [] };
+      return {
+        drawings: parsed.drawings || [],
+        alerts: parsed.alerts || [],
+        studies: parsed.studies,
+        indicators: parsed.indicators,
+        chartType: parsed.chartType,
+        symbol: parsed.symbol,
+        timeframe: parsed.timeframe,
+      };
     } catch { return null; }
   };
   const pushHistory = () => {
@@ -55,7 +87,17 @@ export function initUI(v) {
     saveLayout();
   };
   const persisted = loadLayout();
-  if (persisted) v.set({ drawings: persisted.drawings, alerts: persisted.alerts });
+  if (persisted) {
+    const patch = {};
+    if (persisted.drawings) patch.drawings = persisted.drawings;
+    if (persisted.alerts) patch.alerts = persisted.alerts;
+    if (persisted.studies) patch.studies = persisted.studies;
+    if (persisted.indicators) patch.indicators = persisted.indicators;
+    if (persisted.chartType) patch.chartType = persisted.chartType;
+    if (persisted.symbol) patch.symbol = persisted.symbol;
+    if (persisted.timeframe) patch.timeframe = persisted.timeframe;
+    if (Object.keys(patch).length) v.set(patch);
+  }
   document.querySelectorAll('#rail button').forEach(b => b.addEventListener('click', () => {
     const tool = b.dataset.tool;
     if (tool === 'magnet') {
@@ -144,6 +186,19 @@ export function initUI(v) {
   const geomFor = () => base
     ? { left: 0, top: 0, width: base.width, height: base.height }
     : { left: 0, top: 0, width: 1600, height: 800 };
+  // DPR-aware buffer sizing (cap 2): canvas buffers track CSS layout size.
+  const fitCanvases = () => {
+    try {
+      const stack = document.querySelector('#canvas-stack');
+      const cw = Math.round(stack?.clientWidth || base?.clientWidth || 1600);
+      const ch = Math.round(stack?.clientHeight || base?.clientHeight || 800);
+      if (!(cw > 0 && ch > 0)) return;
+      const dpr = Math.min(2, (typeof window !== 'undefined' && window.devicePixelRatio) || 1);
+      const W = Math.round(cw * dpr), H = Math.round(ch * dpr);
+      if (base && (base.width !== W || base.height !== H)) { base.width = W; base.height = H; }
+      if (overlay && (overlay.width !== W || overlay.height !== H)) { overlay.width = W; overlay.height = H; }
+    } catch {}
+  };
   const maybeSnap = (p, geom, state) => {
     if (!magnetOn || !rows.length) return p;
     const span = state.price.max - state.price.min;
@@ -158,15 +213,20 @@ export function initUI(v) {
     if (overlay) {
       const octx = overlay.getContext('2d');
       octx.clearRect(0, 0, overlay.width, overlay.height);
-      drawDrawings(octx, state.drawings, state, geom);
+      drawDrawings(octx, state.drawings, state, geom, rows);
       drawAlerts(octx, state.alerts, state, geom);
     }
     renderPriceAxis(priceAxis, state, geom);
     renderTimeAxis(timeAxis, rows, state, geom);
-    const effN = (state.replayIndex != null && Number.isFinite(state.replayIndex))
-      ? Math.max(1, Math.min(rows.length, state.replayIndex + 1))
-      : rows.length;
-    const last = rows[effN - 1];
+    // OHLC header tracks the last *visible-in-replay* bar (sliced + offset).
+    const sliced = visibleRows(rows, state.visible);
+    const src = sliced.length ? sliced : rows;
+    const off = sliced.length ? sliceOffset(rows, sliced) : 0;
+    const effSliced = state.replayIndex != null && Number.isFinite(state.replayIndex)
+      ? replayCount(rows, src, off, state)
+      : src.length;
+    const last = (effSliced > 0 ? src[effSliced - 1] : src[src.length - 1]) || rows[rows.length - 1];
+    if (!last) return;
     const ohlc = document.querySelector('#ohlc');
     if (ohlc) ohlc.textContent = `O ${last.o.toFixed(0)} H ${last.h.toFixed(0)} L ${last.l.toFixed(0)} C ${last.c.toFixed(0)}`;
     const sell = document.querySelector('#sell');
@@ -175,25 +235,44 @@ export function initUI(v) {
     if (buy) buy.textContent = `${last.c.toFixed(0)} BUY`;
   }
   v.onRender(renderAll);
+  fitCanvases();
+  const scaleFor = (list) => {
+    let mn = Infinity, mx = -Infinity;
+    for (const r of list) { if (r.l < mn) mn = r.l; if (r.h > mx) mx = r.h; }
+    if (!Number.isFinite(mn) || !Number.isFinite(mx)) return null;
+    if (!(mx > mn)) { mn -= 1; mx += 1; }
+    const pad = (mx - mn) * 0.08;
+    const price = { min: Math.floor((mn - pad) / 1000) * 1000, max: Math.ceil((mx + pad) / 1000) * 1000 };
+    if (!(price.max > price.min)) price.max = price.min + 1000;
+    return { visible: { from: list[0].t, to: list[list.length - 1].t }, price };
+  };
   fetchOHLCV().then((data) => {
     if (Array.isArray(data) && data.length) rows = data;
     if (!rows.length) return;
+    fitCanvases();
     const s = v.get();
     const patch = {};
-    if (!s.visible) patch.visible = { from: rows[0].t, to: rows[rows.length - 1].t };
-    if (!s.price) {
-      let mn = Infinity, mx = -Infinity;
-      for (const r of rows) { if (r.l < mn) mn = r.l; if (r.h > mx) mx = r.h; }
-      const pad = (mx - mn) * 0.08;
-      patch.price = { min: Math.floor((mn - pad) / 1000) * 1000, max: Math.ceil((mx + pad) / 1000) * 1000 };
+    if (!s.visible || !s.price) {
+      const sc = scaleFor(rows);
+      if (!s.visible && sc) patch.visible = sc.visible;
+      if (!s.price && sc) patch.price = sc.price;
     }
+    // Restored symbol/timeframe from layout: reflect in topbar labels.
+    const symBtn0 = document.querySelector('#sym');
+    if (symBtn0 && s.symbol) symBtn0.textContent = String(s.symbol).replace('/', '');
     if (Object.keys(patch).length) v.set(patch);
     else renderAll(v.get());
     const cur = v.get();
     if (cur.visible && !fullVisible) fullVisible = { ...cur.visible };
     if (cur.price && !fullPrice) fullPrice = { ...cur.price };
   }).catch(() => { /* offline + fallback failed — keep empty, no unhandled rejection */ });
-  window.addEventListener('resize', () => renderAll(v.get()));
+  let resizeQueued = false;
+  window.addEventListener('resize', () => {
+    if (resizeQueued) return;
+    resizeQueued = true;
+    const raf = (typeof requestAnimationFrame !== 'undefined') ? requestAnimationFrame : (cb) => setTimeout(cb, 0);
+    raf(() => { resizeQueued = false; fitCanvases(); renderAll(v.get()); });
+  });
 
   // Task 5: pan / zoom / crosshair / ranges. All mutations via ViewState.
   const toCanvas = (e) => {
@@ -235,7 +314,9 @@ export function initUI(v) {
       }
       const tool = st.tool || 'cross';
       if (DRAW_TOOLS.has(tool)) {
-        const t = tForX(mx, st.visible, geom.left, geom.width);
+        const sliced = visibleRows(rows, st.visible);
+        const src = sliced.length ? sliced : null;
+        const t = src ? timeForX(mx, src, geom.left, geom.width) : tForX(mx, st.visible, geom.left, geom.width);
         const p = maybeSnap(pForY(my, st.price, geom.top, geom.height), geom, st);
         const normTool = tool === 'shape' || tool === 'brush' ? 'horizontal' : tool;
         if (normTool === 'trend' || normTool === 'fib') {
@@ -265,6 +346,8 @@ export function initUI(v) {
       const s = v.get(); startVis = s.visible ? { ...s.visible } : null;
       // Select drawing on click (cross tool): nearest trend endpoint / horizontal within 8px.
       let bestId = null, bd = 8;
+      const selSlice = visibleRows(rows, st.visible);
+      const selSrc = selSlice.length ? selSlice : null;
       for (const d of s.drawings || []) {
         if (d.type === 'horizontal') {
           const y = geom.top + (1 - (d.price - s.price.min) / (s.price.max - s.price.min)) * geom.height;
@@ -273,7 +356,8 @@ export function initUI(v) {
         } else if ((d.type === 'trend' || d.type === 'fib') && d.p1) {
           const pts = [d.p1, d.p2].filter(Boolean);
           for (const pt of pts) {
-            const dx = (pt.t - st.visible.from) / (st.visible.to - st.visible.from) * geom.width + geom.left - mx;
+            const px = selSrc ? xForRowTime(pt.t, selSrc, geom.left, geom.width) : (pt.t - st.visible.from) / (st.visible.to - st.visible.from) * geom.width + geom.left;
+            const dx = px - mx;
             const dy = (geom.top + (1 - (pt.p - s.price.min) / (s.price.max - s.price.min)) * geom.height) - my;
             const dist = Math.hypot(dx, dy);
             if (dist <= 12) { bestId = d.id; bd = 0; }
@@ -303,13 +387,13 @@ export function initUI(v) {
       }
       const ctx = overlay.getContext('2d');
       ctx.clearRect(0, 0, overlay.width, overlay.height);
-      drawDrawings(ctx, st.drawings, st, geom);
+      drawDrawings(ctx, st.drawings, st, geom, rows);
       drawAlerts(ctx, st.alerts, st, geom);
       const pal = PAL[st.theme] || PAL.light;
       drawCrosshair(ctx, mx, my, geom, pal);
       const idx = hitTest(mx, st.visible, geom.left, geom.width, rows);
       const effCap = (st.replayIndex != null && Number.isFinite(st.replayIndex))
-        ? Math.max(0, Math.min(rows.length - 1, st.replayIndex))
+        ? Math.max(0, Math.min(rows.length - 1, Math.floor(st.replayIndex)))
         : rows.length - 1;
       updateOhlc(rows[Math.min(idx, effCap)]);
     });
@@ -317,13 +401,16 @@ export function initUI(v) {
       const ctx = overlay.getContext('2d');
       ctx.clearRect(0, 0, overlay.width, overlay.height);
       const st = v.get();
-      drawDrawings(ctx, st.drawings, st, geomFor());
+      drawDrawings(ctx, st.drawings, st, geomFor(), rows);
       drawAlerts(ctx, st.alerts, st, geomFor());
       if (rows.length) {
-        const n = (st.replayIndex != null && Number.isFinite(st.replayIndex))
-          ? Math.max(1, Math.min(rows.length, st.replayIndex + 1))
-          : rows.length;
-        updateOhlc(rows[n - 1]);
+        const sliced = visibleRows(rows, st.visible);
+        const src = sliced.length ? sliced : rows;
+        const off = sliced.length ? sliceOffset(rows, sliced) : 0;
+        const effSliced = st.replayIndex != null && Number.isFinite(st.replayIndex)
+          ? replayCount(rows, src, off, st)
+          : src.length;
+        updateOhlc((effSliced > 0 ? src[effSliced - 1] : src[src.length - 1]) || rows[rows.length - 1]);
       }
     });
     overlay.addEventListener('wheel', (e) => {
@@ -435,22 +522,40 @@ export function initUI(v) {
     if (!rows.length) return;
     let mn = Infinity, mx = -Infinity;
     for (const r of rows) { if (r.l < mn) mn = r.l; if (r.h > mx) mx = r.h; }
+    if (!Number.isFinite(mn) || !Number.isFinite(mx)) return;
+    if (!(mx > mn)) { mn -= 1; mx += 1; }
     const pad = (mx - mn) * 0.08;
     const visible = { from: rows[0].t, to: rows[rows.length - 1].t };
     const price = { min: Math.floor((mn - pad) / 1000) * 1000, max: Math.ceil((mx + pad) / 1000) * 1000 };
+    if (!(price.max > price.min)) price.max = price.min + 1000;
     fullVisible = { ...visible };
     fullPrice = { ...price };
     v.set({ visible, price, replayIndex: null });
   };
-  const reload = async (symbol, ccxtTf) => {
+  // Symbol/timeframe reload: label + scale update ONLY on success. On
+  // failure the old rows/label/scale are kept and an error toast is shown
+  // (same fallback-toast pattern as data.js). Fetches /api/ohlcv directly
+  // so a proxy failure can't masquerade fallback BTC data as the new symbol.
+  const reload = async (symbol, ccxtTf, nextTf) => {
     try {
-      const data = await fetchOHLCV({ symbol, timeframe: ccxtTf });
-      if (Array.isArray(data) && data.length) rows = data;
-    } catch { /* keep existing rows — no unhandled rejection */ }
-    if (!rows.length) return;
-    resetScale();
-    const symBtn = document.querySelector('#sym');
-    if (symBtn) symBtn.textContent = String(symbol).replace('/', '');
+      const r = await fetch(`/api/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${ccxtTf}&limit=300`);
+      if (!r.ok) throw new Error('proxy ' + r.status);
+      const data = normalizeOHLCV(await r.json());
+      if (!Array.isArray(data) || !data.length) throw new Error('empty');
+      rows = data;
+      resetScale();
+      fitCanvases();
+      const patch = { symbol };
+      if (nextTf) patch.timeframe = nextTf;
+      v.set(patch);
+      saveLayout();
+      const symBtn = document.querySelector('#sym');
+      if (symBtn) symBtn.textContent = String(symbol).replace('/', '');
+      return true;
+    } catch (e) {
+      showToast(`Live data unavailable — keeping ${v.get().symbol || 'current chart'}`);
+      return false;
+    }
   };
   // Indicators <dialog> with SMA20/SMA50/EMA20/RSI checkboxes.
   if (!document.querySelector('#ind-dialog')) {
@@ -473,6 +578,7 @@ export function initUI(v) {
       cb.checked = !!(v.get().indicators || {})[cb.dataset.ind];
       cb.addEventListener('change', () => {
         v.set({ indicators: { ...(v.get().indicators || {}), [cb.dataset.ind]: cb.checked } });
+        saveLayout();
       });
     });
     // Task 9: all 85 vendored studies, grouped, with filter + transform radios.
@@ -484,7 +590,7 @@ export function initUI(v) {
         if (!g) { g = { name: s.group, items: [] }; groups.push(g); }
         g.items.push(s);
       }
-      const setStudies = (ids) => v.set({ studies: ids });
+      const setStudies = (ids) => { v.set({ studies: ids }); saveLayout(); };
       const activeIds = () => v.get().studies || [];
       const syncStudies = () => {
         const cur = new Set(activeIds());
@@ -634,7 +740,7 @@ export function initUI(v) {
       step(0);
     });
   }
-  // Symbol search: re-fetch + reset visible.
+  // Symbol search: re-fetch + reset visible (label/state change only on success).
   const symBtn = document.querySelector('#sym');
   if (symBtn && !symBtn.dataset.bound) {
     symBtn.dataset.bound = '1';
@@ -645,11 +751,10 @@ export function initUI(v) {
       if (!ans) return;
       const sym = normalizeSymbol(ans);
       if (!sym) return;
-      v.set({ symbol: sym });
       await reload(sym, TF_CCXT[tfLabel()] || '1d');
     });
   }
-  // Timeframe D/1W/1H -> ccxt 1d/1w/1h.
+  // Timeframe D/1W/1H -> ccxt 1d/1w/1h (state + button label change only on success).
   const tfBtn = [...document.querySelectorAll('#topbar button')].find((b) => b.textContent === 'D' || TF_ORDER.includes(b.textContent));
   if (tfBtn && !tfBtn.dataset.bound) {
     tfBtn.dataset.bound = '1';
@@ -657,9 +762,8 @@ export function initUI(v) {
     tfBtn.textContent = tfLabel();
     tfBtn.addEventListener('click', async () => {
       const next = TF_ORDER[(TF_ORDER.indexOf(tfLabel()) + 1) % TF_ORDER.length];
-      v.set({ timeframe: next });
-      tfBtn.textContent = next;
-      await reload(v.get().symbol || 'BTC/USD', TF_CCXT[next]);
+      const ok = await reload(v.get().symbol || 'BTC/USD', TF_CCXT[next], next);
+      if (ok) tfBtn.textContent = next;
     });
   }
   // Chart-type toggle: candles / bars / line.
@@ -670,6 +774,7 @@ export function initUI(v) {
     ctBtn.addEventListener('click', () => {
       const next = ORDER[(ORDER.indexOf(v.get().chartType || 'candles') + 1) % ORDER.length];
       v.set({ chartType: next });
+      saveLayout();
     });
   }
 
@@ -681,9 +786,8 @@ export function initUI(v) {
   };
   const saveNamedLayout = (name) => {
     try {
-      const s = v.get();
       const all = getNamedLayouts();
-      all[name] = { drawings: s.drawings || [], alerts: s.alerts || [] };
+      all[name] = layoutFromState(v.get());
       localStorage.setItem(LAYOUTS_KEY, JSON.stringify(all));
     } catch {}
   };
@@ -692,7 +796,26 @@ export function initUI(v) {
     const L = all[name];
     if (!L) return;
     pushHistory();
-    v.set({ drawings: L.drawings || [], alerts: L.alerts || [], selectedId: null });
+    // Backward-compat: legacy named layouts may be a drawings array or a
+    // {drawings, alerts} object; missing study/chart keys keep current state.
+    const cur = v.get();
+    const patch = { selectedId: null };
+    if (Array.isArray(L)) { patch.drawings = L; patch.alerts = []; }
+    else {
+      if (L.drawings) patch.drawings = L.drawings;
+      if (L.alerts) patch.alerts = L.alerts;
+      if (L.studies) patch.studies = L.studies;
+      if (L.indicators) patch.indicators = L.indicators;
+      if (L.chartType) patch.chartType = L.chartType;
+      if (L.symbol) {
+        patch.symbol = L.symbol;
+        const symBtn = document.querySelector('#sym');
+        if (symBtn) symBtn.textContent = String(L.symbol).replace('/', '');
+      }
+      if (L.timeframe) patch.timeframe = L.timeframe;
+      void cur;
+    }
+    v.set(patch);
     saveLayout();
   };
   const exportPNG = () => {

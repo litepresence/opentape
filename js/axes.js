@@ -1,5 +1,5 @@
 // js/axes.js
-import { niceTicks, xForTime, yForPrice, PAL } from './chart.js';
+import { niceTicks, xForTime, yForPrice, PAL, visibleRows, xForRowTime } from './chart.js';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -9,6 +9,7 @@ export function renderPriceAxis(el, state, geom) {
   el.innerHTML = '';
   el.style.position = 'relative';
   el.style.overflow = 'hidden';
+  if (!Number.isFinite(state.price.min) || !Number.isFinite(state.price.max) || !(state.price.max > state.price.min)) return;
   for (const p of niceTicks(state.price.min, state.price.max)) {
     const y = yForPrice(p, state.price, geom.top, geom.height);
     const d = document.createElement('div');
@@ -36,10 +37,14 @@ export function renderTimeAxis(el, rows, state, geom) {
   el.style.overflow = 'hidden';
   // Reserve right gutter so % positions align with canvas (canvas width = wrap - axis-w)
   el.style.marginRight = 'var(--axis-w)';
+  // Same sliced array as the candle renderer: month marks come from visible
+  // bars only, positioned with the shared index-based x mapping.
+  const sliced = visibleRows(rows, state.visible);
+  const src = sliced.length ? sliced : rows;
   let lastMonth = -1;
   const seen = new Set();
   const marks = [];
-  rows.forEach((r) => {
+  src.forEach((r) => {
     const d = new Date(r.t);
     const m = d.getUTCMonth();
     const key = d.getUTCFullYear() + '-' + m;
@@ -50,7 +55,9 @@ export function renderTimeAxis(el, rows, state, geom) {
     if (m !== lastMonth) lastMonth = m;
   });
   marks.forEach((mk, idx) => {
-    const x = xForTime(mk.t, state.visible, geom.left, geom.width);
+    const x = sliced.length
+      ? xForRowTime(mk.t, sliced, geom.left, geom.width)
+      : xForTime(mk.t, state.visible, geom.left, geom.width);
     const s = document.createElement('span');
     s.textContent = mk.label;
     s.style.position = 'absolute';

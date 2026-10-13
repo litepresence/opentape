@@ -11,4 +11,10 @@ export function ViewState(initial = {}) {
     toggleTheme() { const next = s.theme === 'light' ? 'dark' : 'light'; this.set({ theme: next }); if (typeof document !== 'undefined' && document.documentElement) { document.documentElement.dataset.theme = next; } try { localStorage.setItem('tv-theme', next); } catch {} },
   };
 }
-export const view = ViewState({ theme: (typeof localStorage !== 'undefined' && localStorage.getItem('tv-theme')) || 'light' });
+function storedTheme() {
+  try {
+    if (typeof localStorage !== 'undefined') return localStorage.getItem('tv-theme') || 'light';
+  } catch { /* storage unavailable (private mode / SSR) — fall through */ }
+  return 'light';
+}
+export const view = ViewState({ theme: storedTheme() });
