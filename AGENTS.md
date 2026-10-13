@@ -37,6 +37,10 @@ Reference: `Screenshot from 2026-10-12 18-38-59.png` in this directory. That ima
 - Pan/zoom at 60fps, crosshair + OHLC correct, drawings persist after reload, light/dark toggle without flash.
 - No console errors.
 
+## REA Findings (2026-10-13, from live tradingview.com capture)
+- Font: `-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif` (no Segoe UI). Text `#0f0f0f`, chrome `#ebebeb`. Brand font EuclidCircular (proprietary — fallback only).
+- Last-price line/tag follows bar direction (green up). Range→interval map: 1D→1m, 5D→5m, 1M→30m, 3M→1h, 6M→2h, YTD/1Y→1d, 5Y→1w, All→1M. 11 stacked canvases. Evidence in `tooling/rea-tv-inspect.json`, `tooling/shots/tv-real-1920.png`, `tooling/rea_tv_facts.mjs` (layout facts only — tree stays clean-room, no TV code/assets).
+
 ## Working Agreement
 - Brainstorm → spec → plan → implement in phases: 1) core chart, 2) drawings, 3) indicators/alerts/replay, 4) themes/polish.
 - Ask before adding deps beyond `ccxt`. Keep vanilla promise.

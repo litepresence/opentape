@@ -41,6 +41,7 @@ export function initUI(v) {
     chartType: s.chartType || 'candles',
     symbol: s.symbol || 'BTC/USD',
     timeframe: s.timeframe || '1D',
+    interval: s.interval || '1d',
   });
   const saveLayout = () => {
     try {
@@ -61,6 +62,7 @@ export function initUI(v) {
         chartType: parsed.chartType,
         symbol: parsed.symbol,
         timeframe: parsed.timeframe,
+        interval: parsed.interval,
       };
     } catch { return null; }
   };
@@ -96,6 +98,7 @@ export function initUI(v) {
     if (persisted.chartType) patch.chartType = persisted.chartType;
     if (persisted.symbol) patch.symbol = persisted.symbol;
     if (persisted.timeframe) patch.timeframe = persisted.timeframe;
+    if (persisted.interval) patch.interval = persisted.interval;
     if (Object.keys(patch).length) v.set(patch);
   }
   document.querySelectorAll('#rail button').forEach(b => b.addEventListener('click', () => {
@@ -216,7 +219,7 @@ export function initUI(v) {
       drawDrawings(octx, state.drawings, state, geom, rows);
       drawAlerts(octx, state.alerts, state, geom);
     }
-    renderPriceAxis(priceAxis, state, geom);
+    renderPriceAxis(priceAxis, rows, state, geom);
     renderTimeAxis(timeAxis, rows, state, geom);
     // OHLC header tracks the last *visible-in-replay* bar (sliced + offset).
     const sliced = visibleRows(rows, state.visible);
@@ -246,7 +249,7 @@ export function initUI(v) {
     if (!(price.max > price.min)) price.max = price.min + 1000;
     return { visible: { from: list[0].t, to: list[list.length - 1].t }, price };
   };
-  fetchOHLCV().then((data) => {
+  fetchOHLCV({ symbol: v.get().symbol || 'BTC/USD', timeframe: v.get().interval || '1d' }).then((data) => {
     if (Array.isArray(data) && data.length) rows = data;
     if (!rows.length) return;
     fitCanvases();
@@ -459,29 +462,24 @@ export function initUI(v) {
       saveLayout();
     });
   }
-  // Range footer: turn "1D 5D 1M ..." span into buttons; set visible window.
+  // Range footer: buttons switch the real data interval (captured from the
+  // live page: 1D→1-minute … All→1-month) then set the time window. Windows
+  // are time-based so they stay correct on any interval.
   const rangeHost = document.querySelector('#rangebar span');
+  const RANGE_TF = { '1D': '1m', '5D': '5m', '1M': '30m', '3M': '1h', '6M': '2h', 'YTD': '1d', '1Y': '1d', '5Y': '1w', 'All': '1M' };
+  const RANGE_SPAN = { '1D': 864e5, '5D': 5 * 864e5, '1M': 30 * 864e5, '3M': 90 * 864e5, '6M': 180 * 864e5, '1Y': 365 * 864e5, '5Y': 5 * 365 * 864e5 };
+  const RANGE_TIP = { '1D': '1 day in 1 minute intervals', '5D': '5 days in 5 minutes intervals', '1M': '1 month in 30 minutes intervals', '3M': '3 months in 1 hour intervals', '6M': '6 months in 2 hours intervals', 'YTD': 'Year to day in 1 day intervals', '1Y': '1 year in 1 day intervals', '5Y': '5 years in 1 week intervals', 'All': 'All data in 1 month intervals' };
+  const curInterval = () => v.get().interval || TF_CCXT[tfLabel()] || '1d';
   const visibleForRange = (label) => {
     if (!rows.length) return null;
-    const n = rows.length;
-    const last = rows[n - 1];
-    const take = (k) => ({ from: rows[Math.max(0, n - k)].t, to: last.t });
-    switch (label) {
-      case '1D': return take(2);
-      case '5D': return take(5);
-      case '1M': return take(30);
-      case '3M': return take(90);
-      case '6M': return take(Math.min(180, n));
-      case 'YTD': {
-        const y = new Date(last.t).getUTCFullYear();
-        const first = rows.find((r) => new Date(r.t).getUTCFullYear() === y) || rows[0];
-        return { from: first.t, to: last.t };
-      }
-      case '1Y': return take(Math.min(365, n));
-      case '5Y':
-      case 'All':
-      default: return { from: rows[0].t, to: last.t };
+    const last = rows[rows.length - 1];
+    if (label === 'YTD') {
+      const y = new Date(last.t).getUTCFullYear();
+      const first = rows.find((r) => new Date(r.t).getUTCFullYear() === y) || rows[0];
+      return { from: first.t, to: last.t };
     }
+    if (!RANGE_SPAN[label]) return { from: rows[0].t, to: last.t };
+    return { from: Math.max(rows[0].t, last.t - RANGE_SPAN[label]), to: last.t };
   };
   if (rangeHost && !rangeHost.dataset.enhanced) {
     rangeHost.dataset.enhanced = '1';
@@ -491,8 +489,18 @@ export function initUI(v) {
       const b = document.createElement('button');
       b.textContent = label;
       b.dataset.range = label;
+      if (RANGE_TIP[label]) b.title = RANGE_TIP[label];
       b.style.padding = '2px 4px';
-      b.addEventListener('click', () => {
+      b.addEventListener('click', async () => {
+        const tf = RANGE_TF[label] || '1d';
+        if (curInterval() !== tf) {
+          const ok = await reload(v.get().symbol || 'BTC/USD', tf, label);
+          if (!ok) return; // reload toasted; keep old data + view
+          v.set({ interval: tf });
+        } else if (label) {
+          v.set({ timeframe: label });
+          saveLayout();
+        }
         const vis = visibleForRange(label);
         if (vis) v.set({ visible: vis });
       });
@@ -751,11 +759,75 @@ export function initUI(v) {
       if (!ans) return;
       const sym = normalizeSymbol(ans);
       if (!sym) return;
-      await reload(sym, TF_CCXT[tfLabel()] || '1d');
+      await reload(sym, curInterval());
     });
   }
+  // Watchlist sidebar: Symbol/Last/Chg/Chg% fed by the proxy (daily bars);
+  // click a row to switch the chart to that symbol. Offline rows show em-dash.
+  const WATCH = [
+    { group: 'CRYPTO', sym: 'BTC/USD', label: 'BTCUSD' },
+    { group: 'CRYPTO', sym: 'ETH/USD', label: 'ETHUSD' },
+  ];
+  const renderWatchlist = async () => {
+    const host = document.querySelector('#watch-groups');
+    if (!host) return;
+    host.innerHTML = '';
+    let group = null;
+    for (const w of WATCH) {
+      if (w.group !== group) {
+        group = w.group;
+        const g = document.createElement('div');
+        g.className = 'wgroup';
+        g.textContent = group;
+        host.appendChild(g);
+      }
+      const row = document.createElement('button');
+      row.className = 'wrow';
+      let last = '—', chg = '—', chgp = '—', cls = '';
+      try {
+        const r = await fetch(`/api/ohlcv?symbol=${encodeURIComponent(w.sym)}&timeframe=1d&limit=2`);
+        if (r.ok) {
+          const d = normalizeOHLCV(await r.json());
+          if (d.length) {
+            const c = d[d.length - 1].c;
+            last = c.toLocaleString('en-US', { maximumFractionDigits: c < 10 ? 3 : 0 });
+            if (d.length >= 2) {
+              const p = d[d.length - 2].c, dc = c - p, pct = dc / p * 100;
+              cls = dc >= 0 ? 'up' : 'down';
+              chg = (dc >= 0 ? '+' : '') + dc.toFixed(dc < 10 && dc > -10 ? 3 : 0);
+              chgp = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+            }
+          }
+        }
+      } catch {}
+      row.innerHTML = '';
+      const s0 = document.createElement('span'); s0.textContent = w.label;
+      const s1 = document.createElement('span'); s1.textContent = last;
+      const s2 = document.createElement('span'); s2.textContent = chg; if (cls) s2.className = cls;
+      const s3 = document.createElement('span'); s3.textContent = chgp; if (cls) s3.className = cls;
+      row.append(s0, s1, s2, s3);
+      row.addEventListener('click', async () => {
+        await reload(w.sym, curInterval());
+        renderWatchlist();
+      });
+      host.appendChild(row);
+    }
+  };
+  const watchAdd = document.querySelector('#watch-add');
+  if (watchAdd && !watchAdd.dataset.bound) {
+    watchAdd.dataset.bound = '1';
+    watchAdd.addEventListener('click', async () => {
+      if (typeof prompt === 'undefined') return;
+      const ans = prompt('Add symbol (e.g. BTC/USD, ETH/USD):', '');
+      const sym = normalizeSymbol(ans);
+      if (!sym) return;
+      if (!WATCH.some(w => w.sym === sym)) WATCH.push({ group: 'CRYPTO', sym, label: sym.replace('/', '') });
+      renderWatchlist();
+    });
+  }
+  renderWatchlist();
   // Timeframe D/1W/1H -> ccxt 1d/1w/1h (state + button label change only on success).
-  const tfBtn = [...document.querySelectorAll('#topbar button')].find((b) => b.textContent === 'D' || TF_ORDER.includes(b.textContent));
+  const tfBtn = document.querySelector('#tf-btn');
   if (tfBtn && !tfBtn.dataset.bound) {
     tfBtn.dataset.bound = '1';
     if (!TF_ORDER.includes(tfBtn.textContent) && tfBtn.textContent !== 'D') { /* leave custom labels */ }
@@ -763,7 +835,7 @@ export function initUI(v) {
     tfBtn.addEventListener('click', async () => {
       const next = TF_ORDER[(TF_ORDER.indexOf(tfLabel()) + 1) % TF_ORDER.length];
       const ok = await reload(v.get().symbol || 'BTC/USD', TF_CCXT[next], next);
-      if (ok) tfBtn.textContent = next;
+      if (ok) { tfBtn.textContent = next; v.set({ interval: TF_CCXT[next] }); }
     });
   }
   // Chart-type toggle: candles / bars / line.

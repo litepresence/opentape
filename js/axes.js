@@ -1,9 +1,9 @@
 // js/axes.js
-import { niceTicks, xForTime, yForPrice, PAL, visibleRows, xForRowTime } from './chart.js';
+import { niceTicks, xForTime, yForPrice, PAL, visibleRows, xForRowTime, lastVisibleBar } from './chart.js';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function renderPriceAxis(el, state, geom) {
+export function renderPriceAxis(el, rows, state, geom) {
   if (!el || !state.price) return;
   const pal = PAL[state.theme] || PAL.light;
   el.innerHTML = '';
@@ -26,6 +26,50 @@ export function renderPriceAxis(el, state, geom) {
     d.style.fontWeight = p % 10000 === 0 ? '700' : '400';
     d.style.pointerEvents = 'none';
     el.appendChild(d);
+  }
+  // Last-price tag pill (price + UTC clock), colored by bar direction.
+  const last = Array.isArray(rows) && rows.length ? lastVisibleBar(rows, state) : null;
+  if (last) {
+    const y = yForPrice(last.c, state.price, geom.top, geom.height);
+    const up = last.c >= last.o;
+    const tag = document.createElement('div');
+    tag.id = 'last-price-tag';
+    tag.style.position = 'absolute';
+    tag.style.top = Math.round(y - 14) + 'px';
+    tag.style.right = '0';
+    tag.style.background = up ? pal.up : pal.down;
+    tag.style.color = '#fff';
+    tag.style.fontSize = '11px';
+    tag.style.lineHeight = '13px';
+    tag.style.padding = '2px 5px';
+    tag.style.borderRadius = '3px';
+    tag.style.textAlign = 'right';
+    tag.style.pointerEvents = 'none';
+    const pl = document.createElement('div');
+    pl.textContent = Math.round(last.c).toLocaleString('en-US');
+    const tm = document.createElement('div');
+    tm.textContent = new Date().toISOString().slice(11, 19);
+    tag.appendChild(pl); tag.appendChild(tm);
+    el.appendChild(tag);
+  }
+  // Volume tag pill (last bar volume, K-formatted), colored by bar direction.
+  if (last && Number.isFinite(last.v)) {
+    const up = last.c >= last.o;
+    const vtag = document.createElement('div');
+    vtag.id = 'last-volume-tag';
+    vtag.style.position = 'absolute';
+    vtag.style.bottom = '2px';
+    vtag.style.right = '0';
+    vtag.style.background = up ? pal.up : pal.down;
+    vtag.style.color = '#fff';
+    vtag.style.fontSize = '11px';
+    vtag.style.lineHeight = '13px';
+    vtag.style.padding = '2px 5px';
+    vtag.style.borderRadius = '3px';
+    vtag.style.textAlign = 'right';
+    vtag.style.pointerEvents = 'none';
+    vtag.textContent = last.v >= 1000 ? (last.v / 1000).toFixed(2) + 'K' : String(Math.round(last.v));
+    el.appendChild(vtag);
   }
 }
 

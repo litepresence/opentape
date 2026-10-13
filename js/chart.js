@@ -108,6 +108,13 @@ export function windowVals(vals, offset, len) {
   if (!Array.isArray(vals)) return vals;
   return vals.slice(offset, offset + len);
 }
+// Last bar visible under the current window + replay position (single source
+// for the dotted last-price line and the price-axis tag pill).
+export function lastVisibleBar(full, state) {
+  const vrows = visibleRows(full, state.visible);
+  const n = replayCount(full, vrows, sliceOffset(full, vrows), state);
+  return n > 0 ? vrows[n - 1] : null;
+}
 export function niceTicks(min, max, n = 7) {
   if (!Number.isFinite(min) || !Number.isFinite(max) || !(max > min)) return [];
   const step0 = (max - min) / n; const mag = 10 ** Math.floor(Math.log10(step0)); const norm = step0 / mag; const step = (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag; const out = []; for (let v = Math.ceil(min / step) * step; v <= max; v += step) out.push(v); return out;
@@ -328,9 +335,9 @@ export function renderBase(ctx, state, rows, geom) {
     }
     for (const j of paneJobs) drawPaneLine(ctx, j.vals, n, scale, { left, top, width, height }, vrows, j.color, py, ph);
   }
-  // last-price dotted line (last *visible-in-replay* bar)
-  const last = vrows[Math.max(0, n - 1)];
-  if (last && n > 0) { const y = yForPrice(last.c, state.price, top, height); ctx.strokeStyle = pal.down; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke(); ctx.setLineDash([]); }
+  // last-price dotted line (last *visible-in-replay* bar), colored by bar direction
+  const last = lastVisibleBar(rows, state);
+  if (last && n > 0) { const y = yForPrice(last.c, state.price, top, height); ctx.strokeStyle = last.c >= last.o ? pal.up : pal.down; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke(); ctx.setLineDash([]); }
 }
 // Task 8: composite base+overlay for PNG export (used by ui.js export button).
 export function compositeToDataURL(base, overlay) {

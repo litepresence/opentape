@@ -1,8 +1,9 @@
 /* styles.css — Task 3 shell chrome: light default + dark via [data-theme] */
 :root {
   --bg: #fff;
+  --chrome: #ebebeb;
   --grid: #e0e3eb;
-  --text: #131722;
+  --text: #0f0f0f;
   --up: #089981;
   --down: #F23645;
   --topbar-h: 48px;
@@ -25,9 +26,9 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; }
 body {
-  background: var(--bg);
+  background: var(--chrome);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
   font-size: 13px;
   display: flex;
   flex-direction: column;
@@ -54,7 +55,7 @@ button:hover { background: var(--btn-hover); }
   border-bottom: 1px solid var(--border);
   background: var(--bg);
 }
-#topbar #sym { font-weight: 700; }
+#topbar #sym { font-weight: 700; font-size: 14px; min-width: 128px; height: 28px; }
 #main { flex: 1; display: flex; min-height: 0; }
 #rail {
   width: var(--rail-w);
@@ -69,8 +70,10 @@ button:hover { background: var(--btn-hover); }
   overflow-y: auto;
 }
 #rail button { font-size: 15px; padding: 6px 0; text-align: center; }
+#rail button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; margin: 0 auto; }
+#rail button svg .f { fill: currentColor; stroke: none; }
 #rail button.active { background: var(--btn-hover); outline: 1px solid var(--grid); }
-#chart-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#chart-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
 #ohlc-head {
   display: flex;
   align-items: center;
@@ -81,11 +84,12 @@ button:hover { background: var(--btn-hover); }
 #sell, #buy {
   padding: 3px 10px;
   border-radius: 4px;
-  color: #fff;
+  background: transparent;
   font-weight: 600;
+  border: 1px solid currentColor;
 }
-#sell { background: var(--down); }
-#buy { background: var(--up); }
+#sell { color: var(--down); border-color: var(--down); }
+#buy { color: #2962FF; border-color: #2962FF; }
 #mid { flex: 1; display: flex; min-height: 0; }
 #canvas-stack { flex: 1; position: relative; min-width: 0; }
 #canvas-stack canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -102,6 +106,18 @@ button:hover { background: var(--btn-hover); }
   background: var(--bg);
 }
 #clock { font-variant-numeric: tabular-nums; }
+/* Watchlist sidebar (matches captured Symbol/Last/Chg/Chg% structure) */
+#watch { width: 320px; min-width: 280px; border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; overflow-y: auto; font-size: 12px; }
+#watch-head { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+#watch-cols, .wrow { display: grid; grid-template-columns: 1fr auto auto auto; gap: 12px; padding: 4px 12px; align-items: center; }
+#watch-cols { color: #787b86; border-bottom: 1px solid var(--border); }
+#watch-cols span:nth-child(n+2), .wrow span:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
+.wgroup { padding: 8px 12px 2px; color: #787b86; font-size: 11px; letter-spacing: 0.04em; }
+.wrow { cursor: pointer; border: none; background: transparent; color: inherit; font: inherit; text-align: left; width: 100%; }
+.wrow:hover { background: var(--btn-hover); }
+.wrow .up { color: var(--up); }
+.wrow .down { color: var(--down); }
+@media (max-width: 1500px) { #watch { display: none; } }
 /* Task 8 polish: responsive desktop reflow */
 @media (max-width: 1400px) {
   :root { --axis-w: 56px; }
