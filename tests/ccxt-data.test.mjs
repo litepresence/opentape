@@ -22,6 +22,34 @@ test('no /api or server references remain in js/', async () => {
   }
   assert.deepEqual(hits, []);
 });
+test('fetchOHLCV liveOnly:true rejects fast without fallback when ccxt unavailable', { timeout: 3000 }, async () => {
+  const { fetchOHLCV } = await import('../js/data.js');
+  const g = globalThis;
+  const hadCcxt = 'ccxt' in g;
+  const origCcxt = g.ccxt;
+  const hadDoc = 'document' in g;
+  const origDoc = g.document;
+  const hadFetch = 'fetch' in g;
+  const origFetch = g.fetch;
+  delete g.ccxt;
+  delete g.document;
+  let fetchCalls = 0;
+  g.fetch = async () => { fetchCalls++; throw new Error('fallback must not be fetched'); };
+  const t0 = Date.now();
+  try {
+    let threw = false;
+    try {
+      await fetchOHLCV({ symbol: 'ETH/USD', timeframe: '1d', limit: 2, liveOnly: true });
+    } catch { threw = true; }
+    assert.equal(threw, true, 'liveOnly should reject when ccxt unavailable');
+    assert.equal(fetchCalls, 0, 'liveOnly must skip embedded fallback fetch');
+    assert.ok(Date.now() - t0 < 2000, 'liveOnly fails fast without fallback');
+  } finally {
+    if (hadCcxt) g.ccxt = origCcxt; else delete g.ccxt;
+    if (hadDoc) g.document = origDoc; else delete g.document;
+    if (hadFetch) g.fetch = origFetch; else delete g.fetch;
+  }
+});
 test('whenCcxt resolves (not hangs) when CDN blocked', { timeout: 3000 }, async () => {
   const g = globalThis;
   const hadDoc = 'document' in g;

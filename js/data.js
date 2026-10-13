@@ -33,7 +33,14 @@ export function whenCcxt(timeoutMs = 15000) {
   return ccxtReady;
 }
 
-export async function fetchOHLCV({ symbol = 'BTC/USD', timeframe = '1d', limit = 300 } = {}) {
+/**
+ * Fetch OHLCV via browser CCXT, falling back to embedded BTC-daily JSON.
+ * @param {object} opts
+ * @param {boolean} [opts.liveOnly=false] - when true, skip the embedded
+ *   fallback and rethrow on failure (choice: throw, so callers can
+ *   distinguish offline from cached data; e.g. watchlist renders em-dash).
+ */
+export async function fetchOHLCV({ symbol = 'BTC/USD', timeframe = '1d', limit = 300, liveOnly = false } = {}) {
   const { exchange, ccxtSymbol } = resolveMarket(symbol);
   try {
     const cc = typeof globalThis.ccxt !== 'undefined' ? globalThis.ccxt : await whenCcxt();
@@ -44,6 +51,7 @@ export async function fetchOHLCV({ symbol = 'BTC/USD', timeframe = '1d', limit =
     if (!rows.length) throw new Error('empty');
     return rows;
   } catch (e) {
+    if (liveOnly) throw e;
     const fb = await fetch('./data/btcusd-1d.json').then(x => x.json());
     console.warn('Live data unavailable — showing cached', e?.message ?? e);
     return normalizeOHLCV(fb);

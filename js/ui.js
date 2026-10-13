@@ -759,7 +759,8 @@ export function initUI(v) {
     });
   }
   // Watchlist sidebar: Symbol/Last/Chg/Chg% fed by browser CCXT (daily bars);
-  // click a row to switch the chart to that symbol. Offline rows show em-dash.
+  // click a row to switch the chart to that symbol. liveOnly skips the
+  // embedded BTC fallback so offline rows keep em-dash via the catch below.
   const WATCH = [
     { group: 'CRYPTO', sym: 'BTC/USD', label: 'BTCUSD' },
     { group: 'CRYPTO', sym: 'ETH/USD', label: 'ETHUSD' },
@@ -781,7 +782,7 @@ export function initUI(v) {
       row.className = 'wrow';
       let last = '—', chg = '—', chgp = '—', cls = '';
       try {
-        const d = await fetchOHLCV({ symbol: w.sym, timeframe: '1d', limit: 2 });
+        const d = await fetchOHLCV({ symbol: w.sym, timeframe: '1d', limit: 2, liveOnly: true });
         if (d.length) {
           const c = d[d.length - 1].c;
           last = c.toLocaleString('en-US', { maximumFractionDigits: c < 10 ? 3 : 0 });
