@@ -155,7 +155,9 @@ export function initUI(v) {
       // Merge into the live query string so foreign params (debug, theme
       // overrides, campaign tags) survive UI-driven syncs.
       const cur = new URLSearchParams(location.search);
-      const next = new URLSearchParams(formatChartUrl({ symbol: s.symbol, interval: s.interval || '1d' }));
+      let ex = '';
+      try { ex = String(resolveMarket(s.symbol || 'BTC/USD').exchange || '').toLowerCase(); } catch {}
+      const next = new URLSearchParams(formatChartUrl({ symbol: s.symbol, interval: s.interval || '1d', exchange: ex }));
       for (const [k, val] of next) cur.set(k, val);
       const url = location.pathname + '?' + cur.toString();
       if (url !== lastUrl) {
@@ -180,6 +182,8 @@ export function initUI(v) {
     if (tool === 'magnet') {
       magnetOn = !magnetOn;
       b.classList.toggle('active', magnetOn);
+      showToast(magnetOn ? 'Magnet on — drawings snap to OHLC' : 'Magnet off');
+      saveLayout();
       return;
     }
     if (tool === 'lock') {
@@ -194,6 +198,7 @@ export function initUI(v) {
       const hidden = !v.get().drawingsHidden;
       v.set({ drawingsHidden: hidden });
       b.classList.toggle('active', hidden);
+      showToast(hidden ? 'Drawings hidden' : 'Drawings shown');
       saveLayout();
       return;
     }
@@ -206,6 +211,9 @@ export function initUI(v) {
           const mid = (s.visible.from + s.visible.to) / 2;
           const nSpan = span * 0.8;
           v.set({ visible: { from: mid - nSpan / 2, to: mid + nSpan / 2 } });
+          showToast('Zoomed in');
+        } else {
+          showToast('No data to zoom');
         }
       }
       return;
@@ -213,7 +221,7 @@ export function initUI(v) {
     if (tool === 'del') {
       const s = v.get();
       if (s.locked) { showToast('Drawings locked — unlock to delete'); return; }
-      if (!s.drawings.length && !s.alerts.length) return;
+      if (!s.drawings.length && !s.alerts.length) { showToast('Nothing to remove'); return; }
       pushHistory();
       if (s.selectedId) {
         v.set({
@@ -225,6 +233,7 @@ export function initUI(v) {
         v.set({ drawings: s.drawings.slice(0, -1) });
       }
       saveLayout();
+      showToast(s.selectedId ? 'Object removed' : 'Last object removed');
       return;
     }
     if (tool === 'extra') { openMenu(b); return; }
@@ -237,7 +246,7 @@ export function initUI(v) {
       saveLayout();
       return;
     }
-    if (tool === 'shape') { openShapeMenu(b); return; }
+    if (tool === 'shape') { openShapeMenu(b); showToast('Pick a shape'); return; }
     document.querySelectorAll('#rail button').forEach(x => {
       if (x.dataset.tool !== 'magnet' && x.dataset.tool !== 'stay') x.classList.remove('active');
     });
@@ -606,7 +615,11 @@ export function initUI(v) {
         // Multi-click tools accumulate anchors until the type is complete.
         if (anchorCount(tool) > 1) {
           const pts = (pending && pending.type === tool ? pending.points : []).concat([{ t, p }]);
-          if (pts.length < anchorCount(tool)) { pending = { type: tool, points: pts }; return; }
+          if (pts.length < anchorCount(tool)) {
+            pending = { type: tool, points: pts };
+            showToast(`Anchor ${pts.length}/${anchorCount(tool)} — click to set the next point`);
+            return;
+          }
           pushHistory();
           const d = makeDrawing(tool, pts);
           addDrawing(v, d);
@@ -1489,7 +1502,15 @@ export function initUI(v) {
   const marketsCache = new Map();
   const getExchanges = () => {
     let all = [];
-    try { if (globalThis.ccxt && Array.isArray(globalThis.ccxt.exchanges)) all = globalThis.ccxt.exchanges; } catch {}
+    try {
+      const cc = globalThis.ccxt;
+      if (cc && Array.isArray(cc.exchanges)) all = cc.exchanges;
+      else if (cc) {
+        // The browser bundle exposes exchanges as lowercase classes and has no
+        // `exchanges` array: error classes are PascalCase, exchanges lowercase.
+        all = Object.keys(cc).filter((k) => typeof cc[k] === 'function' && k === k.toLowerCase() && /^[a-z][a-z0-9_]*$/.test(k));
+      }
+    } catch {}
     const ids = all.length ? [...all] : ['binance'];
     ids.sort((a, b) => (VERIFIED_EX.includes(b) ? 1 : 0) - (VERIFIED_EX.includes(a) ? 1 : 0));
     return ids.map((id) => ({ id, verified: VERIFIED_EX.includes(id) }));

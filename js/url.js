@@ -45,7 +45,11 @@ export function parseChartUrl(search) {
   let q = String(search || '');
   if (q.startsWith('?')) q = q.slice(1);
   const params = new URLSearchParams(q);
-  const sym = normalizeSymbol(params.get('symbol'));
+  const ex = String(params.get('exchange') || '').trim().toLowerCase();
+  if (/^[a-z][a-z0-9_]*$/.test(ex)) out.exchange = ex;
+  let sym = normalizeSymbol(params.get('symbol'));
+  // ?exchange=coinbase&symbol=BTC/USD composes the qualified form the router uses
+  if (sym && ex && !sym.includes(':')) sym = `${ex}:${sym}`;
   if (sym) out.symbol = sym;
   const tf = normalizeInterval(params.get('interval') || params.get('timeframe'));
   if (tf) {
@@ -55,10 +59,11 @@ export function parseChartUrl(search) {
   return out;
 }
 
-export function formatChartUrl({ symbol, interval }) {
+export function formatChartUrl({ symbol, interval, exchange }) {
   const p = new URLSearchParams();
   if (symbol) p.set('symbol', symbol);
   if (interval) p.set('interval', interval);
+  if (exchange) p.set('exchange', exchange);
   const s = p.toString();
   return s ? '?' + s : '';
 }

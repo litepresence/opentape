@@ -37,3 +37,19 @@ test('formatChartUrl round-trips through parse', () => {
   assert.equal(back.symbol, 'bitstamp:BTC/USD');
   assert.equal(back.interval, '1d');
 });
+
+test('exchange param composes a qualified symbol', () => {
+  assert.deepEqual(parseChartUrl('?exchange=coinbase&symbol=BTC/USD&interval=D'),
+    { exchange: 'coinbase', symbol: 'coinbase:BTC/USD', interval: '1d', timeframe: '1D' });
+});
+test('an explicit symbol prefix wins over the exchange param', () => {
+  const r = parseChartUrl('?exchange=binance&symbol=bitstamp:BTC/USD');
+  assert.equal(r.symbol, 'bitstamp:BTC/USD');
+});
+test('formatChartUrl emits the exchange', () => {
+  assert.equal(formatChartUrl({ symbol: 'BTC/USD', interval: '1d', exchange: 'binance' }),
+    '?symbol=BTC%2FUSD&interval=1d&exchange=binance');
+});
+test('a bogus exchange param is ignored', () => {
+  assert.equal(parseChartUrl('?exchange=..%2Fevil&symbol=BTC/USD').exchange, undefined);
+});

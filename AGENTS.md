@@ -55,6 +55,17 @@ and undo/redo. Audit: `tooling/audit_drawings.mjs` (22 checks incl. malformed-re
 crash-proofing and sub-pixel drag tracking). Study colors: auto palette advances per
 *instance* as well as per line (`autoColor(id, ord, k)`), so an SMA mesh is multi-colored.
 
+## Toolbar & Symbol Feedback (2026-10-14)
+Every rail action gives visible feedback — toggles toast (`magnet`, `hide`, `lock`, `stay`,
+`del`, `zoom`, shape submenu) and multi-anchor tools announce progress
+(`Anchor 1/5 — click to set the next point`). The symbol modal hints as you type:
+exchange names are derived from the browser bundle's lowercase classes (the bundle has **no**
+`ccxt.exchanges` array — 103 venues, verified ones marked ✓ and listed first), pair lists come
+from `loadMarkets()` per venue with a pair count. Parameterized URLs carry the venue:
+`?symbol=BTC/USD&interval=1d&exchange=binance`, and `?exchange=` composes the qualified
+`exchange:symbol` the router uses (sanitized to `[a-z][a-z0-9_]*`).
+Audit: `tooling/audit_symbols.mjs` (8 checks).
+
 ## REA Findings (2026-10-13, from live tradingview.com capture)
 - Font: `-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif` (no Segoe UI). Text `#0f0f0f`, chrome `#ebebeb`. Brand font EuclidCircular (proprietary — fallback only).
 - Last-price line/tag follows bar direction (green up). Range→interval map: 1D→1m, 5D→5m, 1M→30m, 3M→1h, 6M→2h, YTD/1Y→1d, 5Y→1w, All→1M. 11 stacked canvases. Evidence in `tooling/rea-tv-inspect.json`, `tooling/shots/tv-real-1920.png`, `tooling/rea_tv_facts.mjs` (layout facts only — tree stays clean-room, no TV code/assets).
