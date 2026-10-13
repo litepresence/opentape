@@ -17,7 +17,7 @@ python3 -m http.server 8787   # from the repo root
 2. **Pure canvas engine:** Two stacked `<canvas>` (base: grid/candles/volume, overlay: crosshair/drawings). No chart libs, no frameworks. Vanilla JS modules only.
 3. **Full functional (gold cup, no quirks):** Pan/zoom, crosshair + tooltip, price/time alerts, drawings (trend/horizontal/fib/text) with magnet snap + undo/redo, indicators (SMA/EMA/RSI), replay mode, symbol/timeframe/chart-type switching, layout save to localStorage.
 4. **Data via CCXT browser bundle:** pinned `<script src="https://cdn.jsdelivr.net/npm/ccxt@4/dist/ccxt.browser.js" async>` exposes global `ccxt` (Binance default: `BTC/USD`→`BTC/USDT`). `js/data.js` (`resolveMarket` exchange routing, `whenCcxt` 15s wait on `ccxt-ready`, `fetchOHLCV` with `enableRateLimit`, `liveOnly` flag for watchlist) fetches live public OHLCV. Embedded `data/btcusd-1d.json` paints first, upgrades to live when the bundle is ready (reload-path failures keep last good data + toast).
-5. **Themes + extras:** Light (default, matches screenshot) + dark toggle via CSS vars + canvas palette swap. Extras beyond original: multi-layout save, PNG export.
+5. **Themes + extras:** Dark default + light toggle via CSS vars + canvas palette swap (choice persisted). Extras beyond original: multi-layout save, PNG export.
 6. **Responsive desktop:** Fluid layout matching ~1980px reference, reflows to smaller desktop windows. Mobile deferred.
 
 ## Scope / Non-Goals V1

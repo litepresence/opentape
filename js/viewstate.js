@@ -1,6 +1,6 @@
 // js/viewstate.js
 export function ViewState(initial = {}) {
-  let s = { symbol: 'BTC/USD', timeframe: '1D', theme: 'light', visible: null, price: null, drawings: [], alerts: [], replayIndex: null, ...initial };
+  let s = { symbol: 'BTC/USD', timeframe: '1D', theme: 'dark', visible: null, price: null, drawings: [], alerts: [], replayIndex: null, ...initial };
   const subs = new Set();
   let queued = false; let fn = null;
   return {
@@ -13,8 +13,8 @@ export function ViewState(initial = {}) {
 }
 function storedTheme() {
   try {
-    if (typeof localStorage !== 'undefined') return localStorage.getItem('tv-theme') || 'light';
+    if (typeof localStorage !== 'undefined') return localStorage.getItem('tv-theme') || 'dark';
   } catch { /* storage unavailable (private mode / SSR) — fall through */ }
-  return 'light';
+  return 'dark';
 }
 export const view = ViewState({ theme: storedTheme() });
