@@ -1,10 +1,10 @@
 // js/ui.js
 import { fetchOHLCV, wasLive, normalizeOHLCV } from './data.js';
-import { renderBase, PAL, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
+import { renderBase, PAL, stuColor, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
-import { hitTest, drawCrosshair, drawDrawings, drawAlerts } from './overlay.js';
+import { hitTest, drawCrosshair, drawDrawings, drawAlerts, drawPending } from './overlay.js';
 import { snapPrice, serialize, deserialize, addDrawing } from './drawings.js';
-import { migrateStudies, makeInstance } from './studies.js';
+import { STUDIES, migrateStudies, makeInstance } from './studies.js';
 
 const LAYOUT_KEY = 'tv-clone-layout-v1';
 
@@ -38,7 +38,6 @@ export function initUI(v) {
     drawings: s.drawings || [],
     alerts: s.alerts || [],
     studies: s.studies || [],
-    indicators: s.indicators || {},
     chartType: s.chartType || 'candles',
     symbol: s.symbol || 'BTC/USD',
     timeframe: s.timeframe || '1D',
@@ -57,7 +56,8 @@ export function initUI(v) {
       if (Array.isArray(parsed)) return { drawings: parsed, alerts: [] };
       // Studies migrate to instances on load: legacy string[] ids and
       // Task-7 indicators flags both become instances; save never writes
-      // legacy (layoutFromState persists state.studies as instances).
+      // legacy or indicators flags (layoutFromState persists state.studies
+      // as instances only).
       let studies;
       if (parsed.studies !== undefined || parsed.indicators) {
         try { studies = migrateStudies({ studies: parsed.studies || [], indicators: parsed.indicators || {} }); }
@@ -67,7 +67,6 @@ export function initUI(v) {
         drawings: parsed.drawings || [],
         alerts: parsed.alerts || [],
         studies,
-        indicators: parsed.indicators,
         chartType: parsed.chartType,
         symbol: parsed.symbol,
         timeframe: parsed.timeframe,
@@ -103,13 +102,21 @@ export function initUI(v) {
     if (persisted.drawings) patch.drawings = persisted.drawings;
     if (persisted.alerts) patch.alerts = persisted.alerts;
     if (persisted.studies) patch.studies = persisted.studies;
-    if (persisted.indicators) patch.indicators = persisted.indicators;
     if (persisted.chartType) patch.chartType = persisted.chartType;
     if (persisted.symbol) patch.symbol = persisted.symbol;
     if (persisted.timeframe) patch.timeframe = persisted.timeframe;
     if (persisted.interval) patch.interval = persisted.interval;
     if (Object.keys(patch).length) v.set(patch);
   }
+  // One-shot: migrate any in-memory legacy indicators flags to instances,
+  // then drop the flags (state relies on migrated instances from here on).
+  try {
+    const st0 = v.get();
+    if (st0.indicators && Object.keys(st0.indicators).length) {
+      const mig = migrateStudies({ studies: st0.studies || [], indicators: st0.indicators });
+      v.set({ studies: mig, indicators: undefined });
+    }
+  } catch {}
   document.querySelectorAll('#rail button').forEach(b => b.addEventListener('click', () => {
     const tool = b.dataset.tool;
     if (tool === 'magnet') {
@@ -153,20 +160,42 @@ export function initUI(v) {
     else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
     else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'c' || e.key === 'C')) {
       if (isEditable(e.target)) return;
+      pending = null;
       v.set({ tool: 'cross' });
-      document.querySelectorAll('#rail button').forEach(x => x.classList.toggle('active', x.dataset.tool === 'cross'));
+      document.querySelectorAll('#rail button').forEach(x => {
+        if (x.dataset.tool === 'magnet') return;
+        x.classList.toggle('active', x.dataset.tool === 'cross');
+      });
     }
     else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 't' || e.key === 'T')) {
       if (isEditable(e.target)) return;
       v.set({ tool: 'trend' });
-      document.querySelectorAll('#rail button').forEach(x => x.classList.toggle('active', x.dataset.tool === 'trend'));
+      document.querySelectorAll('#rail button').forEach(x => {
+        if (x.dataset.tool === 'magnet') return;
+        x.classList.toggle('active', x.dataset.tool === 'trend');
+      });
       pending = null;
     }
     else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'f' || e.key === 'F')) {
       if (isEditable(e.target)) return;
       v.set({ tool: 'fib' });
-      document.querySelectorAll('#rail button').forEach(x => x.classList.toggle('active', x.dataset.tool === 'fib'));
+      document.querySelectorAll('#rail button').forEach(x => {
+        if (x.dataset.tool === 'magnet') return;
+        x.classList.toggle('active', x.dataset.tool === 'fib');
+      });
       pending = null;
+    }
+    else if (e.key === 'Escape') {
+      // Escape exits any drawing tool -> cross + clear pending anchor +
+      // sync rail active class (mirrors c/t/f handler pattern). Runs even
+      // from inputs so a stray anchor never survives; dialog Esc still
+      // closes natively (no preventDefault).
+      pending = null;
+      v.set({ tool: 'cross' });
+      document.querySelectorAll('#rail button').forEach(x => {
+        if (x.dataset.tool === 'magnet') return;
+        x.classList.toggle('active', x.dataset.tool === 'cross');
+      });
     }
     else if (e.key === 'Delete' || e.key === 'Backspace') {
       if (isEditable(e.target)) return;
@@ -343,6 +372,9 @@ export function initUI(v) {
         const t = src ? timeForX(mx, src, geom.left, geom.width) : tForX(mx, st.visible, geom.left, geom.width);
         const p = maybeSnap(pForY(my, st.price, geom.top, geom.height), geom, st);
         const normTool = tool === 'shape' || tool === 'brush' ? 'horizontal' : tool;
+        // Unlimited-placement guarantee: never reset `tool` on placement.
+        // The tool stays selected across unlimited placements until the user
+        // switches tools or presses Escape (which sets cross + clears pending).
         if (normTool === 'trend' || normTool === 'fib') {
           if (!pending) { pending = { type: normTool, p1: { t, p } }; }
           else {
@@ -413,6 +445,11 @@ export function initUI(v) {
       ctx.clearRect(0, 0, overlay.width, overlay.height);
       drawDrawings(ctx, st.drawings, st, geom, rows);
       drawAlerts(ctx, st.alerts, st, geom);
+      // Pending rubber-band: anchor dot + dashed preview to cursor while a
+      // 2-click anchor is set (non-destructive; renderAll clears it).
+      if (pending && pending.p1) {
+        try { drawPending(ctx, pending, { x: mx, y: my }, st, geom, rows); } catch {}
+      }
       const pal = PAL[st.theme] || PAL.light;
       drawCrosshair(ctx, mx, my, geom, pal);
       const idx = hitTest(mx, st.visible, geom.left, geom.width, rows);
@@ -530,7 +567,7 @@ export function initUI(v) {
     });
   }
 
-  // Task 7: indicators dialog, replay, symbol/timeframe switching, chart-type toggle.
+  // Task 7: studies modal, replay, symbol/timeframe switching, chart-type toggle.
   const TF_ORDER = ['D', '1W', '1H'];
   const TF_CCXT = { D: '1d', '1D': '1d', '1W': '1w', '1H': '1h' };
   const tfLabel = () => {
@@ -582,166 +619,245 @@ export function initUI(v) {
       return false;
     }
   };
-  // Indicators <dialog> with SMA20/SMA50/EMA20/RSI checkboxes.
+  // Indicators modal: Active instance cards + Browse groups with Add.
+  // Task-7 checkboxes removed; state relies on migrated instances only.
   if (!document.querySelector('#ind-dialog')) {
     const cur = v.get();
-    if (!cur.indicators) v.set({ indicators: { sma20: false, sma50: false, ema20: false, rsi: false } });
     if (!cur.chartType) v.set({ chartType: 'candles' });
     if (!cur.studies) v.set({ studies: [] });
     const dlg = document.createElement('dialog');
     dlg.id = 'ind-dialog';
-    dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:6px;font:13px sans-serif;min-width:280px;max-height:80vh;overflow:auto">'
-      + '<label><input type="checkbox" data-ind="sma20"> SMA 20</label>'
-      + '<label><input type="checkbox" data-ind="sma50"> SMA 50</label>'
-      + '<label><input type="checkbox" data-ind="ema20"> EMA 20</label>'
-      + '<label><input type="checkbox" data-ind="rsi"> RSI</label>'
-      + '<hr><input id="ind-filter" placeholder="Filter studies…" style="padding:4px">'
-      + '<div id="ind-groups" style="display:flex;flex-direction:column;gap:8px"></div>'
-      + '<button value="close">Close</button></form>';
+    dlg.innerHTML = '<div class="ind-head"><span class="ind-title">Indicators</span>'
+      + '<input id="ind-filter" placeholder="Search…" autocomplete="off">'
+      + '<button value="close" class="ind-close" type="button" title="Close">✕</button></div>'
+      + '<div class="ind-sec"><div class="ind-sec-title">Active</div><div id="ind-active-list"></div></div>'
+      + '<div class="ind-sec"><div class="ind-sec-title">Browse</div><div id="ind-groups"></div></div>';
     document.body.appendChild(dlg);
-    dlg.querySelectorAll('input[data-ind]').forEach((cb) => {
-      cb.checked = !!(v.get().indicators || {})[cb.dataset.ind];
-      cb.addEventListener('change', () => {
-        v.set({ indicators: { ...(v.get().indicators || {}), [cb.dataset.ind]: cb.checked } });
-        saveLayout();
+    const host = dlg.querySelector('#ind-groups');
+    const activeHost = dlg.querySelector('#ind-active-list');
+    const metaById = (id) => STUDIES.find((s) => s.id === id);
+    const instances = () => {
+      const raw = v.get().studies || [];
+      return raw.filter((e) => e && typeof e === 'object' && typeof e.id === 'string');
+    };
+    const countById = (id) => instances().filter((e) => e.id === id).length;
+
+    const commitStudies = (next) => {
+      v.set({ studies: next });
+      saveLayout();
+      renderActive();
+      syncBrowse();
+    };
+    const renderActive = () => {
+      activeHost.innerHTML = '';
+      const list = instances();
+      if (!list.length) {
+        const empty = document.createElement('div');
+        empty.className = 'ind-empty';
+        empty.textContent = 'No active indicators — add from Browse below.';
+        activeHost.appendChild(empty);
+        return;
+      }
+      const transforms = list.filter((e) => metaById(e.id)?.kind === 'transform' && e.visible !== false);
+      const activeTUid = transforms.length ? transforms[0].uid : null;
+      list.forEach((inst, idx) => {
+        const meta = metaById(inst.id);
+        if (!meta) return;
+        const card = document.createElement('div');
+        card.className = 'ind-card';
+        card.dataset.uid = inst.uid;
+        const top = document.createElement('div');
+        top.className = 'ind-card-top';
+        if (meta.kind === 'transform') {
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = 'tv-transform-active';
+          radio.dataset.transformActive = inst.uid;
+          radio.checked = inst.uid === activeTUid;
+          radio.title = 'Active transform (selecting one replaces the other)';
+          radio.addEventListener('change', () => {
+            if (!radio.checked) return;
+            const nonT = instances().filter((e) => metaById(e.id)?.kind !== 'transform');
+            commitStudies([...nonT, { ...inst, visible: true }]);
+          });
+          top.appendChild(radio);
+        }
+        const label = document.createElement('span');
+        label.className = 'ind-card-label';
+        label.textContent = `${meta.label} (${meta.id})`;
+        label.style.flex = '1';
+        top.appendChild(label);
+        const eye = document.createElement('button');
+        eye.type = 'button';
+        eye.dataset.eye = inst.uid;
+        eye.title = 'Toggle visibility';
+        eye.textContent = inst.visible === false ? '🚫' : '👁';
+        eye.addEventListener('click', () => {
+          commitStudies(instances().map((e) => (
+            e.uid === inst.uid ? { ...e, visible: e.visible === false ? true : false } : e
+          )));
+        });
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.dataset.remove = inst.uid;
+        rm.title = 'Remove';
+        rm.textContent = '✕';
+        rm.addEventListener('click', () => {
+          commitStudies(instances().filter((e) => e.uid !== inst.uid));
+        });
+        top.appendChild(eye);
+        top.appendChild(rm);
+        card.appendChild(top);
+        // Per-param number editors (min/max/step from defs, change commits).
+        for (const def of meta.params || []) {
+          const row = document.createElement('label');
+          row.className = 'ind-param';
+          const nm = document.createElement('span');
+          nm.textContent = def.key;
+          const inp = document.createElement('input');
+          inp.type = 'number';
+          inp.dataset.param = def.key;
+          inp.dataset.uid = inst.uid;
+          if (def.min != null) inp.min = String(def.min);
+          if (def.max != null) inp.max = String(def.max);
+          if (def.step != null) inp.step = String(def.step);
+          const curVal = inst.params?.[def.key] ?? meta.opts?.[def.key] ?? '';
+          inp.value = String(curVal);
+          inp.addEventListener('change', () => {
+            const rawVal = inp.value;
+            const num = def.type === 'int' ? parseInt(rawVal, 10) : parseFloat(rawVal);
+            if (!Number.isFinite(num)) { inp.value = String(inst.params?.[def.key] ?? ''); return; }
+            commitStudies(instances().map((e) => (
+              e.uid === inst.uid ? { ...e, params: { ...(e.params || {}), [def.key]: num } } : e
+            )));
+          });
+          row.append(nm, inp);
+          card.appendChild(row);
+        }
+        // Color swatch: value shows explicit color or palette fallback; Auto resets to null (palette).
+        const colorRow = document.createElement('div');
+        colorRow.className = 'ind-param';
+        const colorLabel = document.createElement('span');
+        colorLabel.textContent = 'color';
+        const colorInp = document.createElement('input');
+        colorInp.type = 'color';
+        colorInp.dataset.color = inst.uid;
+        let shown = inst.color;
+        if (typeof shown !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(shown)) {
+          try { shown = stuColor(inst.id, idx); } catch { shown = '#2962FF'; }
+        }
+        colorInp.value = shown;
+        colorInp.title = inst.color ? 'Custom color (Auto resets to palette)' : 'Palette color (pick to customize)';
+        colorInp.addEventListener('change', () => {
+          commitStudies(instances().map((e) => (
+            e.uid === inst.uid ? { ...e, color: colorInp.value } : e
+          )));
+        });
+        const autoB = document.createElement('button');
+        autoB.type = 'button';
+        autoB.dataset.auto = inst.uid;
+        autoB.textContent = 'Auto';
+        autoB.title = 'Reset to palette color';
+        autoB.addEventListener('click', () => {
+          commitStudies(instances().map((e) => (
+            e.uid === inst.uid ? { ...e, color: null } : e
+          )));
+        });
+        colorRow.append(colorLabel, colorInp, autoB);
+        card.appendChild(colorRow);
+        activeHost.appendChild(card);
+      });
+    };
+    // Browse groups (built once; badges synced on every refresh).
+    const groups = [];
+    for (const s of STUDIES) {
+      let g = groups.find((x) => x.name === s.group);
+      if (!g) { g = { name: s.group, items: [] }; groups.push(g); }
+      g.items.push(s);
+    }
+    for (const g of groups) {
+      const box = document.createElement('div');
+      box.dataset.group = g.name;
+      box.className = 'ind-group';
+      const head = document.createElement('div');
+      head.className = 'ind-group-head';
+      const title = document.createElement('span');
+      title.textContent = g.name;
+      title.style.flex = '1';
+      head.appendChild(title);
+      box.appendChild(head);
+      for (const s of g.items) {
+        const row = document.createElement('div');
+        row.className = 'ind-row';
+        row.dataset.studyRow = s.id;
+        row.dataset.label = `${s.id} ${s.label}`.toLowerCase();
+        const lab = document.createElement('span');
+        lab.className = 'ind-row-label';
+        lab.textContent = `${s.label} (${s.id})`;
+        lab.style.flex = '1';
+        const badge = document.createElement('span');
+        badge.className = 'ind-count';
+        badge.dataset.count = s.id;
+        badge.textContent = '0';
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.dataset.add = s.id;
+        add.textContent = '+ Add';
+        add.title = s.kind === 'transform' ? 'Add (replaces other transforms)' : `Add ${s.label}`;
+        add.addEventListener('click', () => {
+          try {
+            const fresh = makeInstance(s.id);
+            if (s.kind === 'transform') {
+              const nonT = instances().filter((e) => metaById(e.id)?.kind !== 'transform');
+              commitStudies([...nonT, fresh]);
+            } else {
+              commitStudies([...instances(), fresh]);
+            }
+          } catch { /* unknown id — skip */ }
+        });
+        row.append(lab, badge, add);
+        box.appendChild(row);
+      }
+      host.appendChild(box);
+    }
+    const syncBrowse = () => {
+      host.querySelectorAll('[data-count]').forEach((b) => {
+        b.textContent = String(countById(b.dataset.count));
+      });
+    };
+    const refreshModal = () => {
+      // Normalize any legacy string entries to instances on open (writes
+      // instances only going forward; chart already tolerates strings).
+      try {
+        const raw = v.get().studies || [];
+        if (raw.some((e) => typeof e === 'string')) {
+          const mig = migrateStudies(raw);
+          v.set({ studies: mig });
+          saveLayout();
+        }
+      } catch {}
+      renderActive();
+      syncBrowse();
+    };
+    dlg.querySelector('#ind-filter')?.addEventListener('input', (e) => {
+      const q = String(e.target.value || '').toLowerCase();
+      host.querySelectorAll('[data-study-row]').forEach((row) => {
+        row.style.display = !q || (row.dataset.label || '').includes(q) ? 'flex' : 'none';
+      });
+      host.querySelectorAll('[data-group]').forEach((box) => {
+        const anyVisible = [...box.querySelectorAll('[data-study-row]')].some((r) => r.style.display !== 'none');
+        box.style.display = anyVisible ? '' : 'none';
       });
     });
-    // Task 9: all 85 vendored studies, grouped, with filter + transform radios.
-    import('./studies.js').then(({ STUDIES }) => {
-      const host = dlg.querySelector('#ind-groups');
-      const groups = [];
-      for (const s of STUDIES) {
-        let g = groups.find(x => x.name === s.group);
-        if (!g) { g = { name: s.group, items: [] }; groups.push(g); }
-        g.items.push(s);
-      }
-      const setStudies = (ids) => {
-        // Store instances (never legacy string ids). Preserve existing
-        // instances' params/color for ids that stay active; fresh defaults
-        // for newly added ids. Transform radio semantics preserved by the
-        // callers (single transform id in `ids`); chart renders first active.
-        const cur = v.get().studies || [];
-        const keep = new Map();
-        for (const e of cur) {
-          const id = typeof e === 'string' ? e : e?.id;
-          if (id && ids.includes(id) && !keep.has(id)) keep.set(id, e);
-        }
-        const next = [];
-        for (const id of ids) {
-          const prev = keep.get(id);
-          if (prev && typeof prev === 'object' && prev.id) { next.push(prev); keep.delete(id); }
-          else { try { next.push(makeInstance(id)); } catch { /* unknown id — skip */ } }
-        }
-        v.set({ studies: next });
-        saveLayout();
-      };
-      const activeIds = () => (v.get().studies || []).map(e => typeof e === 'string' ? e : e?.id).filter(Boolean);
-      const syncStudies = () => {
-        const cur = new Set(activeIds());
-        host.querySelectorAll('input[data-study]').forEach((cb) => {
-          cb.checked = cur.has(cb.dataset.study);
-        });
-        const transforms = STUDIES.filter(s => s.kind === 'transform');
-        const activeT = transforms.find(s => cur.has(s.id));
-        host.querySelectorAll('input[data-transform]').forEach((r) => {
-          r.checked = !!activeT && r.dataset.transform === activeT.id;
-        });
-        const noneR = host.querySelector('input[data-transform-none]');
-        if (noneR) noneR.checked = !activeT;
-      };
-      for (const g of groups) {
-        const box = document.createElement('div');
-        box.dataset.group = g.name;
-        const head = document.createElement('div');
-        head.style.cssText = 'display:flex;gap:6px;align-items:center;font-weight:700';
-        const title = document.createElement('span');
-        title.textContent = g.name;
-        title.style.flex = '1';
-        const allB = document.createElement('button');
-        allB.type = 'button'; allB.textContent = 'All'; allB.dataset.all = g.name;
-        const noneB = document.createElement('button');
-        noneB.type = 'button'; noneB.textContent = 'None'; noneB.dataset.none = g.name;
-        head.append(title, allB, noneB);
-        box.appendChild(head);
-        allB.addEventListener('click', () => {
-          const cur = new Set(activeIds());
-          for (const s of g.items) {
-            if (s.kind === 'transform') continue;
-            cur.add(s.id);
-          }
-          setStudies([...cur]);
-          syncStudies();
-        });
-        noneB.addEventListener('click', () => {
-          setStudies(activeIds().filter(id => !g.items.some(s => s.id === id)));
-          syncStudies();
-        });
-        for (const s of g.items) {
-          const lab = document.createElement('label');
-          lab.dataset.label = (s.id + ' ' + s.label).toLowerCase();
-          lab.style.cssText = 'display:flex;gap:6px;align-items:center';
-          const inp = document.createElement('input');
-          if (s.kind === 'transform') {
-            inp.type = 'radio';
-            inp.name = 'tv-transform';
-            inp.dataset.transform = s.id;
-            inp.addEventListener('change', () => {
-              if (!inp.checked) return;
-              setStudies([...activeIds().filter(id => {
-                const m = STUDIES.find(x => x.id === id);
-                return m && m.kind !== 'transform';
-              }), s.id]);
-            });
-          } else {
-            inp.type = 'checkbox';
-            inp.dataset.study = s.id;
-            inp.addEventListener('change', () => {
-              const cur = new Set(activeIds());
-              if (inp.checked) cur.add(s.id);
-              else cur.delete(s.id);
-              setStudies([...cur]);
-            });
-          }
-          lab.appendChild(inp);
-          lab.appendChild(document.createTextNode(` ${s.label} (${s.id})`));
-          box.appendChild(lab);
-        }
-        host.appendChild(box);
-      }
-      // Transform "None" radio clears the active transform.
-      const clearBox = document.createElement('label');
-      clearBox.style.cssText = 'display:flex;gap:6px;align-items:center';
-      const clear = document.createElement('input');
-      clear.type = 'radio';
-      clear.name = 'tv-transform';
-      clear.dataset.transformNone = '1';
-      clear.addEventListener('change', () => {
-        if (!clear.checked) return;
-        setStudies(activeIds().filter(id => {
-          const m = STUDIES.find(x => x.id === id);
-          return m && m.kind !== 'transform';
-        }));
-      });
-      clearBox.appendChild(clear);
-      clearBox.appendChild(document.createTextNode(' No transform'));
-      host.appendChild(clearBox);
-      dlg.addEventListener('close', syncStudies);
-      dlg.querySelector('#ind-filter')?.addEventListener('input', (e) => {
-        const q = String(e.target.value || '').toLowerCase();
-        host.querySelectorAll('label[data-label]').forEach((lab) => {
-          lab.style.display = !q || lab.dataset.label.includes(q) ? 'flex' : 'none';
-        });
-      });
-      dlg._syncStudies = syncStudies;
-      syncStudies();
-    }).catch(() => { /* studies dialog extension unavailable — Task-7 checkboxes still work */ });
+    dlg.querySelector('button[value="close"]')?.addEventListener('click', () => {
+      try { dlg.close(); } catch { dlg.removeAttribute('open'); }
+    });
+    dlg._syncStudies = refreshModal;
     document.querySelector('#ind-btn')?.addEventListener('click', () => {
-      dlg.querySelectorAll('input[data-ind]').forEach((cb) => {
-        cb.checked = !!(v.get().indicators || {})[cb.dataset.ind];
-      });
-      if (typeof dlg._syncStudies === 'function') dlg._syncStudies();
-      if (typeof dlg.showModal === 'function') dlg.showModal();
-      else dlg.setAttribute('open', '');
+      refreshModal();
+      if (typeof dlg.showModal === 'function') {
+        if (!dlg.open) dlg.showModal();
+      } else dlg.setAttribute('open', '');
     });
   }
   // Replay mode: hides bars after replayIndex, step buttons <- / ->.
@@ -914,7 +1030,6 @@ export function initUI(v) {
         try { patch.studies = migrateStudies({ studies: L.studies || [], indicators: L.indicators || {} }); }
         catch { /* keep current studies on migration failure */ }
       }
-      if (L.indicators) patch.indicators = L.indicators;
       if (L.chartType) patch.chartType = L.chartType;
       if (L.symbol) {
         patch.symbol = L.symbol;

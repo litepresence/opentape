@@ -89,3 +89,30 @@ export function drawAlerts(ctx, alerts, state, geom) {
   }
   ctx.restore();
 }
+// Pending rubber-band preview: while a 2-click anchor is set, draw the anchor
+// dot + a dashed preview line to the cursor. Non-destructive: callers clear
+// the overlay before drawing, and renderAll drops it entirely.
+export function drawPending(ctx, pending, cursor, state, geom, rows) {
+  if (!pending || !pending.p1 || !state.visible || !state.price) return;
+  const sliced = Array.isArray(rows) && rows.length ? visibleRows(rows, state.visible) : null;
+  const src = sliced && sliced.length ? sliced : null;
+  const x1 = tx(pending.p1.t, state, geom, src);
+  const y1 = yForPrice(pending.p1.p, state.price, geom.top, geom.height);
+  if (!Number.isFinite(x1) || !Number.isFinite(y1)) return;
+  const x2 = cursor && Number.isFinite(cursor.x) ? cursor.x : x1;
+  const y2 = cursor && Number.isFinite(cursor.y) ? cursor.y : y1;
+  ctx.save();
+  ctx.strokeStyle = '#2962FF';
+  ctx.fillStyle = '#2962FF';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.arc(x1, y1, 3, 0, 7);
+  ctx.fill();
+  ctx.restore();
+}
