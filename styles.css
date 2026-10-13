@@ -93,8 +93,8 @@ button:hover { background: var(--btn-hover); }
 #mid { flex: 1; display: flex; min-height: 0; }
 #canvas-stack { flex: 1; position: relative; min-width: 0; }
 #canvas-stack canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-#price-axis { width: var(--axis-w); min-width: 72px; border-left: 1px solid var(--border); }
-#time-axis { height: var(--timeaxis-h); min-height: 28px; border-top: 1px solid var(--border); }
+#price-axis { width: var(--axis-w); min-width: 72px; border-left: 1px solid var(--border); cursor: ns-resize; user-select: none; }
+#time-axis { height: var(--timeaxis-h); min-height: 28px; border-top: 1px solid var(--border); cursor: ew-resize; user-select: none; }
 #rangebar {
   height: var(--footer-h);
   min-height: 32px;

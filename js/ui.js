@@ -610,23 +610,111 @@ export function initUI(v) {
       if (fullVisible && fullPrice) v.set({ visible: { ...fullVisible }, price: { ...fullPrice } });
     });
   }
-  // Task 6: click price axis adds a draggable alert line; persisted under same key.
-  if (priceAxis && !priceAxis.dataset.alertBound) {
-    priceAxis.dataset.alertBound = '1';
-    priceAxis.style.cursor = 'pointer';
-    priceAxis.addEventListener('click', (e) => {
+  // Price axis is live like the original: vertical drag rescales (pans the
+  // price range, content follows the cursor), wheel zooms price around the
+  // cursor, double-click autofits price to the visible bars. A press without
+  // drag still places an alert (click), preserving the existing behavior.
+  if (priceAxis && !priceAxis.dataset.axisBound) {
+    priceAxis.dataset.axisBound = '1';
+    priceAxis.style.cursor = 'ns-resize';
+    let pDrag = null;
+    const priceAt = (clientY) => {
+      const st = v.get();
+      const rect = priceAxis.getBoundingClientRect();
+      const fy = (clientY - rect.top) / Math.max(1, rect.height);
+      return st.price.min + (1 - fy) * (st.price.max - st.price.min);
+    };
+    priceAxis.addEventListener('mousedown', (e) => {
+      const st = v.get();
+      if (!rows.length || !st.visible || !st.price) return;
+      e.preventDefault();
+      pDrag = { startY: e.clientY, min: st.price.min, max: st.price.max, moved: false };
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!pDrag) return;
+      const dy = e.clientY - pDrag.startY;
+      if (Math.abs(dy) > 4) pDrag.moved = true;
+      if (!pDrag.moved) return;
+      const rect = priceAxis.getBoundingClientRect();
+      const dPrice = dy * (pDrag.max - pDrag.min) / Math.max(1, rect.height);
+      v.set({ price: { min: pDrag.min - dPrice, max: pDrag.max - dPrice } });
+    });
+    window.addEventListener('mouseup', () => {
+      if (!pDrag) return;
+      const wasClick = !pDrag.moved;
+      const y = pDrag.startY;
+      pDrag = null;
+      if (!wasClick) return;
       const st = v.get();
       if (st.locked) { showToast('Drawings locked — unlock to add alerts'); return; }
       if (!rows.length || !st.visible || !st.price) return;
-      const geom = geomFor();
-      const rect = priceAxis.getBoundingClientRect();
-      const my = (e.clientY - rect.top) * (geom.height / Math.max(1, rect.height));
-      const p = pForY(geom.top + my, st.price, geom.top, geom.height);
+      const p = priceAt(y);
       pushHistory();
       const cur = v.get().alerts || [];
       const id = 'a' + Date.now();
       v.set({ alerts: [...cur, { id, price: p }], selectedId: id });
       saveLayout();
+    });
+    priceAxis.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const st = v.get();
+      if (!rows.length || !st.visible || !st.price) return;
+      const span = st.price.max - st.price.min;
+      if (span <= 0) return;
+      const factor = e.deltaY < 0 ? 0.9 : 1.1;
+      const rect = priceAxis.getBoundingClientRect();
+      const fy = (e.clientY - rect.top) / Math.max(1, rect.height);
+      const pCur = st.price.min + (1 - fy) * span;
+      const nSpan = span * factor;
+      const nMin = pCur - (1 - fy) * nSpan;
+      v.set({ price: { min: nMin, max: nMin + nSpan } });
+    }, { passive: false });
+    priceAxis.addEventListener('dblclick', () => {
+      if (!rows.length) return;
+      const sliced = visibleRows(rows, v.get().visible);
+      const sc = scaleFor(sliced.length ? sliced : rows);
+      if (sc) v.set({ price: sc.price });
+    });
+  }
+  // Time axis is live like the original: horizontal drag pans time (content
+  // follows the cursor), wheel zooms time around the cursor, double-click
+  // jumps back to the full range.
+  if (timeAxis && !timeAxis.dataset.axisBound) {
+    timeAxis.dataset.axisBound = '1';
+    timeAxis.style.cursor = 'ew-resize';
+    let tDrag = null;
+    timeAxis.addEventListener('mousedown', (e) => {
+      const st = v.get();
+      if (!rows.length || !st.visible) return;
+      e.preventDefault();
+      tDrag = { startX: e.clientX, from: st.visible.from, to: st.visible.to, moved: false };
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!tDrag) return;
+      const dx = e.clientX - tDrag.startX;
+      if (Math.abs(dx) > 4) tDrag.moved = true;
+      if (!tDrag.moved) return;
+      const rect = timeAxis.getBoundingClientRect();
+      const span = tDrag.to - tDrag.from;
+      const dt = dx * span / Math.max(1, rect.width);
+      v.set({ visible: { from: tDrag.from - dt, to: tDrag.to - dt } });
+    });
+    window.addEventListener('mouseup', () => { tDrag = null; });
+    timeAxis.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const st = v.get();
+      if (!rows.length || !st.visible) return;
+      const span = st.visible.to - st.visible.from;
+      if (span <= 0) return;
+      const factor = e.deltaY < 0 ? 0.9 : 1.1;
+      const rect = timeAxis.getBoundingClientRect();
+      const fx = (e.clientX - rect.left) / Math.max(1, rect.width);
+      const tCur = st.visible.from + fx * span;
+      const nSpan = span * factor;
+      v.set({ visible: { from: tCur - fx * nSpan, to: tCur - fx * nSpan + nSpan } });
+    }, { passive: false });
+    timeAxis.addEventListener('dblclick', () => {
+      if (fullVisible) v.set({ visible: { ...fullVisible } });
     });
   }
   // Range footer: buttons switch the real data interval (captured from the
