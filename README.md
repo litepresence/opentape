@@ -25,8 +25,13 @@ tests are stdlib-only (`npm test`, or bare `node --test tests/*.test.mjs`).
 - **Chart**: pan (drag, either axis follows TradingView conventions), wheel
   zoom per axis, auto price scale with manual override, crosshair + OHLC
   tooltip, last-price and volume tags that follow candle direction.
-- **Drawings**: trendlines, Fibonacci, horizontals, text/icons — unlimited
-  instances per tool, magnet snap to OHLC, undo/redo, lock, hide, alerts.
+- **Drawings**: the original's full 12-group sidebar — Cursors, Trend tools,
+  Gann and Fibonacci tools, Patterns, Forecasting and measurement tools,
+  Geometric shapes, Annotation tools, Icons — every group opens a menu with the
+  same sections, shortcuts and switches, and every tool places real geometry
+  (87 anchored tools, unlimited instances each).
+- **Rail modes**: measure, zoom, magnets (weak/strong, snap to indicators),
+  stay-in-drawing-mode, lock options, hide options, remove options.
 - **Studies**: 85 indicators with fully parameterized, multi-instance plots —
   build an SMA mesh, tune every period, color and toggle each instance.
 - **Terminal extras**: replay mode, symbol/timeframe switching with real

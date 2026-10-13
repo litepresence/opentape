@@ -55,6 +55,36 @@ and undo/redo. Audit: `tooling/audit_drawings.mjs` (22 checks incl. malformed-re
 crash-proofing and sub-pixel drag tracking). Study colors: auto palette advances per
 *instance* as well as per line (`autoColor(id, ord, k)`), so an SMA mesh is multi-colored.
 
+## Rail Parity With The Original Sidebar (2026-10-13)
+The rail is **data-driven**: `js/tools.js` holds the whole sidebar (12 flyout
+groups, 94 menu items, section headers, `Alt + X` shortcuts, switches), and
+`js/ui.js` renders the rail, the menus and the emoji picker from it — the HTML
+is just `<nav id="rail"></nav>`. Clicking a glyph arms that group's current
+tool; the chevron at the glyph's right edge opens the menu (as measured on the
+live chart, where hovering only shows a tooltip).
+
+Ground truth is `tooling/tv-rail-spec.json`, distilled from live DOM captures by
+`tooling/tv_menu_capture.mjs` → `tooling/derive_rail_spec.mjs`. Getting those
+captures needed three fixes worth remembering: a full-viewport signup
+interstitial (`div.modal-*`/`wrap-*`/`backdrop-*`) swallows *every* click and has
+no close control, so it must be detached before measuring; the submenu chevron
+is a real 11x34 button that its parent overlaps, so Playwright's actionability
+check refuses it and raw mouse coordinates are required; and a menu opens only
+from the chevron, because clicking the glyph body arms a tool — which, in an
+anonymous session, raises the "Join for free" paywall.
+
+Geometry lives in `js/geometry.js`: every tool reduces to a primitive list
+(`line`/`path`/`rect`/`ellipse`/`arc`/`text`/`box`) that render and hit-test both
+consume, so the selectable region always matches the paint. The Icons group has
+no menu rows — it opens an emoji grid, and the chosen emoji arms the `icon` tool.
+
+Audits: `tooling/audit_rail_parity.mjs` (structure vs the captured spec),
+`tooling/audit_rail_browser.mjs` (real browser: menus, shortcuts, switches),
+`tooling/audit_drawing_kinds.mjs` (every anchored tool paints real ink — each is
+measured on a cleared canvas, since one translucent fill makes a global
+pixel-delta meaningless). Navigation for the older audits is in
+`tooling/rail_helpers.mjs`.
+
 ## Toolbar & Symbol Feedback (2026-10-14)
 Every rail action gives visible feedback — toggles toast (`magnet`, `hide`, `lock`, `stay`,
 `del`, `zoom`, shape submenu) and multi-anchor tools announce progress

@@ -73,16 +73,43 @@ button:hover { background: var(--btn-hover); }
 #rail button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; margin: 0 auto; }
 #rail button svg .f { fill: currentColor; stroke: none; }
 .rail-sep { display: block; height: 1px; margin: 4px 6px; background: var(--border); }
-#shape-menu { position: fixed; z-index: 60; display: flex; flex-direction: column; min-width: 150px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
-#shape-menu button { text-align: left; padding: 7px 10px; border-radius: 4px; font-size: 13px; }
-#shape-menu button:hover { background: var(--btn-hover); }
-#rail button.active { background: var(--btn-hover); outline: 1px solid var(--grid); }
-/* Mode toggles (magnet / stay / lock / hide) must read as *engaged*, which
-   looks nothing like hover — a mode left on can never look "nothing selected". */
-#rail button.active[data-tool="magnet"],
-#rail button.active[data-tool="stay"],
-#rail button.active[data-tool="lock"],
-#rail button.active[data-tool="hide"] { background: rgba(41, 98, 255, 0.16); outline: 1px solid #2962FF; color: #2962FF; border-radius: 4px; }
+
+/* Each rail entry pairs the glyph (arms the group's tool) with a chevron
+   (opens the tool menu), the way the original sidebar splits them. */
+.rail-item { position: relative; display: block; }
+#rail .rail-btn { width: 100%; padding: 6px 0; color: var(--text); background: none; border: 0; border-radius: 4px; cursor: pointer; }
+#rail .rail-chev {
+  position: absolute; top: 50%; right: 1px; transform: translateY(-50%);
+  width: 12px; padding: 0; border: 0; background: none; color: var(--muted);
+  opacity: 0; cursor: pointer;
+}
+#rail .rail-chev svg { width: 10px; height: 14px; stroke-width: 2; }
+.rail-item:hover .rail-chev { opacity: 1; }
+.rail-item:hover .rail-btn { background: var(--btn-hover); }
+#rail .rail-btn.active { background: var(--btn-hover); outline: 1px solid var(--grid); }
+#rail .rail-btn.engaged { background: rgba(41, 98, 255, 0.16); outline: 1px solid #2962FF; color: #2962FF; }
+
+/* Tool menu: section headers, shortcuts on the right, switches at the end. */
+#tool-menu { position: fixed; z-index: 70; display: flex; flex-direction: column; min-width: 240px; max-height: calc(100vh - 16px); overflow-y: auto; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px; box-shadow: 0 6px 20px rgba(0,0,0,0.28); }
+#tool-menu .tool-menu-head { padding: 6px 8px 4px; font-size: 11px; color: #787b86; letter-spacing: 0.03em; }
+#tool-menu .tool-menu-sec { padding: 8px 8px 3px; font-size: 11px; font-weight: 600; color: #787b86; text-transform: uppercase; letter-spacing: 0.04em; }
+#tool-menu button { display: flex; align-items: center; gap: 8px; text-align: left; padding: 7px 8px; border: 0; background: none; color: inherit; border-radius: 4px; font-size: 13px; width: 100%; cursor: pointer; }
+#tool-menu button:hover { background: var(--btn-hover); }
+#tool-menu button.current { color: #2962FF; }
+#tool-menu button svg { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#tool-menu .tool-menu-label { flex: 1 1 auto; white-space: nowrap; }
+#tool-menu .tool-menu-hot { margin-left: auto; padding-left: 12px; font-size: 11px; color: #787b86; }
+#tool-menu .tool-menu-icon { flex: 0 0 16px; display: inline-flex; }
+#tool-menu .tool-menu-switch { margin-left: auto; width: 26px; height: 15px; border-radius: 8px; background: var(--grid); position: relative; flex: 0 0 26px; }
+#tool-menu .tool-menu-switch i { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--text); transition: transform .12s ease; }
+#tool-menu button.on .tool-menu-switch { background: #2962FF; }
+#tool-menu button.on .tool-menu-switch i { transform: translateX(11px); background: #fff; }
+
+/* Icons group opens an emoji grid rather than a menu. */
+#emoji-picker { position: fixed; z-index: 70; width: 320px; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; box-shadow: 0 8px 26px rgba(0,0,0,0.3); }
+.emoji-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
+.emoji-grid button { border: 0; background: none; font-size: 18px; line-height: 1; padding: 4px 0; border-radius: 4px; cursor: pointer; }
+.emoji-grid button:hover { background: var(--btn-hover); }
 #locked-badge { margin-right: 8px; }
 #chart-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
 #ohlc-head {

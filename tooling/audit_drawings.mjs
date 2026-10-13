@@ -2,6 +2,7 @@
 // move, edit an anchor, delete, and survive a reload. Uses the ?debug hook.
 // Usage: node tooling/audit_drawings.mjs [baseUrl]
 import { chromium } from 'playwright';
+import { pickTool, openMenu, clickGlyph, pickEmoji } from './rail_helpers.mjs';
 
 const base = (process.argv[2] || 'http://localhost:8787/').replace(/\/$/, '');
 const browser = await chromium.launch();
@@ -27,7 +28,7 @@ const tool = () => page.evaluate(() => window.__tv.view.get().tool || 'cross');
 const box = await page.locator('#overlay').boundingBox();
 const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
 const clickAt = async (x, y) => { await page.mouse.click(x, y); await page.waitForTimeout(220); };
-const selectTool = async (t) => { await page.click(`#rail button[data-tool="${t}"]`); await page.waitForTimeout(150); };
+const selectTool = (t) => pickTool(page, t);
 
 // --- placement per tool ---
 await selectTool('trend');
@@ -74,23 +75,22 @@ await clickAt(cx - 180, cy + 40); await clickAt(cx + 180, cy - 80);
 ds = await drawings();
 check('fib places 2 anchors', ds.filter(d => d.type === 'fib' && d.n === 2).length === 1);
 
-await page.click('#rail button[data-tool="shape"]');
-await page.click('#shape-menu button:has-text("Horizontal line")');
+await pickTool(page, 'horizontal');
 await clickAt(cx, cy - 120);
 ds = await drawings();
 check('horizontal places 1 anchor', ds.filter(d => d.type === 'horizontal' && d.n === 1).length === 1);
 
-await selectTool('prediction');
-await clickAt(cx - 100, cy + 90); await clickAt(cx + 60, cy + 20);
+await selectTool('posforecast');
+await clickAt(cx - 100, cy + 90); await clickAt(cx + 60, cy + 20); await clickAt(cx + 20, cy + 130);
 ds = await drawings();
-check('prediction places 2 anchors', ds.filter(d => d.type === 'prediction' && d.n === 2).length === 1);
+check('position forecast places 3 anchors', ds.filter(d => d.type === 'posforecast' && d.n === 3).length === 1);
 
 await selectTool('text');
 await clickAt(cx + 60, cy - 120);
 ds = await drawings();
 check('text places', ds.filter(d => d.type === 'text' && d.n === 1).length === 1);
 
-await selectTool('icon');
+await pickEmoji(page);
 await clickAt(cx + 120, cy - 120);
 ds = await drawings();
 check('icon places', ds.filter(d => d.type === 'icon' && d.n === 1).length === 1);
@@ -101,15 +101,15 @@ ds = await drawings();
 check('xabcd places 5 anchors', ds.filter(d => d.type === 'xabcd' && d.n === 5).length === 1, JSON.stringify(ds.filter(d => d.type === 'xabcd')));
 
 // shape submenu → rectangle + ellipse
-await page.click('#rail button[data-tool="shape"]');
+await openMenu(page, 'shapes');
 await page.waitForTimeout(200);
-check('shape submenu opens', await page.locator('#shape-menu button').count() === 5);
-await page.click('#shape-menu button:has-text("Rectangle")');
+check('shape submenu opens', await page.locator('#tool-menu button[data-item]').count() === 16);
+await page.click('#tool-menu button[data-item="rect"]');
 await clickAt(cx - 150, cy - 150); await clickAt(cx + 150, cy + 20);
 ds = await drawings();
 check('rect places 2 anchors', ds.filter(d => d.type === 'rect' && d.n === 2).length === 1);
-await page.click('#rail button[data-tool="shape"]');
-await page.click('#shape-menu button:has-text("Ellipse")');
+await openMenu(page, 'shapes');
+await page.click('#tool-menu button[data-item="ellipse"]');
 await clickAt(cx + 200, cy - 120); await clickAt(cx + 340, cy + 40);
 ds = await drawings();
 check('ellipse places 2 anchors', ds.filter(d => d.type === 'ellipse' && d.n === 2).length === 1);
@@ -137,14 +137,12 @@ check('Delete removes selection', countAfter === countBefore - 1, `${countBefore
 
 // --- stay in drawing mode ---
 await page.keyboard.press('Escape');
-await page.click('#rail button[data-tool="stay"]');   // turn OFF
-await page.click('#rail button[data-tool="shape"]');
-await page.click('#shape-menu button:has-text("Horizontal line")');
+await clickGlyph(page, 'stay');   // turn OFF
+await pickTool(page, 'horizontal');
 await clickAt(cx, cy + 200);
 check('stay off returns to cross after placement', (await tool()) === 'cross', await tool());
-await page.click('#rail button[data-tool="stay"]');   // back ON
-await page.click('#rail button[data-tool="shape"]');
-await page.click('#shape-menu button:has-text("Horizontal line")');
+await clickGlyph(page, 'stay');   // back ON
+await pickTool(page, 'horizontal');
 await clickAt(cx, cy + 240);
 check('stay on keeps tool after placement', (await tool()) === 'horizontal', await tool());
 await page.keyboard.press('Escape');
@@ -185,10 +183,10 @@ check('crosshair/pan survive a malformed drawing', stillWorks);
   await p2.waitForFunction(() => window.__tv && window.__tv.rows().length > 0, null, { timeout: 30000 });
   await p2.waitForTimeout(800);
   // magnet off so the price axis can't snap the anchor away from the cursor
-  await p2.click('#rail button[data-tool="magnet"]');
+  await clickGlyph(p2, 'magnets');
   const b2 = await p2.locator('#overlay').boundingBox();
   const x2 = b2.x + b2.width / 2, y2 = b2.y + b2.height / 2;
-  await p2.click('#rail button[data-tool="trend"]');
+  await clickGlyph(p2, 'lines');
   await p2.mouse.click(x2 - 250, y2 - 100); await p2.waitForTimeout(200);
   await p2.mouse.click(x2 + 50, y2 - 20); await p2.waitForTimeout(300);
   await p2.keyboard.press('Escape');

@@ -1,14 +1,17 @@
 // js/overlay.js — crosshair, drawing rendering and hit-testing.
+//
+// Drawing shapes come from js/geometry.js as primitive lists; this module only
+// paints them and hit-tests them, so the selectable region always matches what
+// is painted.
 import { xForTime, yForPrice, visibleRows, sliceOffset, xForRowTime } from './chart.js';
-import { ANCHORS as ANCHOR_COUNTS } from './drawings.js';
+import { anchorCount } from './drawings.js';
+import { buildPrimitives } from './geometry.js';
 
 export const FIB_LEVELS = [0, 0.236, 0.382, 0.5, 0.618, 1];
 const FONT = '11px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif';
 const SEL = '#2962FF';
 const IDLE = '#787b86';
 
-// Index-based hitTest over the visible slice so hover agrees with candle x.
-// Returns the index into the FULL rows array (offset + sliced index).
 export function hitTest(mx, vis, left, width, rows) {
   if (!Array.isArray(rows) || !rows.length) return 0;
   const sliced = visibleRows(rows, vis);
@@ -19,149 +22,216 @@ export function hitTest(mx, vis, left, width, rows) {
   src.forEach((r, i) => { const x = left + i * step + step / 2; const d = Math.abs(x - mx); if (d < bd) { bd = d; best = i; } });
   return off + best;
 }
-export function drawCrosshair(ctx, mx, my, geom, pal) {
+// The Cursors menu offers three pointer shapes; all read the same OHLC.
+export function drawCrosshair(ctx, mx, my, geom, pal, shape = 'cross') {
   ctx.save(); ctx.strokeStyle = pal.text; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(mx, geom.top); ctx.lineTo(mx, geom.top + geom.height); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(geom.left, my); ctx.lineTo(geom.left + geom.width, my); ctx.stroke(); ctx.restore();
+  ctx.beginPath(); ctx.moveTo(geom.left, my); ctx.lineTo(geom.left + geom.width, my); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = '#2962FF';
+  if (shape === 'dot') {
+    ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI * 2); ctx.stroke();
+  } else if (shape === 'arrow') {
+    ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + 13, my + 4); ctx.lineTo(mx + 5, my + 5); ctx.lineTo(mx + 4, my + 13); ctx.closePath(); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(mx, my, 6, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
 }
-function tx(t, state, geom, sliced) {
-  if (sliced && sliced.length) return xForRowTime(t, sliced, geom.left, geom.width);
-  return xForTime(t, state.visible, geom.left, geom.width);
+
+// --- projection context handed to js/geometry.js ----------------------------
+export function makeCtx(state, geom, rows) {
+  // geom arrives as {left,top,width,height}; tools also want the derived edges.
+  const box = {
+    left: geom.left || 0,
+    top: geom.top || 0,
+    width: geom.width || 0,
+    height: geom.height || 0,
+    right: (geom.left || 0) + (geom.width || 0),
+    bottom: (geom.top || 0) + (geom.height || 0),
+  };
+  geom = box;
+  const sliced = Array.isArray(rows) && rows.length ? visibleRows(rows, state.visible) : null;
+  const src = sliced && sliced.length ? sliced : null;
+  const step = src && src.length ? geom.width / src.length : 8;
+  const xy = (p) => {
+    if (!p || !Number.isFinite(p.p)) return null;
+    const x = Number.isFinite(p.t)
+      ? (src && src.length ? xForRowTime(p.t, src, geom.left, geom.width) : xForTime(p.t, state.visible, geom.left, geom.width))
+      : geom.left;
+    return Number.isFinite(x) ? { x, y: yForPrice(p.p, state.price, geom.top, geom.height) } : null;
+  };
+  const indexOf = (t) => (src || []).findIndex((r) => r.t === t);
+  return {
+    geom,
+    box,
+    state,
+    rows: src || rows || [],
+    xy,
+    barWidth: () => step,
+    xForRow: (r) => {
+      const i = indexOf(r.t);
+      return i >= 0 ? geom.left + i * step + step / 2 : geom.left;
+    },
+    yForPrice: (p) => yForPrice(p, state.price, geom.top, geom.height),
+    lastRow: () => (src && src.length ? src[src.length - 1] : null),
+    window: (x0, x1) => {
+      const lo = Math.min(x0, x1), hi = Math.max(x0, x1);
+      return (src || []).filter((r) => { const x = geom.left + indexOf(r.t) * step + step / 2; return x >= lo && x <= hi; });
+    },
+    // Anchored VWAP from the anchor bar to the right edge.
+    vwap: (x0) => {
+      const start = Math.max(0, Math.round((x0 - geom.left) / step));
+      const seg = (src || []).slice(start);
+      let pv = 0, vol = 0;
+      const out = [];
+      seg.forEach((r, i) => {
+        const tp = (r.h + r.l + r.c) / 3;
+        pv += tp * r.v; vol += r.v;
+        out.push({ x: geom.left + (start + i) * step + step / 2, y: yForPrice(vol ? pv / vol : r.c, state.price, geom.top, geom.height) });
+      });
+      return out;
+    },
+    // Horizontal volume profile between two screen positions.
+    volProfile: (x0, x1) => {
+      const win = (src || []).filter((r) => { const x = geom.left + indexOf(r.t) * step + step / 2; return x >= Math.min(x0, x1) && x <= Math.max(x0, x1); });
+      if (!win.length) return [];
+      const lo = Math.min(...win.map((r) => r.l));
+      const hi = Math.max(...win.map((r) => r.h));
+      const bins = 24;
+      const out = Array.from({ length: bins }, () => ({ v: 0, p: 0 }));
+      for (const r of win) {
+        const i = Math.min(bins - 1, Math.max(0, Math.floor(((r.c - lo) / Math.max(1e-9, hi - lo)) * bins)));
+        out[i].v += r.v; out[i].p += r.c;
+      }
+      return out.map((b) => ({ v: b.v, y: yForPrice(b.p, state.price, geom.top, geom.height) }));
+    },
+    dateLabel: (t0, t1) => {
+      const f = (t) => new Date(t).toISOString().slice(5, 10);
+      return `${f(t0)} – ${f(t1)}`;
+    },
+  };
 }
-const px = (d, i, state, geom, sliced) => {
-  const p = d.points[i];
-  if (!p || !Number.isFinite(p.p)) return null;
-  const x = Number.isFinite(p.t) ? tx(p.t, state, geom, sliced) : geom.left;
-  return Number.isFinite(x) ? { x, y: yForPrice(p.p, state.price, geom.top, geom.height) } : null;
-};
-// A drawing needs every anchor it declares before it can be drawn or hit —
-// one malformed record (legacy 1-point trend, hostile localStorage) must never
-// throw out of the render/hit path and freeze the whole chart.
-const drawable = (d) => {
+
+function drawable(d) {
   if (!d || !Array.isArray(d.points) || !d.points.length) return false;
-  const need = d.type === 'brush' ? 2 : (ANCHOR_COUNTS[d.type] ?? 2);
-  return d.points.length >= need && d.points.slice(0, need).every(p => p && Number.isFinite(p.p));
-};
+  const need = anchorCount(d.type);
+  if (!need) return false;
+  return d.points.length >= need && d.points.slice(0, need).every((p) => p && Number.isFinite(p.p));
+}
 function handle(ctx, x, y, color) {
   ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
   ctx.fillStyle = color; ctx.fill();
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
 }
-function path(ctx, pts) {
+
+// --- primitive painting -----------------------------------------------------
+function arrowHead(ctx, x, y, ax, ay, size = 7) {
+  const a = Math.atan2(y - ay, x - ax);
   ctx.beginPath();
-  pts.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - size * Math.cos(a - 0.4), y - size * Math.sin(a - 0.4));
+  ctx.lineTo(x - size * Math.cos(a + 0.4), y - size * Math.sin(a + 0.4));
+  ctx.closePath(); ctx.fill();
 }
 
-// One drawing, one geometry path — shared by render and hit-test so the
-// selectable region always matches what is painted.
-function outline(d, state, geom, sliced) {
-  if (!drawable(d)) return [];
-  const n = d.points.length;
-  if (d.type === 'trend' || d.type === 'ray') {
-    const a = px(d, 0, state, geom, sliced), b = px(d, 1, state, geom, sliced);
-    return [{ x: a.x, y: a.y }, { x: b.x, y: b.y }];
+export function paintPrimitives(ctx, prims, d, gctx) {
+  for (const p of prims) {
+    switch (p.op) {
+      case 'line': {
+        ctx.setLineDash(p.dash || []);
+        ctx.beginPath(); ctx.moveTo(p.x1, p.y1); ctx.lineTo(p.x2, p.y2); ctx.stroke();
+        if (p.arrows === 'end') arrowHead(ctx, p.x2, p.y2, p.x1, p.y1);
+        if (p.arrows === 'both') { arrowHead(ctx, p.x1, p.y1, p.x2, p.y2); arrowHead(ctx, p.x2, p.y2, p.x1, p.y1); }
+        if (p.arrows === 'dot') { ctx.beginPath(); ctx.arc(p.x1, p.y1, 3, 0, Math.PI * 2); ctx.fill(); }
+        ctx.setLineDash([]);
+        break;
+      }
+      case 'path': {
+        const pts = p.pts.filter(Boolean);
+        if (pts.length < 2) break;
+        if (p.fill != null) {
+          ctx.save(); ctx.globalAlpha = p.fill;
+          ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+          pts.slice(1).forEach((q) => ctx.lineTo(q.x, q.y));
+          if (p.close) ctx.closePath();
+          ctx.fillStyle = ctx.strokeStyle; ctx.fill(); ctx.restore();
+        }
+        ctx.save();
+        if (p.thick) { ctx.lineWidth = p.thick; ctx.globalAlpha = p.thick > 4 ? 0.35 : 1; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
+        ctx.setLineDash(p.dash || []);
+        ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+        pts.slice(1).forEach((q) => ctx.lineTo(q.x, q.y));
+        if (p.close) ctx.closePath();
+        ctx.stroke(); ctx.restore();
+        break;
+      }
+      case 'rect': {
+        if (p.fill != null && (p.w > 0 || p.h > 0)) {
+          ctx.save(); ctx.globalAlpha = p.fill;
+          ctx.fillStyle = ctx.strokeStyle; ctx.fillRect(p.x, p.y, Math.max(0, p.w), Math.max(0, p.h)); ctx.restore();
+        }
+        if (p.w > 0 && p.h > 0) ctx.strokeRect(p.x, p.y, p.w, p.h);
+        break;
+      }
+      case 'ellipse':
+        ctx.beginPath();
+        ctx.ellipse(p.cx, p.cy, Math.abs(p.rx), Math.abs(p.ry), 0, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+      case 'arc':
+        ctx.beginPath(); ctx.arc(p.cx, p.cy, Math.abs(p.r), p.a0, p.a1); ctx.stroke();
+        break;
+      case 'text':
+        ctx.save();
+        if (p.size) ctx.font = `${p.size}px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif`;
+        ctx.textAlign = p.align || 'left';
+        ctx.fillText(p.text ?? '', p.x, p.y);
+        ctx.restore();
+        break;
+      case 'box': {
+        const w = p.w, h = p.h;
+        if (p.image) {
+          const img = gctx?.images?.get?.(p.image);
+          if (img) ctx.drawImage(img, p.x, p.y, w, h);
+          else ctx.strokeRect(p.x, p.y, w, h);
+        } else {
+          ctx.save(); ctx.globalAlpha = 0.92;
+          ctx.fillStyle = d.id === gctx?.selectedId ? '#2962FF' : '#1e222d';
+          ctx.fillRect(p.x, p.y, w, h); ctx.restore();
+          ctx.strokeRect(p.x, p.y, w, h);
+        }
+        ctx.save();
+        ctx.fillStyle = '#f0f3fa';
+        ctx.textAlign = 'center';
+        const lines = String(p.label || '').split('\n').slice(0, 4);
+        lines.forEach((ln, i) => ctx.fillText(ln, p.x + w / 2, p.y + 18 + i * 14));
+        ctx.restore();
+        break;
+      }
+      default: break;
+    }
   }
-  if (d.type === 'prediction') {
-    // Two clicks anchor the solid stem; the line extrapolates to the edge.
-    const a = px(d, 0, state, geom, sliced), b = px(d, 1, state, geom, sliced);
-    const dx = b.x - a.x, dy = b.y - a.y;
-    if (!dx) return [{ x: a.x, y: a.y }, { x: b.x, y: b.y }];
-    const k = (geom.left + geom.width - a.x) / dx;
-    return [{ x: a.x, y: a.y }, { x: a.x + dx * k, y: a.y + dy * k }];
-  }
-  if (d.type === 'rect' || d.type === 'ellipse') {
-    const a = px(d, 0, state, geom, sliced), b = px(d, 1, state, geom, sliced);
-    return [{ x: a.x, y: a.y }, { x: b.x, y: b.y }];
-  }
-  if (d.type === 'fib') {
-    const a = px(d, 0, state, geom, sliced), b = px(d, 1, state, geom, sliced);
-    return [{ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) }, { x: Math.max(a.x, b.x), y: Math.max(a.y, b.y) }];
-  }
-  if (d.type === 'brush' || d.type === 'xabcd') {
-    return d.points.map((_, i) => px(d, i, state, geom, sliced));
-  }
-  const a = px(d, 0, state, geom, sliced);
-  return [{ x: a.x, y: a.y }, { x: a.x + 1, y: a.y }];
 }
 
 export function drawDrawings(ctx, drawings, state, geom, rows) {
   if (!drawings || !drawings.length || !state.visible || !state.price) return;
-  const sliced = Array.isArray(rows) && rows.length ? visibleRows(rows, state.visible) : null;
-  const src = sliced && sliced.length ? sliced : null;
+  const gctx = makeCtx(state, geom, rows);
   ctx.save();
   ctx.font = FONT;
+  ctx.lineJoin = 'round';
   for (const d of drawings) {
     if (!drawable(d)) continue;
     const sel = d.id === state.selectedId;
     ctx.strokeStyle = sel ? SEL : IDLE;
     ctx.fillStyle = sel ? SEL : IDLE;
     ctx.lineWidth = sel ? 2 : 1;
-    ctx.setLineDash([]);
-
-    if (d.type === 'trend') {
-      const [a, b] = outline(d, state, geom, src);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-    } else if (d.type === 'ray') {
-      const [a, b] = outline(d, state, geom, src);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(a.x + (b.x - a.x) * 3, a.y + (b.y - a.y) * 3); ctx.stroke();
-    } else if (d.type === 'prediction') {
-      const [a, b] = outline(d, state, geom, src);
-      const stem = px(d, 1, state, geom, src);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(stem.x, stem.y); ctx.stroke();
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath(); ctx.moveTo(stem.x, stem.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      ctx.setLineDash([]);
-    } else if (d.type === 'horizontal') {
-      const y = yForPrice(d.points[0].p, state.price, geom.top, geom.height);
-      // horizontal lines have no time anchor
-      ctx.beginPath(); ctx.moveTo(geom.left, y); ctx.lineTo(geom.left + geom.width, y); ctx.stroke();
-    } else if (d.type === 'rect') {
-      const [a, b] = outline(d, state, geom, src);
-      ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
-    } else if (d.type === 'ellipse') {
-      const [a, b] = outline(d, state, geom, src);
-      ctx.beginPath();
-      ctx.ellipse((a.x + b.x) / 2, (a.y + b.y) / 2, Math.abs(b.x - a.x) / 2, Math.abs(b.y - a.y) / 2, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    } else if (d.type === 'fib') {
-      const [a, b] = outline(d, state, geom, src);
-      const p1 = d.points[0].p, p2 = d.points[1].p;
-      const hi = Math.max(p1, p2), lo = Math.min(p1, p2);
-      // shaded band between the anchors, then level lines + labels
-      ctx.save();
-      ctx.globalAlpha = 0.08;
-      ctx.fillRect(a.x, Math.min(a.y, b.y), b.x - a.x, Math.abs(b.y - a.y));
-      ctx.restore();
-      for (const lv of FIB_LEVELS) {
-        const price = hi - (hi - lo) * lv;
-        const y = yForPrice(price, state.price, geom.top, geom.height);
-        ctx.globalAlpha = (lv === 0 || lv === 1) ? 1 : 0.75;
-        ctx.beginPath(); ctx.moveTo(a.x, y); ctx.lineTo(b.x, y); ctx.stroke();
-        ctx.globalAlpha = 1;
-        ctx.fillText(String(lv), b.x + 4, y + 3);
-      }
-    } else if (d.type === 'brush') {
-      const pts = outline(d, state, geom, src);
-      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-      path(ctx, pts); ctx.stroke();
-    } else if (d.type === 'xabcd') {
-      const pts = outline(d, state, geom, src);
-      path(ctx, pts); ctx.stroke();
-      ['X', 'A', 'B', 'C', 'D'].slice(0, pts.length).forEach((L, i) => {
-        ctx.fillText(L, pts[i].x - 7, pts[i].y - 6);
-      });
-    } else if (d.type === 'text' || d.type === 'icon') {
-      const a = px(d, 0, state, geom, src);
-      ctx.font = d.type === 'icon' ? '16px sans-serif' : FONT;
-      ctx.fillText(d.text || (d.type === 'icon' ? '⭐' : ''), a.x + 5, a.y + 4);
-      ctx.font = FONT;
-    }
-
+    const prims = buildPrimitives({ ...d, kind: d.kind || d.type }, gctx);
+    paintPrimitives(ctx, prims, d, gctx);
     if (sel) {
-      for (let i = 0; i < d.points.length; i++) {
+      for (let i = 0; i < d.points.length; i += 1) {
         if (!Number.isFinite(d.points[i]?.p)) continue;
-        const h = px(d, i, state, geom, src);
+        const h = gctx.xy(d.points[i]);
         if (h) handle(ctx, h.x, h.y, SEL);
       }
     }
@@ -169,46 +239,63 @@ export function drawDrawings(ctx, drawings, state, geom, rows) {
   ctx.restore();
 }
 
-// Nearest anchor of the selected drawing within `tol` px, else -1.
+// --- hit testing -----------------------------------------------------------
 export function hitTestAnchor(drawings, state, geom, rows, mx, my, tol = 8) {
-  const sliced = Array.isArray(rows) && rows.length ? visibleRows(rows, state.visible) : null;
-  const src = sliced && sliced.length ? sliced : null;
-  const d = (drawings || []).find(x => x && x.id === state.selectedId);
+  const d = (drawings || []).find((x) => x && x.id === state.selectedId);
   if (!drawable(d)) return -1;
-  for (let i = 0; i < d.points.length; i++) {
+  const gctx = makeCtx(state, geom, rows);
+  for (let i = 0; i < d.points.length; i += 1) {
     const p = d.points[i];
     if (!p || !Number.isFinite(p.p) || !Number.isFinite(p.t)) continue;
-    const h = px(d, i, state, geom, src);
-    if (Math.hypot(h.x - mx, h.y - my) <= tol) return i;
+    const h = gctx.xy(p);
+    if (h && Math.hypot(h.x - mx, h.y - my) <= tol) return i;
   }
   return -1;
 }
 
-// Body hit-test: nearest drawing whose outline passes within `tol` px.
+function primDist(prims, mx, my) {
+  let best = Infinity;
+  for (const p of prims) {
+    if (p.op === 'line') best = Math.min(best, segDist(mx, my, p.x1, p.y1, p.x2, p.y2));
+    else if (p.op === 'path' && p.pts.length > 1) {
+      for (let i = 0; i + 1 < p.pts.length; i += 1) {
+        best = Math.min(best, segDist(mx, my, p.pts[i].x, p.pts[i].y, p.pts[i + 1].x, p.pts[i + 1].y));
+      }
+    } else if (p.op === 'rect' && p.w > 0 && p.h > 0) {
+      const x = Math.min(p.x, p.x + p.w), y = Math.min(p.y, p.y + p.h);
+      const w = Math.abs(p.w), h = Math.abs(p.h);
+      const inside = mx >= x && mx <= x + w && my >= y && my <= y + h;
+      if (inside) best = Math.min(best, 0.5);
+      else {
+        best = Math.min(best,
+          segDist(mx, my, x, y, x + w, y),
+          segDist(mx, my, x + w, y, x + w, y + h),
+          segDist(mx, my, x + w, y + h, x, y + h),
+          segDist(mx, my, x, y + h, x, y));
+      }
+    } else if (p.op === 'ellipse') {
+      const dx = (mx - p.cx) / (Math.abs(p.rx) || 1), dy = (my - p.cy) / (Math.abs(p.ry) || 1);
+      const r = Math.hypot(dx, dy);
+      best = Math.min(best, Math.abs(r - 1) * Math.min(Math.abs(p.rx), Math.abs(p.ry)));
+    } else if (p.op === 'arc') {
+      const a = Math.atan2(my - p.cy, mx - p.cx);
+      const lo = Math.min(p.a0, p.a1), hi = Math.max(p.a0, p.a1);
+      if (a >= lo - 0.2 && a <= hi + 0.2) best = Math.min(best, Math.abs(Math.hypot(mx - p.cx, my - p.cy) - Math.abs(p.r)));
+    } else if (p.op === 'box') {
+      const inside = mx >= p.x && mx <= p.x + p.w && my >= p.y && my <= p.y + p.h;
+      if (inside) best = Math.min(best, 0.5);
+    }
+  }
+  return best;
+}
+
 export function hitTestDrawing(drawings, state, geom, rows, mx, my, tol = 6) {
-  const sliced = Array.isArray(rows) && rows.length ? visibleRows(rows, state.visible) : null;
-  const src = sliced && sliced.length ? sliced : null;
+  const gctx = makeCtx(state, geom, rows);
   let best = null, bd = tol;
   for (const d of drawings || []) {
     if (!drawable(d)) continue;
-    if (d.type === 'horizontal') {
-      const y = yForPrice(d.points[0].p, state.price, geom.top, geom.height);
-      const dist = Math.abs(y - my);
-      if (dist <= bd) { bd = dist; best = d; }
-      continue;
-    }
-    const pts = outline(d, state, geom, src);
-    for (let i = 0; i + 1 < pts.length; i++) {
-      const dist = segDist(mx, my, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
-      if (dist <= bd) { bd = dist; best = d; }
-    }
-    // "Inside a shape" is a weaker signal than "on its outline": remember it
-    // but let a genuine outline hit anywhere win.
-    if (!best && (d.type === 'rect' || d.type === 'ellipse')) {
-      const a = pts[0], b = pts[1];
-      if (a && b && mx >= Math.min(a.x, b.x) && mx <= Math.max(a.x, b.x)
-        && my >= Math.min(a.y, b.y) && my <= Math.max(a.y, b.y)) { best = d; }
-    }
+    const dist = primDist(buildPrimitives({ ...d, kind: d.kind || d.type }, gctx), mx, my);
+    if (dist <= bd) { bd = dist; best = d; }
   }
   return best;
 }
@@ -241,22 +328,23 @@ export function drawAlerts(ctx, alerts, state, geom) {
   }
   ctx.restore();
 }
-// Pending rubber-band preview: anchor dots + dashed preview to the cursor
-// (multi-anchor tools accumulate; the newest segment tracks the pointer).
+
 export function drawPending(ctx, pending, cursor, state, geom, rows) {
   if (!pending || !Array.isArray(pending.points) || !pending.points.length) return;
-  const sliced = Array.isArray(rows) && rows.length ? visibleRows(rows, state.visible) : null;
-  const src = sliced && sliced.length ? sliced : null;
-  const pts = pending.points.map(pt => ({ x: tx(pt.t, state, geom, src), y: yForPrice(pt.p, state.price, geom.top, geom.height) }));
-  const x2 = cursor && Number.isFinite(cursor.x) ? cursor.x : pts[pts.length - 1].x;
-  const y2 = cursor && Number.isFinite(cursor.y) ? cursor.y : pts[pts.length - 1].y;
+  const gctx = makeCtx(state, geom, rows);
+  const pts = pending.points.map((p) => gctx.xy(p)).filter(Boolean);
+  if (!pts.length) return;
+  const last = pts[pts.length - 1];
+  const x2 = cursor && Number.isFinite(cursor.x) ? cursor.x : last.x;
+  const y2 = cursor && Number.isFinite(cursor.y) ? cursor.y : last.y;
   ctx.save();
   ctx.strokeStyle = SEL;
   ctx.fillStyle = SEL;
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 4]);
   ctx.beginPath();
-  pts.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+  ctx.moveTo(pts[0].x, pts[0].y);
+  pts.slice(1).forEach((q) => ctx.lineTo(q.x, q.y));
   ctx.lineTo(x2, y2);
   ctx.stroke();
   ctx.setLineDash([]);

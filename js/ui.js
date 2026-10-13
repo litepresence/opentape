@@ -4,6 +4,7 @@ import { renderBase, PAL, stuColor, autoColor, compositeToDataURL, visibleRows, 
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts, drawPending, hitTestDrawing, hitTestAnchor } from './overlay.js';
 import { snapPrice, serialize, deserialize, addDrawing, makeDrawing, anchorCount, translateDrawing, moveAnchor, migrateDrawings } from './drawings.js';
+import { RAIL, RAIL_GROUPS, ITEMS, ITEM_LIST, groupOf, firstToolOf, anchorsOf, iconSvg } from './tools.js';
 import { parseChartUrl, formatChartUrl, normalizeSymbol } from './url.js';
 import { STUDIES, migrateStudies, makeInstance } from './studies.js';
 
@@ -19,6 +20,7 @@ export function initUI(v) {
   document.querySelector('#theme-btn')?.addEventListener('click', () => v.toggleTheme());
   // Task 6 state: magnet, pending 2-click anchor, undo/redo stacks.
   let magnetOn = true;
+  let magnetStrength = 'weak';   // Magnets menu: weak | strong
   // Stay in drawing mode (original default): the tool persists after each
   // placement; when off the rail returns to cross. Persisted per user.
   let stayMode = true;
@@ -193,81 +195,148 @@ export function initUI(v) {
       v.set({ studies: mig, indicators: undefined });
     }
   } catch {}
-  document.querySelectorAll('#rail button').forEach(b => b.addEventListener('click', () => {
-    const tool = b.dataset.tool;
-    if (tool === 'magnet') {
-      magnetOn = !magnetOn;
-      b.classList.toggle('active', magnetOn);
-      showToast(magnetOn ? 'Magnet on — drawings snap to OHLC' : 'Magnet off');
-      saveLayout();
-      return;
+  // --- rail ---------------------------------------------------------------
+  // The rail is generated from js/tools.js so it can never drift from the
+  // captured spec. Each entry is a glyph that arms the group's current tool,
+  // plus (for groups) a chevron that opens the tool menu.
+  const railEl = document.querySelector('#rail');
+  const railBtns = new Map();
+  const buildRail = () => {
+    if (!railEl) return;
+    railEl.innerHTML = '';
+    for (const g of RAIL) {
+      const current = firstToolOf(g.id);
+      const wrap = document.createElement('div');
+      wrap.className = 'rail-item';
+      wrap.dataset.group = g.id;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'rail-btn';
+      b.dataset.groupId = g.id;
+      b.dataset.tool = g.direct ? g.id : current;
+      b.title = g.direct ? g.label : `${g.label} — click to use ${current ? (ITEMS[current]?.label || '') : ''}`;
+      b.innerHTML = iconSvg(g.icon);
+      wrap.appendChild(b);
+      railBtns.set(g.id, b);
+      if (!g.direct && g.sections.length) {
+        const chev = document.createElement('button');
+        chev.type = 'button';
+        chev.className = 'rail-chev';
+        chev.dataset.chevron = g.id;
+        chev.setAttribute('aria-label', g.label);
+        chev.title = g.label;
+        chev.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+        wrap.appendChild(chev);
+      }
+      railEl.appendChild(wrap);
     }
-    if (tool === 'lock') { toggleLock(); return; }
-    if (tool === 'hide') {
-      const hidden = !v.get().drawingsHidden;
-      v.set({ drawingsHidden: hidden });
-      b.classList.toggle('active', hidden);
-      showToast(hidden ? 'Drawings hidden' : 'Drawings shown');
-      saveLayout();
-      return;
+  };
+  buildRail();
+
+  // Mode toggles the rail reflects (magnets, lock, hide).
+  const modeFlags = () => {
+    const s = v.get();
+    return {
+      magnets: magnetOn,
+      lock: !!(s.locked || s.lockedDrawings || s.lockedIndicators),
+      hide: !!s.drawingsHidden,
+      stay: stayMode,
+    };
+  };
+  const syncRail = () => {
+    const tool = v.get().tool;
+    const flags = modeFlags();
+    for (const [gid, b] of railBtns) {
+      const g = RAIL_GROUPS[gid];
+      const armed = g.direct ? flags[gid] === true || tool === gid : tool && groupOf(tool) === gid;
+      b.classList.toggle('active', !!armed);
+      b.classList.toggle('engaged', !!flags[gid]);
     }
-    if (tool === 'zoom') {
-      // Momentary action (not a persistent tool): zoom the time axis one step.
-      const s = v.get();
-      if (s.visible && rows.length) {
-        const span = s.visible.to - s.visible.from;
-        if (span > 0) {
+  };
+  // Rail glyph click: arm the group's tool, or run its direct action.
+  // The chevron (bound below) is what opens a tool menu — clicking the glyph
+  // itself arms the tool, exactly like the original sidebar.
+  const setMode = (key, on) => { v.set({ [key]: on }); syncRail(); saveLayout(); };
+  const removeWhat = (what) => {
+    const s = v.get();
+    const nD = (s.drawings || []).length;
+    const nS = (s.studies || []).length;
+    if (what === 'drawings' && !nD) { showToast('No drawings to remove'); return; }
+    if (what === 'indicators' && !nS) { showToast('No indicators to remove'); return; }
+    if (what === 'all' && !nD && !nS) { showToast('Nothing to remove'); return; }
+    if (s.locked || s.lockedDrawings) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+    pushHistory();
+    const patch = { selectedId: null };
+    if (what === 'drawings' || what === 'all') { patch.drawings = []; patch.alerts = []; }
+    if (what === 'indicators' || what === 'all') { patch.studies = []; }
+    v.set(patch);
+    saveLayout();
+    showToast(what === 'all' ? `Removed ${nD} drawing${nD === 1 ? '' : 's'} & ${nS} indicator${nS === 1 ? '' : 's'}` : `Removed ${what === 'drawings' ? nD : nS} ${what === 'drawings' ? (nD === 1 ? 'drawing' : 'drawings') : (nS === 1 ? 'indicator' : 'indicators')}`);
+  };
+  const ACTIONS = {
+    'lock:drawings': () => setMode('lockedDrawings', !v.get().lockedDrawings),
+    'lock:indicators': () => setMode('lockedIndicators', !v.get().lockedIndicators),
+    'lock:all': () => toggleLock(),
+    'hide:drawings': () => setMode('drawingsHidden', !v.get().drawingsHidden),
+    'hide:indicators': () => setMode('indicatorsHidden', !v.get().indicatorsHidden),
+    'hide:positions': () => showToast('No positions or orders on this chart'),
+    'hide:all': () => { setMode('drawingsHidden', true); setMode('indicatorsHidden', true); },
+    'remove:drawings': () => removeWhat('drawings'),
+    'remove:indicators': () => removeWhat('indicators'),
+    'remove:all': () => removeWhat('all'),
+    'magnet:weak': () => { magnetOn = true; magnetStrength = 'weak'; syncRail(); saveLayout(); showToast('Weak magnet — snaps to the nearest OHLC'); },
+    'magnet:strong': () => { magnetOn = true; magnetStrength = 'strong'; syncRail(); saveLayout(); showToast('Strong magnet — snaps to open/close/high/low'); },
+    'cursor:cross': () => setTool('cross'),
+    'cursor:dot': () => setTool('dot'),
+    'cursor:arrow': () => setTool('arrow-cursor'),
+    'cursor:demo': () => setTool('demonstration'),
+    'cursor:magic': () => setTool('magic'),
+    'cursor:eraser': () => setTool('eraser'),
+    'open:emoji': () => openEmojiPicker(),
+  };
+  document.querySelectorAll('#rail button[data-group-id]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const gid = b.dataset.groupId;
+      const g = RAIL_GROUPS[gid];
+      if (!g) return;
+      if (g.id === 'magnets') { magnetOn = !magnetOn; syncRail(); saveLayout(); showToast(magnetOn ? `Magnet on (${magnetStrength}) — drawings snap to OHLC` : 'Magnet off'); return; }
+      if (g.id === 'stay') { stayMode = !stayMode; v.set({ stayMode }); syncRail(); saveLayout(); return; }
+      if (g.id === 'lock') { toggleLock(); return; }
+      if (g.id === 'hide') { const on = !v.get().drawingsHidden; setMode('drawingsHidden', on); showToast(on ? 'Drawings hidden' : 'Drawings shown'); return; }
+      if (g.id === 'zoom') {
+        const s = v.get();
+        if (s.visible && rows.length && s.visible.to > s.visible.from) {
+          const span = s.visible.to - s.visible.from;
           const mid = (s.visible.from + s.visible.to) / 2;
           const nSpan = span * 0.8;
           v.set({ visible: { from: mid - nSpan / 2, to: mid + nSpan / 2 } });
           showToast('Zoomed in');
-        } else {
-          showToast('No data to zoom');
-        }
+        } else showToast('No data to zoom');
+        return;
       }
-      return;
-    }
-    if (tool === 'del') {
-      const s = v.get();
-      if (s.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
-      if (!s.drawings.length && !s.alerts.length) { showToast('Nothing to remove'); return; }
-      pushHistory();
-      if (s.selectedId) {
+      if (g.id === 'measure') { setTool('measure'); return; }
+      if (g.id === 'icons') { openEmojiPicker(); return; }
+      if (g.id === 'remove') {
+        const s = v.get();
+        if (s.locked || s.lockedDrawings) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+        if (!s.drawings.length && !s.alerts.length) { showToast('Nothing to remove'); return; }
+        pushHistory();
         v.set({
-          drawings: s.drawings.filter(d => d.id !== s.selectedId),
-          alerts: (s.alerts || []).filter(a => a.id !== s.selectedId),
+          drawings: s.selectedId ? s.drawings.filter((d) => d.id !== s.selectedId) : s.drawings.slice(0, -1),
+          alerts: s.selectedId ? (s.alerts || []).filter((a) => a.id !== s.selectedId) : s.alerts,
           selectedId: null,
         });
-      } else {
-        v.set({ drawings: s.drawings.slice(0, -1) });
+        saveLayout();
+        showToast(s.selectedId ? 'Object removed' : 'Last object removed');
+        return;
       }
-      saveLayout();
-      showToast(s.selectedId ? 'Object removed' : 'Last object removed');
-      return;
-    }
-    if (tool === 'extra') { openMenu(b); return; }
-    if (tool === 'stay') {
-      // Stay in drawing mode: on = the tool persists after each placement
-      // (the original's default); off = return to cross after placing one.
-      stayMode = !stayMode;
-      v.set({ stayMode });
-      b.classList.toggle('active', stayMode);
-      saveLayout();
-      return;
-    }
-    if (tool === 'shape') { openShapeMenu(b); showToast('Pick a shape'); return; }
-    document.querySelectorAll('#rail button').forEach(x => {
-      if (x.dataset.tool !== 'magnet' && x.dataset.tool !== 'stay') x.classList.remove('active');
+      // groups: arm the group's current tool
+      const t = firstToolOf(gid);
+      if (t) { pending = null; setTool(t); }
     });
-    b.classList.add('active'); v.set({ tool });
-    pending = null;
-  }));
-  // Magnet button reflects default-on state.
-  document.querySelector('#rail button[data-tool="magnet"]')?.classList.add('active');
-  document.querySelector('#rail button[data-tool="stay"]')?.classList.toggle('active', stayMode);
-  // Lock/hide buttons reflect restored persisted state.
-  if (v.get().locked) document.querySelector('#rail button[data-tool="lock"]')?.classList.add('active');
-  if (v.get().drawingsHidden) document.querySelector('#rail button[data-tool="hide"]')?.classList.add('active');
+  });
+  // Reflect persisted mode state on the freshly built rail.
+  syncRail();
   syncLockBadge(!!v.get().locked);
   // Topbar undo/redo (↩ ↪) + keyboard.
   document.querySelectorAll('#topbar button').forEach(b => {
@@ -316,7 +385,8 @@ export function initUI(v) {
       pending = null;
       measureStart = null;
       closeMenu();
-      closeShapeMenu();
+      closeToolMenu();
+      toolMenuOpen = false;
       setTool('cross');
       document.querySelectorAll('#rail button').forEach(x => {
         if (x.dataset.tool === 'magnet') return;
@@ -555,16 +625,16 @@ export function initUI(v) {
   // CCXT's market-load path (Bitstamp/Coinbase block pairs-info/currencies
   // preflights — verified live). Prefixed symbols (exchange:PAIR) still
   // parse and attempt gracefully. If a second venue verifies, add #ex-btn.
-  const DRAW_TOOLS = new Set(['trend', 'prediction', 'fib', 'rect', 'ellipse', 'ray', 'xabcd', 'horizontal', 'text', 'icon']);
+  // Every rail item that places something on the chart (cursor/action items do not).
+  const DRAW_TOOLS = new Set(ITEM_LIST.filter((i) => i.anchors > 0).map((i) => i.id));
   let brushPath = null;      // in-progress freehand points
+  let brushTool = 'brush';   // which freehand tool is being dragged
+  let demoStep = -1;         // Demonstration cursor progress
   let brushDrawingId = null; // id of the committed freehand drawing
   let dragDrawingId = null;  // drawing being moved/edited
   let dragAnchorIdx = -1;    // anchor index when editing a single point
   let dragStartPoint = null; // pointer anchor captured at body-drag start
   let dragOrigin = null;     // original points snapshot for a body drag
-  // Active shape sub-tool (original groups rectangles, ellipses, rays and
-  // plain lines under one button; selection switches the geometry).
-  let shapeKind = 'rect';
   const cursorPoint = (mx, geom, st, my = null) => {
     const sliced = visibleRows(rows, st.visible);
     const src = sliced.length ? sliced : null;
@@ -573,13 +643,13 @@ export function initUI(v) {
       p: maybeSnap(pForY(my ?? geom.top, st.price, geom.top, geom.height), geom, st),
     };
   };
-  const SHAPE_TOOLS = new Set(['horizontal', 'rect', 'ellipse', 'ray']);
   function toggleLock() {
-    const locked = !v.get().locked;
-    v.set({ locked });
-    document.querySelector('#rail button[data-tool="lock"]')?.classList.toggle('active', locked);
+    const st = v.get();
+    const locked = !(st.locked || st.lockedDrawings);
+    v.set({ locked, lockedDrawings: locked, lockedIndicators: locked });
+    syncRail();
     syncLockBadge(locked);
-    showToast(locked ? 'Drawings locked' : 'Drawings unlocked');
+    showToast(locked ? 'Drawings and indicators locked' : 'Drawings unlocked');
     saveLayout();
   }
   // Persistent header badge: a mode toggle left on must never look like hover.
@@ -596,12 +666,45 @@ export function initUI(v) {
     }
     el.textContent = 'Drawings locked · click to unlock';
   }
+  // Carry the rail item's renderer spec (and a default caption for text-like
+  // tools) onto the drawing record so js/geometry.js can build its shapes.
+  const drawingExtras = (spec) => {
+    const x = { kind: spec.kind };
+    if (spec.variant) x.variant = spec.variant;
+    if (spec.labels) x.labels = spec.labels;
+    if (spec.smooth) x.smooth = true;
+    if (spec.close) x.close = true;
+    if (TEXT_TOOLS.has(spec.kind) || spec.kind === 'infoline') {
+      const def = spec.label ? String(spec.label).toLowerCase() : '';
+      const asked = typeof prompt !== 'undefined' ? prompt('Text:', def) : null;
+      if (asked === null) { x.cancel = true; return x; }
+      x.text = asked || def;
+    }
+    return x;
+  };
+  const TEXT_TOOLS = new Set(['text', 'note', 'pricenote', 'pricelabel', 'callout', 'post', 'infoline']);
+  // Cursors menu: which pointer shape the crosshair wears.
+  const cursorShape = (tool) => (tool === 'dot' ? 'dot' : tool === 'arrow-cursor' ? 'arrow' : 'cross');
+  // Swing pivots drive the Magic and Demonstration cursor tools.
+  const swingPivots = (list) => {
+    const k = 2;
+    const out = [];
+    for (let i = k; i < list.length - k; i += 1) {
+      const h = list[i].h, l = list[i].l;
+      let isH = true, isL = true;
+      for (let j = 1; j <= k; j += 1) {
+        if (h <= list[i - j].h || h <= list[i + j].h) isH = false;
+        if (l >= list[i - j].l || l >= list[i + j].l) isL = false;
+      }
+      if (isH) out.push({ t: list[i].t, p: h, kind: 'high' });
+      if (isL) out.push({ t: list[i].t, p: l, kind: 'low' });
+    }
+    return out.sort((a, b) => a.t - b.t);
+  };
   const setTool = (tool) => {
     v.set({ tool });
-    document.querySelectorAll('#rail button').forEach(x => {
-      if (x.dataset.tool === 'magnet' || x.dataset.tool === 'stay') return;
-      x.classList.toggle('active', x.dataset.tool === tool || (x.dataset.tool === 'shape' && SHAPE_TOOLS.has(tool)));
-    });
+    pending = null;
+    syncRail();
   };
   if (overlay) {
     let dragging = false;
@@ -629,31 +732,72 @@ export function initUI(v) {
         return;
       }
       const tool = st.tool || 'cross';
+      // Cursors menu: three of the six entries act on click rather than place.
+      if (tool === 'eraser') {
+        const hit = hitTestDrawing(st.drawings, st, geom, rows, mx, my, 10);
+        if (hit) {
+          if (st.locked || st.lockedDrawings) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+          pushHistory();
+          v.set({ drawings: st.drawings.filter((d) => d.id !== hit.id), selectedId: null });
+          saveLayout();
+          showToast('Drawing erased');
+        } else showToast('Nothing under the cursor');
+        return;
+      }
+      if (tool === 'magic' || tool === 'demonstration') {
+        const pivots = swingPivots(visibleRows(rows, st.visible).length ? visibleRows(rows, st.visible) : rows);
+        if (pivots.length < 2) { showToast('No swing points detected yet'); return; }
+        if (st.locked || st.lockedDrawings) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+        if (tool === 'magic') {
+          const [a, b] = pivots.slice(-2);
+          pushHistory();
+          const d = makeDrawing('trend', [{ t: a.t, p: a.p }, { t: b.t, p: b.p }], { kind: 'segment' });
+          addDrawing(v, d);
+          v.set({ selectedId: d.id });
+          saveLayout();
+          showToast('Trend line drawn between the last two swings');
+        } else {
+          demoStep = (demoStep + 1) % Math.max(1, pivots.length - 1);
+          const a = pivots[demoStep];
+          const b = pivots[demoStep + 1] || pivots[demoStep];
+          pushHistory();
+          const d = makeDrawing('trend', [{ t: a.t, p: a.p }, { t: b.t, p: b.p }], { kind: 'segment' });
+          addDrawing(v, d);
+          v.set({ selectedId: d.id });
+          saveLayout();
+          showToast(`Demonstration ${demoStep + 1}/${pivots.length - 1} — click again to advance`);
+        }
+        return;
+      }
       if (tool === 'measure') {
         // Measure marquee: drag to read out Δbars / Δprice / Δ%.
         measureStart = { mx, my };
         return;
       }
-      if (tool === 'brush') {
+      if (ITEMS[tool]?.kind === 'brush') {
         if (st.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
         pushHistory();
         brushPath = [{ t: cursorPoint(mx, geom, st).t, p: maybeSnap(pForY(my, st.price, geom.top, geom.height), geom, st) }];
         brushDrawingId = null;
+        brushTool = tool;
         return;
       }
       if (DRAW_TOOLS.has(tool)) {
-        if (st.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+        if (st.lockedDrawings || st.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+        const spec = ITEMS[tool] || {};
         const { t, p } = cursorPoint(mx, geom, st, my);
-        // Multi-click tools accumulate anchors until the type is complete.
-        if (anchorCount(tool) > 1) {
+        // Multi-click tools accumulate anchors until the tool is complete.
+        const need = anchorCount(tool);
+        if (need > 1) {
           const pts = (pending && pending.type === tool ? pending.points : []).concat([{ t, p }]);
-          if (pts.length < anchorCount(tool)) {
+          if (pts.length < need) {
             pending = { type: tool, points: pts };
-            showToast(`Anchor ${pts.length}/${anchorCount(tool)} — click to set the next point`);
+            showToast(`Anchor ${pts.length}/${need} — click to set the next point`);
             return;
           }
+          if (spec.kind === 'brush') return;
           pushHistory();
-          const d = makeDrawing(tool, pts);
+          const d = makeDrawing(tool, pts, drawingExtras(spec));
           addDrawing(v, d);
           v.set({ selectedId: d.id });
           pending = null;
@@ -661,23 +805,17 @@ export function initUI(v) {
           if (!stayMode) setTool('cross');
           return;
         }
-        if (tool === 'horizontal') {
-          pushHistory();
-          const d = makeDrawing('horizontal', [{ t: null, p }]);
-          addDrawing(v, d);
-          v.set({ selectedId: d.id });
-          saveLayout();
-        } else if (tool === 'text' || tool === 'icon') {
-          const glyph = tool === 'icon'
-            ? (typeof prompt !== 'undefined' ? (prompt('Icon:', '⭐') || '⭐') : '⭐')
-            : (typeof prompt !== 'undefined' ? prompt('Text:') : null);
-          if (!glyph) return;
-          pushHistory();
-          const d = makeDrawing(tool, [{ t, p }], { text: glyph });
-          addDrawing(v, d);
-          v.set({ selectedId: d.id });
-          saveLayout();
-        }
+        pushHistory();
+        const extras = drawingExtras(spec);
+        // An emoji chosen from the Icons picker already carries its own glyph.
+        if (extras.cancel && pending && pending.type === tool && pending.glyph) delete extras.cancel;
+        if (pending && pending.type === tool && pending.glyph) extras.text = pending.glyph;
+        if (extras.cancel) { pending = null; if (!stayMode) setTool('cross'); return; }
+        const d = makeDrawing(tool, [{ t, p }], extras);
+        addDrawing(v, d);
+        v.set({ selectedId: d.id });
+        pending = null;
+        saveLayout();
         if (!stayMode) setTool('cross');
         return;
       }
@@ -750,7 +888,7 @@ export function initUI(v) {
         if (!last || Math.hypot(q.t - last.t, q.p - last.p) > 1e-9) brushPath.push(q);
         const next = brushDrawingId
           ? v.get().drawings.map(d => (d.id === brushDrawingId ? { ...d, points: brushPath.slice() } : d))
-          : [...v.get().drawings, makeDrawing('brush', brushPath.slice())];
+          : [...v.get().drawings, makeDrawing(brushTool, brushPath.slice(), { kind: 'brush', variant: ITEMS[brushTool]?.variant })];
         if (!brushDrawingId) brushDrawingId = next[next.length - 1].id;
         v.set({ drawings: next, selectedId: brushDrawingId });
         return;
@@ -829,7 +967,7 @@ export function initUI(v) {
         ctx.fillText(label, bx + 6, by + 13);
         ctx.restore();
         const pal = PAL[st.theme] || PAL.light;
-        drawCrosshair(ctx, mx, my, geom, pal);
+        drawCrosshair(ctx, mx, my, geom, pal, cursorShape(st.tool));
         return;
       }
       // Pending rubber-band: anchor dot + dashed preview to cursor while a
@@ -838,7 +976,7 @@ export function initUI(v) {
         try { drawPending(ctx, pending, { x: mx, y: my }, st, geom, rows); } catch {}
       }
       const pal = PAL[st.theme] || PAL.light;
-      drawCrosshair(ctx, mx, my, geom, pal);
+      drawCrosshair(ctx, mx, my, geom, pal, cursorShape(st.tool));
       const idx = hitTest(mx, st.visible, geom.left, geom.width, rows);
       const effCap = (st.replayIndex != null && Number.isFinite(st.replayIndex))
         ? Math.max(0, Math.min(rows.length - 1, Math.floor(st.replayIndex)))
@@ -1456,33 +1594,148 @@ export function initUI(v) {
       if (!menu.contains(e.target)) { closeMenu(); document.removeEventListener('mousedown', off); }
     }), 0);
   };
-  // Geometric shapes submenu (rectangle / ellipse / ray / line).
-  function closeShapeMenu() { try { document.querySelector('#shape-menu')?.remove(); } catch {} }
-  const openShapeMenu = (anchor) => {
-    closeShapeMenu();
+  // Rail flyouts: the chevron on a group icon opens its tool menu, the way the
+  // original sidebar does. Menus mirror the captured structure — section
+  // headers, keyboard shortcuts on the right, switches at the bottom.
+  function closeToolMenu() { try { document.querySelector('#tool-menu')?.remove(); } catch {} }
+  let toolMenuOpen = false;
+
+  const menuState = { snapIndicators: false, valuesTooltip: false, removeLocked: false };
+  const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+  const itemLabel = (item) => {
+    if (!item.dynamic) return item.label;
+    const s = v.get();
+    const nD = (s.drawings || []).length;
+    const nS = (s.studies || []).length;
+    return item.dynamic
+      .replace('%d', plural(nD, 'drawing'))
+      .replace('%i', plural(nS, 'indicator'));
+  };
+
+  const openToolMenu = (groupId, anchorBtn) => {
+    const group = RAIL_GROUPS[groupId];
+    if (!group) return;
+    const existing = document.querySelector('#tool-menu');
+    if (existing && existing.dataset.group === groupId) { closeToolMenu(); toolMenuOpen = false; return; }
+    closeToolMenu();
     const menu = document.createElement('div');
-    menu.id = 'shape-menu';
-    const kinds = [['horizontal', 'Horizontal line'], ['rect', 'Rectangle'], ['ellipse', 'Ellipse'], ['ray', 'Ray'], ['trend', 'Line']];
-    for (const [kind, label] of kinds) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = label;
-      b.addEventListener('click', () => {
-        shapeKind = kind;
-        closeShapeMenu();
-        setTool(kind);
-        pending = null;
-      });
-      menu.appendChild(b);
+    menu.id = 'tool-menu';
+    menu.dataset.group = groupId;
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-label', group.label);
+    const head = document.createElement('div');
+    head.className = 'tool-menu-head';
+    head.textContent = group.label;
+    menu.appendChild(head);
+
+    const current = v.get().tool;
+    for (const sec of group.sections) {
+      if (!sec.items.length) continue;
+      if (sec.title) {
+        const h = document.createElement('div');
+        h.className = 'tool-menu-sec';
+        h.textContent = sec.title;
+        menu.appendChild(h);
+      }
+      for (const item of sec.items) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.item = item.id;
+        b.setAttribute('role', 'menuitem');
+        const isToggle = !!item.toggle;
+        if (isToggle) {
+          const on = menuState[item.toggle];
+          b.classList.toggle('on', !!on);
+          b.setAttribute('aria-pressed', String(!!on));
+          b.innerHTML = `<span>${item.label}</span><span class="tool-menu-switch" aria-hidden="true"><i></i></span>`;
+        } else {
+          b.innerHTML = `<span class="tool-menu-icon">${iconSvg(railIconFor(item.id))}</span><span class="tool-menu-label">${itemLabel(item)}</span>`
+            + (item.hotkey ? `<span class="tool-menu-hot">${item.hotkey}</span>` : '');
+          if (item.id === current) b.classList.add('current');
+        }
+        b.addEventListener('click', () => {
+          if (isToggle) {
+            menuState[item.toggle] = !menuState[item.toggle];
+            v.set({ [item.toggle]: menuState[item.toggle] });
+            b.classList.toggle('on', menuState[item.toggle]);
+            b.setAttribute('aria-pressed', String(menuState[item.toggle]));
+            saveLayout();
+            showToast(`${item.label} — ${menuState[item.toggle] ? 'on' : 'off'}`);
+            return;
+          }
+          if (item.action && ACTIONS[item.action]) {
+            closeToolMenu(); toolMenuOpen = false;
+            ACTIONS[item.action]();
+            return;
+          }
+          closeToolMenu(); toolMenuOpen = false;
+          pending = null;
+          setTool(item.id);
+          const need = anchorCount(item.id);
+          showToast(need > 1
+            ? `${item.label} — click ${need} points on the chart`
+            : `${item.label} — click the chart to place`);
+        });
+        menu.appendChild(b);
+      }
     }
     document.body.appendChild(menu);
-    const r = anchor?.getBoundingClientRect?.() || { left: 56, bottom: 48 };
-    menu.style.left = (r.right || 56) + 4 + 'px';
-    menu.style.top = Math.max(4, r.top || 48) + 'px';
+    const r = anchorBtn?.getBoundingClientRect?.() || { left: 48, top: 80 };
+    const h = menu.offsetHeight || 300;
+    menu.style.left = ((r.right || 48) + 2) + 'px';
+    menu.style.top = Math.max(4, Math.min((r.top || 80), (window.innerHeight || 900) - h - 8)) + 'px';
+    toolMenuOpen = true;
     setTimeout(() => document.addEventListener('mousedown', function off(e) {
-      if (!menu.contains(e.target)) { closeShapeMenu(); document.removeEventListener('mousedown', off); }
+      if (!menu.contains(e.target) && e.target !== anchorBtn && !anchorBtn?.contains?.(e.target)) {
+        closeToolMenu(); toolMenuOpen = false; document.removeEventListener('mousedown', off);
+      }
     }), 0);
   };
+  // Small glyph for a tool inside a menu (reuse the rail art per family).
+  const railIconFor = (toolId) => {
+    const g = groupOf(toolId);
+    return g ? (RAIL_GROUPS[g]?.icon || 'trend') : 'trend';
+  };
+
+  // Emoji / icon picker (the Icons group opens a grid, like the original).
+  const EMOJI = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','👽','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🙈','🙉','🙊','💋','💌','💘','💝','💖','💗','💓','💞','💕','💟','❣️','💔','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','⭐','🌟','✨','⚡','🔥','💥','💯','✅','❌','❓','❗','💤','🚀','🏆','🥇','🎯','🎉','🎊'];
+  function openEmojiPicker() {
+    closeToolMenu(); toolMenuOpen = false;
+    document.querySelector('#emoji-picker')?.remove();
+    const wrap = document.createElement('div');
+    wrap.id = 'emoji-picker';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-label', 'Icons');
+    const grid = document.createElement('div');
+    grid.className = 'emoji-grid';
+    for (const e of EMOJI) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = e;
+      b.title = e;
+      b.addEventListener('click', () => {
+        wrap.remove();
+        setTool('icon');
+        pending = { type: 'icon', points: [], glyph: e };
+        showToast('Icon armed — click the chart to place it');
+      });
+      grid.appendChild(b);
+    }
+    wrap.appendChild(grid);
+    document.body.appendChild(wrap);
+    const r = railBtns.get('icons')?.getBoundingClientRect?.() || { left: 48, top: 300 };
+    wrap.style.left = ((r.right || 48) + 2) + 'px';
+    wrap.style.top = Math.max(4, r.top || 300) + 'px';
+    setTimeout(() => document.addEventListener('mousedown', function off(e) {
+      if (!wrap.contains(e.target)) { wrap.remove(); document.removeEventListener('mousedown', off); }
+    }), 0);
+  }
+
+  // Chevrons open the menus; hovering another group switches the open menu.
+  document.querySelectorAll('#rail button[data-chevron]').forEach((btn) => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); openToolMenu(btn.dataset.chevron, btn.parentElement); });
+    btn.addEventListener('mouseenter', () => { if (toolMenuOpen) openToolMenu(btn.dataset.chevron, btn.parentElement); });
+  });
   document.querySelector('#menu')?.addEventListener('click', (e) => openMenu(e.currentTarget));
   document.querySelector('#topbar button[title="Premium"]')?.addEventListener('click', () => openAbout());
   // Replay mode: hides bars after replayIndex, step buttons <- / ->.

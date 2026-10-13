@@ -1,5 +1,6 @@
 // js/drawings.js — drawing model: anchors, migration, geometry helpers.
 // All drawings are stored in time/price coordinates so they survive pan/zoom.
+import { ITEMS } from './tools.js';
 export function snapPrice(p, rows, tol = 2) {
   let best = null, bd = tol;
   for (const r of rows) for (const v of [r.o, r.h, r.l, r.c]) { const d = Math.abs(v - p); if (d <= bd) { bd = d; best = v; } }
@@ -8,13 +9,14 @@ export function snapPrice(p, rows, tol = 2) {
 export function serialize(drawings) { return JSON.stringify(drawings); }
 export function deserialize(s) { try { return JSON.parse(s) || []; } catch { return []; } }
 
-// Anchor count per drawing type (the original plots require a fixed number of
-// clicks; brush collects a freehand path instead).
-export const ANCHORS = {
-  trend: 2, prediction: 2, fib: 2, ray: 2, rect: 2, ellipse: 2,
-  horizontal: 1, text: 1, icon: 1, xabcd: 5,
-};
-export const FREEFORM = new Set(['brush']);
+// Anchor count comes from the rail table: each tool declares how many clicks
+// place it. Cursor/action tools declare 0 — they are modes, not drawings.
+const LEGACY = { trend: 2, prediction: 2, fib: 2, ray: 2, rect: 2, ellipse: 2, horizontal: 1, text: 1, icon: 1, xabcd: 5 };
+export const ANCHORS = Object.fromEntries([
+  ...Object.entries(LEGACY),
+  ...Object.entries(ITEMS).map(([id, it]) => [id, it.anchors || 0]),
+]);
+export const FREEFORM = new Set(['brush', 'highlighter']);
 
 export function anchorCount(type) { return ANCHORS[type] ?? 2; }
 export function isComplete(d) {

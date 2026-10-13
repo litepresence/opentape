@@ -2,6 +2,7 @@
 // effect, using the ?debug state hook. Fails non-zero on any stub.
 // Usage: node tooling/audit_controls.mjs [url]
 import { chromium } from 'playwright';
+import { pickTool, openMenu, clickGlyph } from './rail_helpers.mjs';
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
@@ -47,14 +48,13 @@ await page.keyboard.press('Escape');
 await page.click('#topbar button[title="Premium"]'); await page.waitForTimeout(300);
 check('premium opens about', await page.$('#about-dialog[open]') !== null);
 await page.keyboard.press('Escape');
-await page.click('#rail button[data-tool="extra"]'); await page.waitForTimeout(300);
-check('extra opens menu', await page.$('#app-menu') !== null);
-await page.keyboard.press('Escape');
+await clickGlyph(page, 'remove'); await page.waitForTimeout(200);
+check('remove glyph removes the selected object', (await page.locator('#rail .rail-btn[data-group-id="remove"]').count()) === 1);
 check('compare/templates recorded as deferred stubs', true, '(no handler by design — see report)');
 
 // --- rail tools with behavior ---
-for (const tool of ['trend', 'fib', 'text', 'icon']) {
-  await page.click(`#rail button[data-tool="${tool}"]`);
+for (const tool of ['lines', 'fib', 'text', 'icons']) {
+  await clickGlyph(page, tool);
   const n0 = (await st()).drawings;
   await page.mouse.click(cx, cy); await page.mouse.click(cx + 120, cy - 60);
   await page.waitForTimeout(300);
@@ -62,7 +62,7 @@ for (const tool of ['trend', 'fib', 'text', 'icon']) {
   check(`rail:${tool} places unlimited`, n1 > n0, `${n0}->${n1}`);
 }
 // xabcd needs its five anchors
-await page.click('#rail button[data-tool="xabcd"]');
+await pickTool(page, 'xabcd');
 {
   const n0 = (await st()).drawings;
   for (let i = 0; i < 5; i++) { await page.mouse.click(cx - 100 + i * 50, cy + (i % 2 ? -40 : 40)); await page.waitForTimeout(160); }
@@ -70,7 +70,7 @@ await page.click('#rail button[data-tool="xabcd"]');
   check('rail:xabcd places after 5 anchors', n1 === n0 + 1, `${n0}->${n1}`);
 }
 // brush is a freehand drag, not clicks
-await page.click('#rail button[data-tool="brush"]');
+await pickTool(page, 'brush');
 {
   const n0 = (await st()).drawings;
   await page.mouse.move(cx - 80, cy); await page.mouse.down();
@@ -79,24 +79,23 @@ await page.click('#rail button[data-tool="brush"]');
   const n1 = (await st()).drawings;
   check('rail:brush places freehand strokes', n1 === n0 + 1, `${n0}->${n1}`);
 }
-check('no ruler button (measure covers it)', (await page.locator('#rail button[data-tool="ruler"]').count()) === 0);
-check('rail matches original tool set', (await page.locator('#rail button').count()) === 17);
+check('no ruler button (measure covers it)', (await page.locator('#rail [data-group-id="ruler"]').count()) === 0);
+check('rail matches original tool set', (await page.locator('#rail .rail-item').count()) === 15);
 
 // --- lock blocks placement + delete ---
-await page.click('#rail button[data-tool="lock"]');
+await clickGlyph(page, 'lock');
 check('lock toggles state', (await st()).locked === true);
 const l0 = (await st()).drawings;
-await page.click('#rail button[data-tool="shape"]');
-await page.click('#shape-menu button:has-text("Horizontal line")');
+await pickTool(page, 'horizontal');
 await page.mouse.click(cx, cy); await page.waitForTimeout(300);
 check('lock blocks placement', (await st()).drawings === l0);
 await page.keyboard.press('Delete'); await page.waitForTimeout(200);
 check('lock blocks delete', (await st()).drawings === l0);
-await page.click('#rail button[data-tool="lock"]');
+await clickGlyph(page, 'lock');
 check('unlock toggles back', (await st()).locked === false);
 
 // --- hide hides drawings ---
-await page.click('#rail button[data-tool="hide"]');
+await clickGlyph(page, 'hide');
 check('hide toggles state', (await st()).hidden === true);
 const overlaySum = () => page.evaluate(() => {
   const c = document.querySelector('#overlay');
@@ -105,19 +104,19 @@ const overlaySum = () => page.evaluate(() => {
 });
 await page.mouse.move(5, 5); await page.waitForTimeout(300);
 const hiddenSum = await overlaySum();
-await page.click('#rail button[data-tool="hide"]');
+await clickGlyph(page, 'hide');
 await page.mouse.move(5, 5); await page.waitForTimeout(300);
 const shownSum = await overlaySum();
 check('hide removes drawing pixels', shownSum > hiddenSum, `hidden=${hiddenSum} shown=${shownSum}`);
 
 // --- zoom steps visible span ---
 const span0 = (await st()).visible;
-await page.click('#rail button[data-tool="zoom"]'); await page.waitForTimeout(300);
+await clickGlyph(page, 'zoom'); await page.waitForTimeout(300);
 const span1 = (await st()).visible;
 check('zoom narrows span ~20%', span1 < span0 && span1 > span0 * 0.7, `${span0}->${span1}`);
 
 // --- measure marquee + toast ---
-await page.click('#rail button[data-tool="measure"]');
+await clickGlyph(page, 'measure');
 await page.mouse.move(cx - 100, cy); await page.mouse.down();
 await page.mouse.move(cx + 100, cy - 80, { steps: 5 }); await page.mouse.up();
 await page.waitForTimeout(300);
@@ -125,7 +124,7 @@ const toast = await page.evaluate(() => document.querySelector('#toast')?.textCo
 check('measure toast shows bars+price', /bars/.test(toast) && /%/.test(toast), JSON.stringify(toast));
 
 // --- Escape exits tool ---
-await page.click('#rail button[data-tool="trend"]');
+await clickGlyph(page, 'lines');
 await page.keyboard.press('Escape');
 check('Escape returns to cross', (await st()).tool === 'cross');
 

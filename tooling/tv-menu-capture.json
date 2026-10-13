@@ -1,0 +1,9704 @@
+{
+ "Cursors": {
+  "icon": "Cross",
+  "railY": 67,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Cross",
+    "aria": "Cross",
+    "text": "",
+    "x": 59,
+    "y": 48,
+    "w": 249,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Cursors",
+    "aria": "",
+    "text": "Cursors",
+    "x": 56,
+    "y": 55,
+    "w": 64,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 278,
+    "y": 56,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Cross",
+    "aria": "",
+    "text": "Cross",
+    "x": 95,
+    "y": 59,
+    "w": 37,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Dot",
+    "aria": "Dot",
+    "text": "",
+    "x": 59,
+    "y": 88,
+    "w": 249,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 278,
+    "y": 96,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Dot",
+    "aria": "",
+    "text": "Dot",
+    "x": 95,
+    "y": 99,
+    "w": 22,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Arrow",
+    "aria": "Arrow",
+    "text": "",
+    "x": 59,
+    "y": 128,
+    "w": 249,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 278,
+    "y": 136,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Arrow",
+    "aria": "",
+    "text": "Arrow",
+    "x": 95,
+    "y": 139,
+    "w": 37,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Demonstration",
+    "aria": "Demonstration",
+    "text": "",
+    "x": 59,
+    "y": 168,
+    "w": 249,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 278,
+    "y": 176,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Demonstration",
+    "aria": "",
+    "text": "Demonstration",
+    "x": 95,
+    "y": 179,
+    "w": 91,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Magic",
+    "aria": "Magic",
+    "text": "",
+    "x": 59,
+    "y": 208,
+    "w": 249,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 278,
+    "y": 216,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Magic",
+    "aria": "",
+    "text": "Magic",
+    "x": 95,
+    "y": 219,
+    "w": 37,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Eraser",
+    "aria": "Eraser",
+    "text": "",
+    "x": 59,
+    "y": 261,
+    "w": 249,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 278,
+    "y": 269,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Eraser",
+    "aria": "",
+    "text": "Eraser",
+    "x": 95,
+    "y": 272,
+    "w": 41,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Values tooltip on long press",
+    "aria": "Values tooltip on long press",
+    "text": "",
+    "x": 59,
+    "y": 314,
+    "w": 249,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Values tooltip on long press",
+    "aria": "",
+    "text": "Values tooltip on long press",
+    "x": 67,
+    "y": 321,
+    "w": 171,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Trend tools": {
+  "icon": "Trendline",
+  "railY": 105,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Lines",
+    "aria": "Lines",
+    "text": "",
+    "x": 59,
+    "y": 86,
+    "w": 262,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Lines",
+    "aria": "",
+    "text": "Lines",
+    "x": 67,
+    "y": 92,
+    "w": 34,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Trend tools",
+    "aria": "",
+    "text": "Trend tools",
+    "x": 56,
+    "y": 93,
+    "w": 83,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Trendline",
+    "aria": "Trendline",
+    "text": "",
+    "x": 59,
+    "y": 110,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 118,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 159,
+    "y": 121,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Alt + T",
+    "aria": "",
+    "text": "Alt + T",
+    "x": 249,
+    "y": 122,
+    "w": 35,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Ray",
+    "aria": "Ray",
+    "text": "",
+    "x": 59,
+    "y": 150,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 158,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 126,
+    "y": 161,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Info line",
+    "aria": "Info line",
+    "text": "",
+    "x": 59,
+    "y": 190,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 198,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 150,
+    "y": 201,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Extended line",
+    "aria": "Extended line",
+    "text": "",
+    "x": 59,
+    "y": 230,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 238,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 186,
+    "y": 241,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Trend angle",
+    "aria": "Trend angle",
+    "text": "",
+    "x": 59,
+    "y": 270,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 278,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 175,
+    "y": 281,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Horizontal line",
+    "aria": "Horizontal line",
+    "text": "",
+    "x": 59,
+    "y": 310,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 318,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 190,
+    "y": 321,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Alt + H",
+    "aria": "",
+    "text": "Alt + H",
+    "x": 247,
+    "y": 322,
+    "w": 36,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "Horizontal ray",
+    "aria": "Horizontal ray",
+    "text": "",
+    "x": 59,
+    "y": 350,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 358,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 187,
+    "y": 361,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Alt + J",
+    "aria": "",
+    "text": "Alt + J",
+    "x": 250,
+    "y": 362,
+    "w": 34,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "Vertical line",
+    "aria": "Vertical line",
+    "text": "",
+    "x": 59,
+    "y": 390,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 398,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 173,
+    "y": 401,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Alt + V",
+    "aria": "",
+    "text": "Alt + V",
+    "x": 248,
+    "y": 402,
+    "w": 36,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "Crossline",
+    "aria": "Crossline",
+    "text": "",
+    "x": 59,
+    "y": 430,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 438,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 159,
+    "y": 441,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Alt + C",
+    "aria": "",
+    "text": "Alt + C",
+    "x": 247,
+    "y": 442,
+    "w": 36,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "Channels",
+    "aria": "Channels",
+    "text": "",
+    "x": 59,
+    "y": 483,
+    "w": 262,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Channels",
+    "aria": "",
+    "text": "Channels",
+    "x": 67,
+    "y": 489,
+    "w": 63,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Parallel channel",
+    "aria": "Parallel channel",
+    "text": "",
+    "x": 59,
+    "y": 507,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 515,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 201,
+    "y": 518,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Regression trend",
+    "aria": "Regression trend",
+    "text": "",
+    "x": 59,
+    "y": 547,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 555,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 208,
+    "y": 558,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Flat top/bottom",
+    "aria": "Flat top/bottom",
+    "text": "",
+    "x": 59,
+    "y": 587,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 595,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 194,
+    "y": 598,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Disjoint channel",
+    "aria": "Disjoint channel",
+    "text": "",
+    "x": 59,
+    "y": 627,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 635,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 200,
+    "y": 638,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Pitchforks",
+    "aria": "Pitchforks",
+    "text": "",
+    "x": 59,
+    "y": 680,
+    "w": 262,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Pitchforks",
+    "aria": "",
+    "text": "Pitchforks",
+    "x": 67,
+    "y": 686,
+    "w": 75,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Pitchfork",
+    "aria": "Pitchfork",
+    "text": "",
+    "x": 59,
+    "y": 704,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 712,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 155,
+    "y": 715,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Schiff pitchfork",
+    "aria": "Schiff pitchfork",
+    "text": "",
+    "x": 59,
+    "y": 744,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 752,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 193,
+    "y": 755,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Modified Schiff pitchfork",
+    "aria": "Modified Schiff pitchfork",
+    "text": "",
+    "x": 59,
+    "y": 784,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 792,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 249,
+    "y": 795,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Inside pitchfork",
+    "aria": "Inside pitchfork",
+    "text": "",
+    "x": 59,
+    "y": 824,
+    "w": 262,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 291,
+    "y": 832,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 195,
+    "y": 835,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Gann and Fibonacci tools": {
+  "icon": "Fib retracement",
+  "railY": 143,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Fibonacci",
+    "aria": "Fibonacci",
+    "text": "",
+    "x": 59,
+    "y": 124,
+    "w": 275,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Fibonacci",
+    "aria": "",
+    "text": "Fibonacci",
+    "x": 67,
+    "y": 130,
+    "w": 64,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Gann and Fibonacci tools",
+    "aria": "",
+    "text": "Gann and Fibonacci tools",
+    "x": 56,
+    "y": 131,
+    "w": 165,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Fib retracement",
+    "aria": "Fib retracement",
+    "text": "",
+    "x": 59,
+    "y": 148,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 156,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 199,
+    "y": 159,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Alt + F",
+    "aria": "",
+    "text": "Alt + F",
+    "x": 261,
+    "y": 160,
+    "w": 35,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "Trend-based fib extension",
+    "aria": "Trend-based fib extension",
+    "text": "",
+    "x": 59,
+    "y": 188,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 196,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 262,
+    "y": 199,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Fib channel",
+    "aria": "Fib channel",
+    "text": "",
+    "x": 59,
+    "y": 228,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 236,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 173,
+    "y": 239,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Fib time zone",
+    "aria": "Fib time zone",
+    "text": "",
+    "x": 59,
+    "y": 268,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 276,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 185,
+    "y": 279,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Fib speed resistance fan",
+    "aria": "Fib speed resistance fan",
+    "text": "",
+    "x": 59,
+    "y": 308,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 316,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 254,
+    "y": 319,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Trend-based fib time",
+    "aria": "Trend-based fib time",
+    "text": "",
+    "x": 59,
+    "y": 348,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 356,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 229,
+    "y": 359,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Fib circles",
+    "aria": "Fib circles",
+    "text": "",
+    "x": 59,
+    "y": 388,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 396,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 164,
+    "y": 399,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Fib spiral",
+    "aria": "Fib spiral",
+    "text": "",
+    "x": 59,
+    "y": 428,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 436,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 158,
+    "y": 439,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Fib speed resistance arcs",
+    "aria": "Fib speed resistance arcs",
+    "text": "",
+    "x": 59,
+    "y": 468,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 476,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 261,
+    "y": 479,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Fib wedge",
+    "aria": "Fib wedge",
+    "text": "",
+    "x": 59,
+    "y": 508,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 516,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 166,
+    "y": 519,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Pitchfan",
+    "aria": "Pitchfan",
+    "text": "",
+    "x": 59,
+    "y": 548,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 556,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 152,
+    "y": 559,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Gann",
+    "aria": "Gann",
+    "text": "",
+    "x": 59,
+    "y": 601,
+    "w": 275,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Gann",
+    "aria": "",
+    "text": "Gann",
+    "x": 67,
+    "y": 607,
+    "w": 33,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Gann box",
+    "aria": "Gann box",
+    "text": "",
+    "x": 59,
+    "y": 625,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 633,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 162,
+    "y": 636,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Gann square fixed",
+    "aria": "Gann square fixed",
+    "text": "",
+    "x": 59,
+    "y": 665,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 673,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 215,
+    "y": 676,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Gann square",
+    "aria": "Gann square",
+    "text": "",
+    "x": 59,
+    "y": 705,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 713,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 182,
+    "y": 716,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Gann fan",
+    "aria": "Gann fan",
+    "text": "",
+    "x": 59,
+    "y": 745,
+    "w": 275,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 304,
+    "y": 753,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 159,
+    "y": 756,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Patterns": {
+  "icon": "XABCD pattern",
+  "railY": 181,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Chart patterns",
+    "aria": "Chart patterns",
+    "text": "",
+    "x": 59,
+    "y": 162,
+    "w": 344,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Chart patterns",
+    "aria": "",
+    "text": "Chart patterns",
+    "x": 67,
+    "y": 168,
+    "w": 103,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Patterns",
+    "aria": "",
+    "text": "Patterns",
+    "x": 56,
+    "y": 169,
+    "w": 66,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "XABCD pattern",
+    "aria": "XABCD pattern",
+    "text": "",
+    "x": 59,
+    "y": 186,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 194,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 197,
+    "y": 197,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Cypher pattern",
+    "aria": "Cypher pattern",
+    "text": "",
+    "x": 59,
+    "y": 226,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 234,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 194,
+    "y": 237,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Head and shoulders",
+    "aria": "Head and shoulders",
+    "text": "",
+    "x": 59,
+    "y": 266,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 274,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 277,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "ABCD pattern",
+    "aria": "ABCD pattern",
+    "text": "",
+    "x": 59,
+    "y": 306,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 314,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 187,
+    "y": 317,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Triangle pattern",
+    "aria": "Triangle pattern",
+    "text": "",
+    "x": 59,
+    "y": 346,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 354,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 199,
+    "y": 357,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Three drives pattern",
+    "aria": "Three drives pattern",
+    "text": "",
+    "x": 59,
+    "y": 386,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 394,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 397,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Elliott waves",
+    "aria": "Elliott waves",
+    "text": "",
+    "x": 59,
+    "y": 439,
+    "w": 344,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Elliott waves",
+    "aria": "",
+    "text": "Elliott waves",
+    "x": 67,
+    "y": 445,
+    "w": 91,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Elliott impulse wave (1·2·3·4·5)",
+    "aria": "Elliott impulse wave (1·2·3·4·5)",
+    "text": "",
+    "x": 59,
+    "y": 463,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 471,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 292,
+    "y": 474,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Elliott correction wave (A·B·C)",
+    "aria": "Elliott correction wave (A·B·C)",
+    "text": "",
+    "x": 59,
+    "y": 503,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 511,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 287,
+    "y": 514,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Elliott triangle wave (A·B·C·D·E)",
+    "aria": "Elliott triangle wave (A·B·C·D·E)",
+    "text": "",
+    "x": 59,
+    "y": 543,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 551,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 299,
+    "y": 554,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Elliott double combo wave (W·X·Y)",
+    "aria": "Elliott double combo wave (W·X·Y)",
+    "text": "",
+    "x": 59,
+    "y": 583,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 591,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 317,
+    "y": 594,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Elliott triple combo wave (W·X·Y·X·Z)",
+    "aria": "Elliott triple combo wave (W·X·Y·X·Z)",
+    "text": "",
+    "x": 59,
+    "y": 623,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 631,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 331,
+    "y": 634,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Cycles",
+    "aria": "Cycles",
+    "text": "",
+    "x": 59,
+    "y": 676,
+    "w": 344,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Cycles",
+    "aria": "",
+    "text": "Cycles",
+    "x": 67,
+    "y": 682,
+    "w": 46,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Cyclic lines",
+    "aria": "Cyclic lines",
+    "text": "",
+    "x": 59,
+    "y": 700,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 708,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 171,
+    "y": 711,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Time cycles",
+    "aria": "Time cycles",
+    "text": "",
+    "x": 59,
+    "y": 740,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 748,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 174,
+    "y": 751,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Sine line",
+    "aria": "Sine line",
+    "text": "",
+    "x": 59,
+    "y": 780,
+    "w": 344,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 373,
+    "y": 788,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 155,
+    "y": 791,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Forecasting and measurement tools": {
+  "icon": "Long position",
+  "railY": 219,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Forecasting",
+    "aria": "Forecasting",
+    "text": "",
+    "x": 59,
+    "y": 200,
+    "w": 279,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Forecasting",
+    "aria": "",
+    "text": "Forecasting",
+    "x": 67,
+    "y": 206,
+    "w": 84,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Forecasting and measurement tools",
+    "aria": "",
+    "text": "Forecasting and measurement tools",
+    "x": 56,
+    "y": 207,
+    "w": 225,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Long position",
+    "aria": "Long position",
+    "text": "",
+    "x": 59,
+    "y": 224,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 232,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 184,
+    "y": 235,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Short position",
+    "aria": "Short position",
+    "text": "",
+    "x": 59,
+    "y": 264,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 272,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 187,
+    "y": 275,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Position forecast",
+    "aria": "Position forecast",
+    "text": "",
+    "x": 59,
+    "y": 304,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 312,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 205,
+    "y": 315,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bars pattern",
+    "aria": "Bars pattern",
+    "text": "",
+    "x": 59,
+    "y": 344,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 352,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 177,
+    "y": 355,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Ghost feed",
+    "aria": "Ghost feed",
+    "text": "",
+    "x": 59,
+    "y": 384,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 392,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 170,
+    "y": 395,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Sector",
+    "aria": "Sector",
+    "text": "",
+    "x": 59,
+    "y": 424,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 432,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 141,
+    "y": 435,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Volume-based",
+    "aria": "Volume-based",
+    "text": "",
+    "x": 59,
+    "y": 477,
+    "w": 279,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Volume-based",
+    "aria": "",
+    "text": "Volume-based",
+    "x": 67,
+    "y": 483,
+    "w": 92,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Anchored VWAP",
+    "aria": "Anchored VWAP",
+    "text": "",
+    "x": 59,
+    "y": 501,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 509,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 206,
+    "y": 512,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Fixed range volume profile",
+    "aria": "Fixed range volume profile",
+    "text": "",
+    "x": 59,
+    "y": 541,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 549,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 266,
+    "y": 552,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Anchored volume profile",
+    "aria": "Anchored volume profile",
+    "text": "",
+    "x": 59,
+    "y": 581,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 589,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 252,
+    "y": 592,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Measurers",
+    "aria": "Measurers",
+    "text": "",
+    "x": 59,
+    "y": 634,
+    "w": 279,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Measurers",
+    "aria": "",
+    "text": "Measurers",
+    "x": 67,
+    "y": 640,
+    "w": 73,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Price range",
+    "aria": "Price range",
+    "text": "",
+    "x": 59,
+    "y": 658,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 666,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 173,
+    "y": 669,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Date range",
+    "aria": "Date range",
+    "text": "",
+    "x": 59,
+    "y": 698,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 706,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 170,
+    "y": 709,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Date and price range",
+    "aria": "Date and price range",
+    "text": "",
+    "x": 59,
+    "y": 738,
+    "w": 279,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 308,
+    "y": 746,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 232,
+    "y": 749,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Geometric shapes": {
+  "icon": "Brush",
+  "railY": 257,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Brushes",
+    "aria": "Brushes",
+    "text": "",
+    "x": 59,
+    "y": 206,
+    "w": 259,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Brushes",
+    "aria": "",
+    "text": "Brushes",
+    "x": 67,
+    "y": 212,
+    "w": 56,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Brush",
+    "aria": "Brush",
+    "text": "",
+    "x": 59,
+    "y": 230,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 238,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 138,
+    "y": 241,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Geometric shapes",
+    "aria": "",
+    "text": "Geometric shapes",
+    "x": 56,
+    "y": 245,
+    "w": 124,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Highlighter",
+    "aria": "Highlighter",
+    "text": "",
+    "x": 59,
+    "y": 270,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 278,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 168,
+    "y": 281,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Arrows",
+    "aria": "Arrows",
+    "text": "",
+    "x": 59,
+    "y": 323,
+    "w": 259,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Arrows",
+    "aria": "",
+    "text": "Arrows",
+    "x": 67,
+    "y": 329,
+    "w": 52,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Arrow marker",
+    "aria": "Arrow marker",
+    "text": "",
+    "x": 59,
+    "y": 347,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 355,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 185,
+    "y": 358,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Arrow",
+    "aria": "Arrow",
+    "text": "",
+    "x": 59,
+    "y": 387,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 395,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 138,
+    "y": 398,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Arrow mark up",
+    "aria": "Arrow mark up",
+    "text": "",
+    "x": 59,
+    "y": 427,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 435,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 192,
+    "y": 438,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Arrow mark down",
+    "aria": "Arrow mark down",
+    "text": "",
+    "x": 59,
+    "y": 467,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 475,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 210,
+    "y": 478,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Shapes",
+    "aria": "Shapes",
+    "text": "",
+    "x": 59,
+    "y": 520,
+    "w": 259,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Shapes",
+    "aria": "",
+    "text": "Shapes",
+    "x": 67,
+    "y": 526,
+    "w": 47,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Rectangle",
+    "aria": "Rectangle",
+    "text": "",
+    "x": 59,
+    "y": 544,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 552,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 164,
+    "y": 555,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Alt + Shift + R",
+    "aria": "",
+    "text": "Alt + Shift + R",
+    "x": 206,
+    "y": 556,
+    "w": 74,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "Rotated rectangle",
+    "aria": "Rotated rectangle",
+    "text": "",
+    "x": 59,
+    "y": 584,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 592,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 212,
+    "y": 595,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Path",
+    "aria": "Path",
+    "text": "",
+    "x": 59,
+    "y": 624,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 632,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 130,
+    "y": 635,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Circle",
+    "aria": "Circle",
+    "text": "",
+    "x": 59,
+    "y": 664,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 672,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 137,
+    "y": 675,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Ellipse",
+    "aria": "Ellipse",
+    "text": "",
+    "x": 59,
+    "y": 704,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 712,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 142,
+    "y": 715,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Polyline",
+    "aria": "Polyline",
+    "text": "",
+    "x": 59,
+    "y": 744,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 752,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 150,
+    "y": 755,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Triangle",
+    "aria": "Triangle",
+    "text": "",
+    "x": 59,
+    "y": 784,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 792,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 151,
+    "y": 795,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Arc",
+    "aria": "Arc",
+    "text": "",
+    "x": 59,
+    "y": 824,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 832,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 122,
+    "y": 835,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Curve",
+    "aria": "Curve",
+    "text": "",
+    "x": 59,
+    "y": 864,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 872,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 138,
+    "y": 875,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Double curve",
+    "aria": "Double curve",
+    "text": "",
+    "x": 59,
+    "y": 904,
+    "w": 259,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 288,
+    "y": 912,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 184,
+    "y": 915,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Annotation tools": {
+  "icon": "Text",
+  "railY": 295,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Text and notes",
+    "aria": "Text and notes",
+    "text": "",
+    "x": 59,
+    "y": 276,
+    "w": 179,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Text and notes",
+    "aria": "",
+    "text": "Text and notes",
+    "x": 67,
+    "y": 282,
+    "w": 100,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Annotation tools",
+    "aria": "",
+    "text": "Annotation tools",
+    "x": 56,
+    "y": 283,
+    "w": 111,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Text",
+    "aria": "Text",
+    "text": "",
+    "x": 59,
+    "y": 300,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 308,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 127,
+    "y": 311,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Note",
+    "aria": "Note",
+    "text": "",
+    "x": 59,
+    "y": 340,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 348,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 131,
+    "y": 351,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Price note",
+    "aria": "Price note",
+    "text": "",
+    "x": 59,
+    "y": 380,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 388,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 164,
+    "y": 391,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Pin",
+    "aria": "Pin",
+    "text": "",
+    "x": 59,
+    "y": 420,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 428,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 121,
+    "y": 431,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Table",
+    "aria": "Table",
+    "text": "",
+    "x": 59,
+    "y": 460,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 468,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 134,
+    "y": 471,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Callout",
+    "aria": "Callout",
+    "text": "",
+    "x": 59,
+    "y": 500,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 508,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 145,
+    "y": 511,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Comment",
+    "aria": "Comment",
+    "text": "",
+    "x": 59,
+    "y": 540,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 548,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 162,
+    "y": 551,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Price label",
+    "aria": "Price label",
+    "text": "",
+    "x": 59,
+    "y": 580,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 588,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 166,
+    "y": 591,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Signpost",
+    "aria": "Signpost",
+    "text": "",
+    "x": 59,
+    "y": 620,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 628,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 155,
+    "y": 631,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Flag mark",
+    "aria": "Flag mark",
+    "text": "",
+    "x": 59,
+    "y": 660,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 668,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 163,
+    "y": 671,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Content",
+    "aria": "Content",
+    "text": "",
+    "x": 59,
+    "y": 713,
+    "w": 179,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Content",
+    "aria": "",
+    "text": "Content",
+    "x": 67,
+    "y": 719,
+    "w": 56,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Image",
+    "aria": "Image",
+    "text": "",
+    "x": 59,
+    "y": 737,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 745,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 140,
+    "y": 748,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Post",
+    "aria": "Post",
+    "text": "",
+    "x": 59,
+    "y": 777,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 785,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 129,
+    "y": 788,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Idea",
+    "aria": "Idea",
+    "text": "",
+    "x": 59,
+    "y": 817,
+    "w": 179,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Add to favorites",
+    "aria": "Add to favorites",
+    "text": "",
+    "x": 208,
+    "y": 825,
+    "w": 24,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Click here to learn more",
+    "aria": "",
+    "text": "",
+    "x": 128,
+    "y": 828,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Icons": {
+  "icon": "Icon",
+  "railY": 333,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Icons",
+    "aria": "",
+    "text": "Icons",
+    "x": 56,
+    "y": 321,
+    "w": 49,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Emojis",
+    "aria": "",
+    "text": "Emojis",
+    "x": 134,
+    "y": 913,
+    "w": 48,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Stickers",
+    "aria": "",
+    "text": "Stickers",
+    "x": 206,
+    "y": 913,
+    "w": 57,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Icons",
+    "aria": "",
+    "text": "Icons",
+    "x": 287,
+    "y": 913,
+    "w": 38,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Magnets": {
+  "icon": "Magnet mode snaps drawings placed near price b",
+  "railY": 473,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Weak magnet",
+    "aria": "Weak magnet",
+    "text": "",
+    "x": 59,
+    "y": 454,
+    "w": 190,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Magnets",
+    "aria": "",
+    "text": "Magnets",
+    "x": 56,
+    "y": 461,
+    "w": 68,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Weak magnet",
+    "aria": "",
+    "text": "Weak magnet",
+    "x": 95,
+    "y": 465,
+    "w": 86,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Strong magnet",
+    "aria": "Strong magnet",
+    "text": "",
+    "x": 59,
+    "y": 494,
+    "w": 190,
+    "h": 40,
+    "tag": "div"
+   },
+   {
+    "label": "Strong magnet",
+    "aria": "",
+    "text": "Strong magnet",
+    "x": 95,
+    "y": 505,
+    "w": 92,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Snap to indicators",
+    "aria": "Snap to indicators",
+    "text": "",
+    "x": 59,
+    "y": 547,
+    "w": 190,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Snap to indicators",
+    "aria": "",
+    "text": "Snap to indicators",
+    "x": 67,
+    "y": 554,
+    "w": 112,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Lock options": {
+  "icon": "Lock drawings and indicators",
+  "railY": 549,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Lock drawings",
+    "aria": "Lock drawings",
+    "text": "",
+    "x": 59,
+    "y": 530,
+    "w": 109,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Lock options",
+    "aria": "",
+    "text": "Lock options",
+    "x": 56,
+    "y": 537,
+    "w": 91,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Lock drawings",
+    "aria": "",
+    "text": "Lock drawings",
+    "x": 67,
+    "y": 537,
+    "w": 90,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Lock indicators",
+    "aria": "Lock indicators",
+    "text": "",
+    "x": 59,
+    "y": 562,
+    "w": 109,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Lock indicators",
+    "aria": "",
+    "text": "Lock indicators",
+    "x": 67,
+    "y": 569,
+    "w": 93,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Lock all",
+    "aria": "Lock all",
+    "text": "",
+    "x": 59,
+    "y": 594,
+    "w": 109,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Lock all",
+    "aria": "",
+    "text": "Lock all",
+    "x": 67,
+    "y": 601,
+    "w": 47,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Hide options": {
+  "icon": "Hide all drawings",
+  "railY": 587,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Hide drawings",
+    "aria": "Hide drawings",
+    "text": "",
+    "x": 59,
+    "y": 568,
+    "w": 175,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Hide options",
+    "aria": "",
+    "text": "Hide options",
+    "x": 56,
+    "y": 575,
+    "w": 90,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Hide drawings",
+    "aria": "",
+    "text": "Hide drawings",
+    "x": 67,
+    "y": 575,
+    "w": 89,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Hide indicators",
+    "aria": "Hide indicators",
+    "text": "",
+    "x": 59,
+    "y": 600,
+    "w": 175,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicators",
+    "aria": "",
+    "text": "Hide indicators",
+    "x": 67,
+    "y": 607,
+    "w": 93,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Hide positions and orders",
+    "aria": "Hide positions and orders",
+    "text": "",
+    "x": 59,
+    "y": 632,
+    "w": 175,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Hide positions and orders",
+    "aria": "",
+    "text": "Hide positions and orders",
+    "x": 67,
+    "y": 639,
+    "w": 159,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Hide all",
+    "aria": "Hide all",
+    "text": "",
+    "x": 59,
+    "y": 664,
+    "w": 175,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Hide all",
+    "aria": "",
+    "text": "Hide all",
+    "x": 67,
+    "y": 671,
+    "w": 47,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ },
+ "Remove options": {
+  "icon": "Remove objects",
+  "railY": 638,
+  "rows": [
+   {
+    "label": "Chart #1",
+    "aria": "Chart #1",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1514,
+    "h": 869,
+    "tag": "div"
+   },
+   {
+    "label": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "aria": "Chart for BITSTAMP:BTCUSD, 5 minutes",
+    "text": "",
+    "x": 56,
+    "y": 42,
+    "w": 1458,
+    "h": 841,
+    "tag": "canvas"
+   },
+   {
+    "label": "Flag symbol",
+    "aria": "",
+    "text": "",
+    "x": 325,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 353,
+    "y": 46,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 48,
+    "w": 164,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Change interval",
+    "aria": "",
+    "text": "",
+    "x": 226,
+    "y": 48,
+    "w": 21,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "B",
+    "aria": "",
+    "text": "B",
+    "x": 65,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Change symbol",
+    "aria": "Change symbol",
+    "text": "Bitcoin / U.S. Dollar",
+    "x": 87,
+    "y": 49,
+    "w": 139,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Change interval",
+    "aria": "Change interval",
+    "text": "5",
+    "x": 238,
+    "y": 49,
+    "w": 9,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "Bitstamp",
+    "aria": "",
+    "text": "Bitstamp",
+    "x": 259,
+    "y": 49,
+    "w": 62,
+    "h": 18,
+    "tag": "div"
+   },
+   {
+    "label": "Market open",
+    "aria": "",
+    "text": "",
+    "x": 329,
+    "y": 49,
+    "w": 18,
+    "h": 18,
+    "tag": "button"
+   },
+   {
+    "label": "O",
+    "aria": "",
+    "text": "O",
+    "x": 355,
+    "y": 51,
+    "w": 11,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 366,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "H",
+    "aria": "",
+    "text": "H",
+    "x": 412,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,177",
+    "aria": "",
+    "text": "83,177",
+    "x": 422,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "L",
+    "aria": "",
+    "text": "L",
+    "x": 468,
+    "y": 51,
+    "w": 8,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,149",
+    "aria": "",
+    "text": "83,149",
+    "x": 476,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "C",
+    "aria": "",
+    "text": "C",
+    "x": 522,
+    "y": 51,
+    "w": 10,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,150",
+    "aria": "",
+    "text": "83,150",
+    "x": 532,
+    "y": 51,
+    "w": 40,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "−27 (−0.03%)",
+    "aria": "",
+    "text": "−27 (−0.03%)",
+    "x": 578,
+    "y": 51,
+    "w": 79,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "83,171",
+    "aria": "",
+    "text": "83,171",
+    "x": 76,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "83,171",
+    "aria": "",
+    "text": "83,171",
+    "x": 156,
+    "y": 76,
+    "w": 37,
+    "h": 16,
+    "tag": "span"
+   },
+   {
+    "label": "Sell",
+    "aria": "",
+    "text": "Sell",
+    "x": 76,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Buy",
+    "aria": "",
+    "text": "Buy",
+    "x": 156,
+    "y": 92,
+    "w": 37,
+    "h": 12,
+    "tag": "span"
+   },
+   {
+    "label": "Hide",
+    "aria": "Hide",
+    "text": "",
+    "x": 124,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Settings",
+    "aria": "Settings",
+    "text": "",
+    "x": 152,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Remove",
+    "aria": "Remove",
+    "text": "",
+    "x": 180,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "More",
+    "aria": "More",
+    "text": "",
+    "x": 208,
+    "y": 112,
+    "w": 28,
+    "h": 24,
+    "tag": "button"
+   },
+   {
+    "label": "Volume · BTC",
+    "aria": "",
+    "text": "",
+    "x": 62,
+    "y": 114,
+    "w": 58,
+    "h": 20,
+    "tag": "div"
+   },
+   {
+    "label": "Vol · BTC",
+    "aria": "",
+    "text": "Vol · BTC",
+    "x": 65,
+    "y": 117,
+    "w": 55,
+    "h": 15,
+    "tag": "div"
+   },
+   {
+    "label": "Hide indicator legend",
+    "aria": "Hide indicator legend",
+    "text": "",
+    "x": 65,
+    "y": 139,
+    "w": 29,
+    "h": 21,
+    "tag": "button"
+   },
+   {
+    "label": "Remove 0 drawings",
+    "aria": "Remove 0 drawings",
+    "text": "",
+    "x": 59,
+    "y": 619,
+    "w": 277,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Remove options",
+    "aria": "",
+    "text": "Remove options",
+    "x": 56,
+    "y": 626,
+    "w": 112,
+    "h": 24,
+    "tag": "div"
+   },
+   {
+    "label": "Remove 0 drawings",
+    "aria": "",
+    "text": "Remove 0 drawings",
+    "x": 67,
+    "y": 626,
+    "w": 124,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Remove 1 indicator",
+    "aria": "Remove 1 indicator",
+    "text": "",
+    "x": 59,
+    "y": 651,
+    "w": 277,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Remove 1 indicator",
+    "aria": "",
+    "text": "Remove 1 indicator",
+    "x": 67,
+    "y": 658,
+    "w": 121,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Remove 0 drawings & 1 indicator",
+    "aria": "Remove 0 drawings & 1 indicator",
+    "text": "",
+    "x": 59,
+    "y": 683,
+    "w": 277,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Remove 0 drawings & 1 indicator",
+    "aria": "",
+    "text": "Remove 0 drawings & 1 indicator",
+    "x": 67,
+    "y": 690,
+    "w": 205,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "Always remove locked drawings",
+    "aria": "Always remove locked drawings",
+    "text": "",
+    "x": 59,
+    "y": 728,
+    "w": 277,
+    "h": 32,
+    "tag": "div"
+   },
+   {
+    "label": "Always remove locked drawings",
+    "aria": "",
+    "text": "Always remove locked drawings",
+    "x": 67,
+    "y": 735,
+    "w": 199,
+    "h": 18,
+    "tag": "span"
+   },
+   {
+    "label": "1 day in 1 minute intervals",
+    "aria": "1 day in 1 minute intervals",
+    "text": "",
+    "x": 64,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 days in 5 minutes intervals",
+    "aria": "5 days in 5 minutes intervals",
+    "text": "",
+    "x": 94,
+    "y": 912,
+    "w": 30,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 month in 30 minutes intervals",
+    "aria": "1 month in 30 minutes intervals",
+    "text": "",
+    "x": 124,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "3 months in 1 hour intervals",
+    "aria": "3 months in 1 hour intervals",
+    "text": "",
+    "x": 155,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "6 months in 2 hours intervals",
+    "aria": "6 months in 2 hours intervals",
+    "text": "",
+    "x": 187,
+    "y": 912,
+    "w": 31,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Year to day in 1 day intervals",
+    "aria": "Year to day in 1 day intervals",
+    "text": "",
+    "x": 218,
+    "y": 912,
+    "w": 40,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1 year in 1 day intervals",
+    "aria": "1 year in 1 day intervals",
+    "text": "",
+    "x": 258,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "5 years in 1 week intervals",
+    "aria": "5 years in 1 week intervals",
+    "text": "",
+    "x": 287,
+    "y": 912,
+    "w": 29,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "All data in 1 month intervals",
+    "aria": "All data in 1 month intervals",
+    "text": "",
+    "x": 316,
+    "y": 912,
+    "w": 28,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "Go to",
+    "aria": "Go to",
+    "text": "",
+    "x": 353,
+    "y": 912,
+    "w": 38,
+    "h": 38,
+    "tag": "button"
+   },
+   {
+    "label": "1D",
+    "aria": "",
+    "text": "1D",
+    "x": 70,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5D",
+    "aria": "",
+    "text": "5D",
+    "x": 100,
+    "y": 923,
+    "w": 18,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1M",
+    "aria": "",
+    "text": "1M",
+    "x": 130,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "3M",
+    "aria": "",
+    "text": "3M",
+    "x": 161,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "6M",
+    "aria": "",
+    "text": "6M",
+    "x": 193,
+    "y": 923,
+    "w": 19,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "YTD",
+    "aria": "",
+    "text": "YTD",
+    "x": 224,
+    "y": 923,
+    "w": 28,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "1Y",
+    "aria": "",
+    "text": "1Y",
+    "x": 264,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "5Y",
+    "aria": "",
+    "text": "5Y",
+    "x": 293,
+    "y": 923,
+    "w": 17,
+    "h": 16,
+    "tag": "div"
+   },
+   {
+    "label": "All",
+    "aria": "",
+    "text": "All",
+    "x": 322,
+    "y": 923,
+    "w": 16,
+    "h": 16,
+    "tag": "div"
+   }
+  ]
+ }
+}

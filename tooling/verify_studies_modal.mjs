@@ -3,6 +3,7 @@
 // cards === 3 + persisted studies), 3 horizontals + 2 trends placed without
 // reselecting, Escape returns to cross, zero pageerrors.
 import { chromium } from 'playwright';
+import { pickTool, openMenu, clickGlyph } from './rail_helpers.mjs';
 import { mkdirSync } from 'node:fs';
 mkdirSync('tooling/shots', { recursive: true });
 const target = process.argv[2] || 'http://localhost:8787/';
@@ -111,22 +112,22 @@ try {
   };
 
   const beforeH = await drawingsCount();
-  await page.click('#rail button[data-tool="shape"]');
-  await page.click('#shape-menu button:has-text("Horizontal line")');
+  await pickTool(page, 'horizontal');
   // One tool selection, three placements (no reselect).
   await clickOverlay(0.3, 0.3);
   await clickOverlay(0.5, 0.5);
   await clickOverlay(0.7, 0.4);
   const afterH = await drawingsCount();
   if (afterH - beforeH !== 3) throw new Error(`expected +3 horizontals, got +${afterH - beforeH}`);
-  // Tool must still be selected (unlimited-placement guarantee).
-  // horizontal lives under the shape submenu, so the shape button carries active
-  const hActive = await page.locator('#rail button[data-tool="shape"].active').count();
+  // Tool must still be selected (unlimited-placement guarantee). The rail
+  // highlights the group that OWNS the armed tool — horizontal line lives in
+  // "Trend tools", so that glyph carries the active state.
+  const hActive = await page.locator('#rail .rail-btn[data-group-id="lines"].active').count();
   if (hActive !== 1) throw new Error('horizontal tool did not stay selected across placements');
   console.log('3 horizontals placed without reselecting');
 
   const beforeT = await drawingsCount();
-  await page.click('#rail button[data-tool="trend"]');
+  await clickGlyph(page, 'lines');
   // Two trends = 4 clicks (anchor + endpoint each), single tool selection.
   await clickOverlay(0.25, 0.6);
   await clickOverlay(0.4, 0.4);
@@ -134,14 +135,14 @@ try {
   await clickOverlay(0.75, 0.35);
   const afterT = await drawingsCount();
   if (afterT - beforeT !== 2) throw new Error(`expected +2 trends, got +${afterT - beforeT}`);
-  const tActive = await page.locator('#rail button[data-tool="trend"].active').count();
+  const tActive = await page.locator('#rail .rail-btn[data-group-id="lines"].active').count();
   if (tActive !== 1) throw new Error('trend tool did not stay selected across placements');
   console.log('2 trends placed without reselecting');
 
   // --- Escape returns to cross ---
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
-  const crossActive = await page.locator('#rail button[data-tool="cross"].active').count();
+  const crossActive = await page.locator('#rail .rail-btn[data-group-id="cursors"].active').count();
   if (crossActive !== 1) throw new Error('Escape did not return to cross tool');
   console.log('Escape returns to cross');
 

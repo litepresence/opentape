@@ -1,0 +1,724 @@
+{
+ "source": "tradingview.com/chart/?symbol=BITSTAMP%3ABTCUSD (anonymous session, 1920x950)",
+ "capturedBy": "tooling/tv_menu_capture.mjs",
+ "note": "Labels/order only — no code or assets copied. Icons grid renders as an emoji picker.",
+ "groups": [
+  {
+   "group": "Cursors",
+   "icon": "Cross",
+   "sections": [
+    {
+     "title": "",
+     "items": [
+      {
+       "label": "Cross",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Dot",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Arrow",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Demonstration",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Magic",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Eraser",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Values tooltip on long press",
+       "hotkey": "",
+       "toggle": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Trend tools",
+   "icon": "Trendline",
+   "sections": [
+    {
+     "title": "Lines",
+     "items": [
+      {
+       "label": "Trendline",
+       "hotkey": "Alt + T",
+       "toggle": false
+      },
+      {
+       "label": "Ray",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Info line",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Extended line",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Trend angle",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Horizontal line",
+       "hotkey": "Alt + H",
+       "toggle": false
+      },
+      {
+       "label": "Horizontal ray",
+       "hotkey": "Alt + J",
+       "toggle": false
+      },
+      {
+       "label": "Vertical line",
+       "hotkey": "Alt + V",
+       "toggle": false
+      },
+      {
+       "label": "Crossline",
+       "hotkey": "Alt + C",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Channels",
+     "items": [
+      {
+       "label": "Parallel channel",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Regression trend",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Flat top/bottom",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Disjoint channel",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Pitchforks",
+     "items": [
+      {
+       "label": "Pitchfork",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Schiff pitchfork",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Modified Schiff pitchfork",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Inside pitchfork",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Gann and Fibonacci tools",
+   "icon": "Fib retracement",
+   "sections": [
+    {
+     "title": "Fibonacci",
+     "items": [
+      {
+       "label": "Fib retracement",
+       "hotkey": "Alt + F",
+       "toggle": false
+      },
+      {
+       "label": "Trend-based fib extension",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Fib channel",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Fib time zone",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Fib speed resistance fan",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Trend-based fib time",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Fib circles",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Fib spiral",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Fib speed resistance arcs",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Fib wedge",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Pitchfan",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Gann",
+     "items": [
+      {
+       "label": "Gann box",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Gann square fixed",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Gann square",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Gann fan",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Patterns",
+   "icon": "XABCD pattern",
+   "sections": [
+    {
+     "title": "Chart patterns",
+     "items": [
+      {
+       "label": "XABCD pattern",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Cypher pattern",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Head and shoulders",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "ABCD pattern",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Triangle pattern",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Three drives pattern",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Elliott waves",
+     "items": [
+      {
+       "label": "Elliott impulse wave (1·2·3·4·5)",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Elliott correction wave (A·B·C)",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Elliott triangle wave (A·B·C·D·E)",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Elliott double combo wave (W·X·Y)",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Elliott triple combo wave (W·X·Y·X·Z)",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Cycles",
+     "items": [
+      {
+       "label": "Cyclic lines",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Time cycles",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Sine line",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Forecasting and measurement tools",
+   "icon": "Long position",
+   "sections": [
+    {
+     "title": "Forecasting",
+     "items": [
+      {
+       "label": "Long position",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Short position",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Position forecast",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Bars pattern",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Ghost feed",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Sector",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Volume-based",
+     "items": [
+      {
+       "label": "Anchored VWAP",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Fixed range volume profile",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Anchored volume profile",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Measurers",
+     "items": [
+      {
+       "label": "Price range",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Date range",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Date and price range",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Geometric shapes",
+   "icon": "Brush",
+   "sections": [
+    {
+     "title": "Brushes",
+     "items": [
+      {
+       "label": "Brush",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Highlighter",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Arrows",
+     "items": [
+      {
+       "label": "Arrow marker",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Arrow",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Arrow mark up",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Arrow mark down",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Shapes",
+     "items": [
+      {
+       "label": "Rectangle",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Rotated rectangle",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Path",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Circle",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Ellipse",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Polyline",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Triangle",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Arc",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Curve",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Double curve",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Annotation tools",
+   "icon": "Text",
+   "sections": [
+    {
+     "title": "Text and notes",
+     "items": [
+      {
+       "label": "Text",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Note",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Price note",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Pin",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Table",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Callout",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Comment",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Price label",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Signpost",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Flag mark",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    },
+    {
+     "title": "Content",
+     "items": [
+      {
+       "label": "Image",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Post",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Idea",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Icons",
+   "icon": "Icon",
+   "sections": [],
+   "picker": "emoji"
+  },
+  {
+   "group": "Magnets",
+   "icon": "Magnet mode snaps drawings placed near price b",
+   "sections": [
+    {
+     "title": "",
+     "items": [
+      {
+       "label": "Weak magnet",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Strong magnet",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Snap to indicators",
+       "hotkey": "",
+       "toggle": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Lock options",
+   "icon": "Lock drawings and indicators",
+   "sections": [
+    {
+     "title": "",
+     "items": [
+      {
+       "label": "Lock drawings",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Lock indicators",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Lock all",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Hide options",
+   "icon": "Hide all drawings",
+   "sections": [
+    {
+     "title": "",
+     "items": [
+      {
+       "label": "Hide drawings",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Hide indicators",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Hide positions and orders",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Hide all",
+       "hotkey": "",
+       "toggle": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Remove options",
+   "icon": "Remove objects",
+   "sections": [
+    {
+     "title": "",
+     "items": [
+      {
+       "label": "Remove 0 drawings",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Remove 1 indicator",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Remove 0 drawings & 1 indicator",
+       "hotkey": "",
+       "toggle": false
+      },
+      {
+       "label": "Always remove locked drawings",
+       "hotkey": "",
+       "toggle": true
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
