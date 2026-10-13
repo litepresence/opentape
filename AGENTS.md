@@ -8,7 +8,7 @@ Reference: `Screenshot from 2026-10-12 18-38-59.png` in this directory. That ima
 ## Run (Python only — no npm, no build, no server)
 ```bash
 python3 -m http.server 8787   # from the repo root
-# open http://localhost:8787/ — live Binance data, embedded fallback offline
+# open http://localhost:8787/ — live Binance data; offline/blocked shows an error state (no fake candles)
 ```
 `npm install` is needed only for the Playwright verify/audit harness (`npm run verify`); unit tests are stdlib-only (`npm test`, or bare `node --test tests/*.test.mjs` with no install at all).
 
@@ -16,8 +16,9 @@ python3 -m http.server 8787   # from the repo root
 1. **Pixel fidelity:** Top bar, left drawing rail (15 icons), OHLC header + SELL/BUY pills, candle chart (May–Oct), volume, right price axis (56k–90k), bottom time axis + range footer (1D–All), UTC clock, gear, TradingView watermark — match fonts, spacing, colors, dotted grid.
 2. **Pure canvas engine:** Two stacked `<canvas>` (base: grid/candles/volume, overlay: crosshair/drawings). No chart libs, no frameworks. Vanilla JS modules only.
 3. **Full functional (gold cup, no quirks):** Pan/zoom, crosshair + tooltip, price/time alerts, drawings (trend/horizontal/fib/text) with magnet snap + undo/redo, indicators (SMA/EMA/RSI), replay mode, symbol/timeframe/chart-type switching, layout save to localStorage.
-4. **Data via CCXT browser bundle:** pinned `<script src="https://cdn.jsdelivr.net/npm/ccxt@4/dist/ccxt.browser.js" async>` exposes global `ccxt` (Binance default: `BTC/USD`→`BTC/USDT`). `js/data.js` (`resolveMarket` exchange routing, `whenCcxt` 15s wait on `ccxt-ready`, `fetchOHLCV` with `enableRateLimit`, `liveOnly` flag for watchlist) fetches live public OHLCV. Embedded `data/btcusd-1d.json` paints first, upgrades to live when the bundle is ready (reload-path failures keep last good data + toast).
+4. **Data via CCXT browser bundle:** pinned `<script src="https://cdn.jsdelivr.net/npm/ccxt@4/dist/ccxt.browser.js" async>` exposes global `ccxt` (Binance default: `BTC/USD`→`BTC/USDT`). `js/data.js` (`resolveMarket` exchange routing, `whenCcxt` 15s wait on `ccxt-ready`, `fetchOHLCV` with `enableRateLimit`) fetches live public OHLCV. No embedded dataset — failures surface as a loading/error state with retry, never as another market's bars; reload-path failures keep last good data + toast.
 5. **Themes + extras:** Dark default + light toggle via CSS vars + canvas palette swap (choice persisted). Extras beyond original: multi-layout save, PNG export.
+6. **Live-only data:** no embedded/cached candles ship — a mislabeled market is worse than an empty chart.
 6. **Responsive desktop:** Fluid layout matching ~1980px reference, reflows to smaller desktop windows. Mobile deferred.
 
 ## Scope / Non-Goals V1
@@ -30,7 +31,6 @@ python3 -m http.server 8787   # from the repo root
 - `styles.css` — CSS vars `--bg`, `--grid`, `--up:#089981`, `--down:#F23645`, light/dark via `[data-theme]`.
 - `js/viewstate.js` — single truth: visible range, price scale, theme, drawings, alerts.
 - `js/chart.js` — base canvas render; `js/axes.js` — price/time axes; `js/overlay.js` — crosshair/drawings; `js/data.js` — browser-CCXT driver (global `ccxt` bundle, `resolveMarket` routing, `whenCcxt`/`fetchOHLCV`); `js/drawings.js`, `js/indicators.js`, `js/ui.js` — toolbar wiring.
-- `data/btcusd-1d.json` — embedded fallback (first paint + offline).
 
 ## Conventions
 - Vanilla only: no React/Vue/Tailwind, no chart libs. `ccxt` allowed only via the pinned CDN script tag (no npm dep, no server code).
@@ -40,7 +40,7 @@ python3 -m http.server 8787   # from the repo root
 
 ## Verification (Definition of Done)
 - Side-by-side with reference PNG at 1920px: layout drift <2px, colors ΔE <3.
-- Open `index.html` via any static server (or `github.io`): candles paint from embedded JSON, then upgrade to live when the bundle is ready, with no console errors.
+- Open `index.html` via any static server (or `github.io`): candles paint from live CCXT data once loaded; a blocked bundle/offline shows the error + retry state, with no console errors.
 - Pan/zoom at 60fps, crosshair + OHLC correct, drawings persist after reload, light/dark toggle without flash.
 - No console errors.
 

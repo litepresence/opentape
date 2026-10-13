@@ -7,8 +7,7 @@ Stack: vanilla HTML/JS/CSS + Canvas, CCXT browser bundle (no backend). Responsiv
 - Frontend: `index.html`, `styles.css`, `js/` modules. No frameworks, no chart libs.
 - `js/viewstate.js`: single truth `{ symbol, timeframe, visible {from,to}, price {min,max}, theme, drawings[], alerts[], replayIndex }`. All UI mutations go through ViewState → `requestRender()`.
 - Two stacked canvases in `.chart-area`: `#base` (grid, candles, volume, axes decorations) + `#overlay` (crosshair, drawing previews, alert lines). DevicePixelRatio scaling.
-- Backend: none. `js/data.js` drives global `ccxt` (pinned `ccxt@4` browser bundle via jsDelivr `async` script tag); `resolveMarket` routing (`exchange:SYM` prefix or Binance default `BTC/USD`→`BTC/USDT`); `whenCcxt` 15s wait on `ccxt-ready`; `fetchOHLCV` with `enableRateLimit`. Embedded `data/btcusd-1d.json` is the first-paint fallback.
-- `data/btcusd-1d.json`: ~150 daily candles traced from screenshot for pixel-identical first paint offline.
+- Backend: none. `js/data.js` drives global `ccxt` (pinned `ccxt@4` browser bundle via jsDelivr `async` script tag); `resolveMarket` routing (`exchange:SYM` prefix or Binance default `BTC/USD`→`BTC/USDT`); `whenCcxt` 15s wait on `ccxt-ready`; `fetchOHLCV` with `enableRateLimit`.
 
 ## 2. Components
 - **TopBar (48px):** hamburger, symbol search `BTCUSD`, premium diamond, compare `+`, timeframe `D`, candle-type, `Indicators`, templates grid, `Alert`, `Replay`, undo/redo, layout box, `Save` dropdown. SVG icons, 14px system font.
@@ -17,7 +16,7 @@ Stack: vanilla HTML/JS/CSS + Canvas, CCXT browser bundle (no backend). Responsiv
 - Isolation: each component exposes `render(state)`; only imports ViewState. No direct canvas writes from event handlers.
 
 ## 3. Data Flow
-1. Load: paint embedded `data/btcusd-1d.json` instantly → upgrade to live via `fetchOHLCV` when the bundle is ready → reload-path failures keep last good data + toast. Watchlist uses `liveOnly` so offline rows keep em-dash instead of cached BTC data.
+1. Load: show loading state → paint live rows from `fetchOHLCV` → failures show an error + retry (no embedded dataset). Reload-path failures keep last good data + toast; watchlist shows em-dash when a venue is unreachable.
 2. Normalize to `{t,o,h,l,c,v}` sorted ascending.
 3. ViewState computes visible window (default: May→mid-Oct) + auto price min/max with 8% padding.
 4. `chart.js` draws: dotted grid (`#e0e3eb`, 1px dotted), candles (up `#089981`, down `#F23645`, body 60% of step, wick 1px), volume bars (same color, 40% alpha, bottom 15% pane), last-price dotted red line + right-axis tag `82473` + time `01:21:01`, volume tag `1.32K`.
@@ -36,7 +35,7 @@ Stack: vanilla HTML/JS/CSS + Canvas, CCXT browser bundle (no backend). Responsiv
 - Extras beyond original: multi-layout save, PNG export (`canvas.toDataURL` composite), keyboard shortcuts.
 
 ## 5. Error Handling
-- Bundle blocked/offline → embedded fallback + warning `Live data unavailable — showing cached`; symbol/timeframe/range reload failures keep last good data + toast `Live data unavailable — keeping <symbol>`.
+- Bundle blocked/offline on first load → error state with retry; symbol/timeframe/range reload failures keep last good data + toast `Live data unavailable — keeping <symbol>`.
 - Exchange rejects symbol → keep last good data + toast `Live data unavailable — keeping <symbol>`.
 - CCXT rate-limit → `enableRateLimit` on the exchange instance + retry on next interaction (reload / range / watchlist refresh).
 - Invalid symbol/timeframe → header shows error state, chart keeps last good data.

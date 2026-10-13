@@ -14,8 +14,9 @@ python3 -m http.server 8787   # from the repo root
 # open http://localhost:8787/
 ```
 
-That's the whole thing — Python only. Live Binance candles load automatically;
-offline it paints embedded data with a notice. `npm install` exists solely for
+That's the whole thing — Python only. Live Binance candles load automatically from
+the browser; if the data can't load you get an explicit error and a retry rather
+than a stale or mislabeled chart. `npm install` exists solely for
 the optional Playwright verify/audit harness (`npm run verify`); the 46 unit
 tests are stdlib-only (`npm test`, or bare `node --test tests/*.test.mjs`).
 
@@ -69,8 +70,8 @@ All plots below are rendered by the app itself (BTCUSD daily, dark theme).
 - `js/viewstate.js` — single source of truth; every mutation flows through it.
 - `js/chart.js` + `js/axes.js` + `js/overlay.js` — stacked canvases: market
   data, crosshair/drawings, axes.
-- `js/data.js` — CCXT browser bundle (Binance default) with embedded
-  first-paint fallback; GET-only public data, no keys, no trading desk.
+- `js/data.js` — CCXT browser bundle (Binance default), live public data only;
+  GET-only, no keys, no trading desk, no embedded dataset.
 - `js/studies.js` + `indicators/` — 85-study registry (overlay/bands/pane/
   multiline/transform) over vendored pure-math functions.
 - `tooling/` — Playwright harness: verify, control audits, screenshot recipes.

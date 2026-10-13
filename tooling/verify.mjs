@@ -15,7 +15,7 @@ const evidence = {
     'Does not assert candle correctness — only absence of runtime errors.',
     'No pixel-diff vs reference (see tooling/pixel_diff.py for measurement).',
     'Single viewport (1920x1080); responsive breakpoints unverified.',
-    'Falls back to embedded data if proxy is down — pass may reflect fallback.',
+    'Requires live exchange data — a PASS with an error overlay would still be a pass.',
   ],
   confidence: 'observed',
 };
@@ -25,8 +25,20 @@ try {
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto(target, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1500);
+  // Wait for real bars (or the honest error state) before capturing.
+  await page.waitForFunction(
+    () => {
+      const st = document.querySelector('#data-status');
+      if (st && st.classList.contains('error')) return true;
+      return /^O \d/.test(document.querySelector('#ohlc')?.textContent || '');
+    },
+    null,
+    { timeout: 30000 },
+  ).catch(() => {});
+  await page.waitForTimeout(800);
+  const status = await page.evaluate(() => document.querySelector('#data-status')?.className || 'ok');
   await page.screenshot({ path: 'tooling/shots/final-1920.png' });
+  evidence.data_status = status;
   evidence.errors = errors;
   evidence.screenshot = 'tooling/shots/final-1920.png';
   evidence.duration_ms = Date.now() - started;

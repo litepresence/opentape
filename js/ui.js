@@ -1,5 +1,5 @@
 // js/ui.js
-import { fetchOHLCV, wasLive, normalizeOHLCV, resolveMarket } from './data.js';
+import { fetchOHLCV, resolveMarket } from './data.js';
 import { renderBase, PAL, stuColor, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts, drawPending } from './overlay.js';
@@ -374,6 +374,10 @@ export function initUI(v) {
     if (!(price.max > price.min)) price.max = price.min + 1000;
     return { visible: { from: list[0].t, to: list[list.length - 1].t }, price };
   };
+  // Live-only boot: show a loading state until real bars arrive, then paint.
+  // On failure show the error + retry. No embedded dataset exists by design —
+  // painting BTC candles under an ETH header would be misleading.
+  const dataStatus = { state: 'loading', msg: '' };
   const paintBootRows = () => {
     if (!rows.length) return;
     fitCanvases();
@@ -392,19 +396,44 @@ export function initUI(v) {
     if (cur.visible && !fullVisible) fullVisible = { ...cur.visible };
     if (cur.price && !fullPrice) fullPrice = { ...cur.price };
   };
-  // Embedded-first boot: paint local fallback immediately (never awaits
-  // whenCcxt), then upgrade to live rows only when the fetch actually
-  // returned live exchange data (wasLive guard prevents mislabeling
-  // embedded BTC rows as another symbol).
-  fetch('./data/btcusd-1d.json').then((r) => r.json()).then((j) => {
-    const fb = normalizeOHLCV(j);
-    if (fb.length && !rows.length) { rows = fb; paintBootRows(); }
-  }).catch(() => { /* embedded missing — live upgrade below still tries */ }).finally(() => {
-    fetchOHLCV({ symbol: v.get().symbol || 'BTC/USD', timeframe: v.get().interval || '1d' }).then((data) => {
-      if (!wasLive()) return;
-      if (Array.isArray(data) && data.length) { rows = data; paintBootRows(); }
-    }).catch(() => { /* offline + fallback failed — keep embedded/empty, no unhandled rejection */ });
-  });
+  const setDataStatus = (state, msg = '') => {
+    dataStatus.state = state;
+    dataStatus.msg = msg;
+    let el = document.querySelector('#data-status');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'data-status';
+      document.querySelector('#canvas-stack')?.appendChild(el);
+      el.addEventListener('click', (e) => {
+        if (e.target.closest('[data-retry]')) loadData();
+      });
+    }
+    el.className = state;
+    el.innerHTML = '';
+    if (state === 'loading') {
+      el.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Loading market data…</span>';
+    } else if (state === 'error') {
+      el.innerHTML = '<strong>No market data</strong><span class="msg"></span><button type="button" data-retry>Retry</button>';
+      el.querySelector('.msg').textContent = msg;
+    }
+    el.style.display = state === 'ok' || !rows.length ? 'none' : '';
+    if (state === 'error') el.style.display = '';
+  };
+  const loadData = async () => {
+    const s = v.get();
+    setDataStatus('loading');
+    try {
+      const data = await fetchOHLCV({ symbol: s.symbol || 'BTC/USD', timeframe: s.interval || '1d' });
+      if (!Array.isArray(data) || !data.length) throw new Error('No rows returned');
+      rows = data;
+      paintBootRows();
+      setDataStatus('ok');
+    } catch (e) {
+      console.warn('Market data unavailable', e?.message ?? e);
+      setDataStatus('error', e?.message ?? String(e));
+    }
+  };
+  loadData();
   let resizeQueued = false;
   window.addEventListener('resize', () => {
     if (resizeQueued) return;
