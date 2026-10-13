@@ -46,6 +46,7 @@ export function initUI(v) {
     interval: s.interval || '1d',
     locked: !!s.locked,
     drawingsHidden: !!s.drawingsHidden,
+    priceAuto: s.priceAuto !== false,
   });
   const saveLayout = () => {
     try {
@@ -83,6 +84,7 @@ export function initUI(v) {
         interval: parsed.interval,
         locked: parsed.locked,
         drawingsHidden: parsed.drawingsHidden,
+        priceAuto: parsed.priceAuto,
       };
     } catch { return null; }
   };
@@ -120,6 +122,7 @@ export function initUI(v) {
     if (persisted.interval) patch.interval = persisted.interval;
     if (persisted.locked) patch.locked = true;
     if (persisted.drawingsHidden) patch.drawingsHidden = true;
+    if (persisted.priceAuto === false) patch.priceAuto = false;
     if (Object.keys(patch).length) v.set(patch);
   }
   // One-shot: migrate any in-memory legacy indicators flags to instances,
@@ -377,6 +380,27 @@ export function initUI(v) {
     raf(() => { resizeQueued = false; fitCanvases(); renderAll(v.get()); });
   });
 
+  // Auto price scale (original behavior): while on, any time navigation
+  // refits price to the visible bars. Any manual price adjustment (plot
+  // vertical drag, price-axis drag/wheel, shift+wheel) turns it off;
+  // price-axis double-click turns it back on. Pan/zoom-only changes never
+  // persist the fitted price; the on/off preference itself is persisted.
+  const refitPriceToVisible = () => {
+    const st = v.get();
+    if (st.priceAuto === false) return false;
+    if (!rows.length || !st.visible) return false;
+    const sliced = visibleRows(rows, st.visible);
+    const sc = scaleFor(sliced.length ? sliced : rows);
+    if (!sc) return false;
+    v.set({ price: sc.price });
+    return true;
+  };
+  const syncScaleTip = () => {
+    if (!priceAxis) return;
+    priceAxis.title = v.get().priceAuto !== false
+      ? 'Auto scale on — drag to rescale, double-click to auto-fit'
+      : 'Auto scale off — double-click to auto-fit';
+  };
   // Task 5: pan / zoom / crosshair / ranges. All mutations via ViewState.
   const toCanvas = (e) => {
     const el = overlay || base;
@@ -392,8 +416,8 @@ export function initUI(v) {
   const DRAW_TOOLS = new Set(['trend', 'fib', 'text', 'horizontal', 'shape', 'brush', 'emoji']);
   if (overlay) {
     let dragging = false;
-    let startX = 0;
-    let startVis = null;
+    let startX = 0, startY = 0;
+    let startVis = null, startPrice = null;
     let dragAlertId = null;
     const alertAtY = (my, state, geom) => {
       for (const a of state.alerts || []) {
@@ -459,8 +483,9 @@ export function initUI(v) {
         }
         return;
       }
-      dragging = true; startX = e.clientX;
+      dragging = true; startX = e.clientX; startY = e.clientY;
       const s = v.get(); startVis = s.visible ? { ...s.visible } : null;
+      startPrice = s.price ? { ...s.price } : null;
       // Select drawing on click (cross tool): nearest trend endpoint / horizontal within 8px.
       // Skipped while locked or hidden.
       let bestId = null, bd = 8;
@@ -516,10 +541,23 @@ export function initUI(v) {
         return;
       }
       if (dragging && startVis) {
-        const dx = (e.clientX - startX) * (geom.width / Math.max(1, overlay.getBoundingClientRect().width));
+        const rect = overlay.getBoundingClientRect();
+        const dx = (e.clientX - startX) * (geom.width / Math.max(1, rect.width));
         const span = startVis.to - startVis.from;
         const dt = dx * span / Math.max(1, geom.width);
-        v.set({ visible: { from: startVis.from - dt, to: startVis.to - dt } });
+        const patch = { visible: { from: startVis.from - dt, to: startVis.to - dt } };
+        // Vertical drag pans price too (content follows the cursor); any
+        // real vertical move is a manual scale adjustment (auto off).
+        const dyCss = e.clientY - startY;
+        if (startPrice && Math.abs(dyCss) > 4) {
+          const pSpan = startPrice.max - startPrice.min;
+          const dPrice = dyCss * pSpan / Math.max(1, rect.height);
+          patch.price = { min: startPrice.min - dPrice, max: startPrice.max - dPrice };
+          patch.priceAuto = false;
+        }
+        v.set(patch);
+        if (patch.priceAuto === false) { saveLayout(); syncScaleTip(); }
+        refitPriceToVisible();
         return;
       }
       const ctx = overlay.getContext('2d');
@@ -596,7 +634,8 @@ export function initUI(v) {
         const pCur = st.price.min + (1 - fy) * span;
         const nSpan = span * factor;
         const nMin = pCur - (1 - fy) * nSpan;
-        v.set({ price: { min: nMin, max: nMin + nSpan } });
+        v.set({ price: { min: nMin, max: nMin + nSpan }, priceAuto: false });
+        saveLayout(); syncScaleTip();
       } else {
         const span = st.visible.to - st.visible.from;
         if (span <= 0) return;
@@ -604,10 +643,14 @@ export function initUI(v) {
         const tCur = st.visible.from + fx * span;
         const nSpan = span * factor;
         v.set({ visible: { from: tCur - fx * nSpan, to: tCur - fx * nSpan + nSpan } });
+        refitPriceToVisible();
       }
     }, { passive: false });
     overlay.addEventListener('dblclick', () => {
-      if (fullVisible && fullPrice) v.set({ visible: { ...fullVisible }, price: { ...fullPrice } });
+      if (fullVisible && fullPrice) {
+        v.set({ visible: { ...fullVisible }, price: { ...fullPrice }, priceAuto: true });
+        saveLayout(); syncScaleTip();
+      }
     });
   }
   // Price axis is live like the original: vertical drag rescales (pans the
@@ -637,7 +680,8 @@ export function initUI(v) {
       if (!pDrag.moved) return;
       const rect = priceAxis.getBoundingClientRect();
       const dPrice = dy * (pDrag.max - pDrag.min) / Math.max(1, rect.height);
-      v.set({ price: { min: pDrag.min - dPrice, max: pDrag.max - dPrice } });
+      v.set({ price: { min: pDrag.min - dPrice, max: pDrag.max - dPrice }, priceAuto: false });
+      saveLayout(); syncScaleTip();
     });
     window.addEventListener('mouseup', () => {
       if (!pDrag) return;
@@ -667,13 +711,15 @@ export function initUI(v) {
       const pCur = st.price.min + (1 - fy) * span;
       const nSpan = span * factor;
       const nMin = pCur - (1 - fy) * nSpan;
-      v.set({ price: { min: nMin, max: nMin + nSpan } });
+      v.set({ price: { min: nMin, max: nMin + nSpan }, priceAuto: false });
+      saveLayout(); syncScaleTip();
     }, { passive: false });
     priceAxis.addEventListener('dblclick', () => {
       if (!rows.length) return;
       const sliced = visibleRows(rows, v.get().visible);
       const sc = scaleFor(sliced.length ? sliced : rows);
-      if (sc) v.set({ price: sc.price });
+      if (sc) v.set({ price: sc.price, priceAuto: true });
+      saveLayout(); syncScaleTip();
     });
   }
   // Time axis is live like the original: horizontal drag pans time (content
@@ -698,6 +744,7 @@ export function initUI(v) {
       const span = tDrag.to - tDrag.from;
       const dt = dx * span / Math.max(1, rect.width);
       v.set({ visible: { from: tDrag.from - dt, to: tDrag.to - dt } });
+      refitPriceToVisible();
     });
     window.addEventListener('mouseup', () => { tDrag = null; });
     timeAxis.addEventListener('wheel', (e) => {
@@ -712,9 +759,11 @@ export function initUI(v) {
       const tCur = st.visible.from + fx * span;
       const nSpan = span * factor;
       v.set({ visible: { from: tCur - fx * nSpan, to: tCur - fx * nSpan + nSpan } });
+      refitPriceToVisible();
     }, { passive: false });
     timeAxis.addEventListener('dblclick', () => {
       if (fullVisible) v.set({ visible: { ...fullVisible } });
+      refitPriceToVisible();
     });
   }
   // Range footer: buttons switch the real data interval (captured from the
@@ -758,6 +807,7 @@ export function initUI(v) {
         }
         const vis = visibleForRange(label);
         if (vis) v.set({ visible: vis });
+        refitPriceToVisible();
       });
       rangeHost.appendChild(b);
       rangeHost.appendChild(document.createTextNode(' '));
@@ -1349,6 +1399,7 @@ export function initUI(v) {
       if (L.timeframe) patch.timeframe = L.timeframe;
       if (L.locked != null) patch.locked = !!L.locked;
       if (L.drawingsHidden != null) patch.drawingsHidden = !!L.drawingsHidden;
+      if (L.priceAuto != null) patch.priceAuto = L.priceAuto !== false;
       void cur;
     }
     v.set(patch);
@@ -1427,4 +1478,5 @@ export function initUI(v) {
       window.__tv = { view: v, rows: () => rows };
     }
   } catch {}
+  syncScaleTip();
 }
