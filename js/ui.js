@@ -4,6 +4,7 @@ import { renderBase, PAL, compositeToDataURL, visibleRows, sliceOffset, replayCo
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts } from './overlay.js';
 import { snapPrice, serialize, deserialize, addDrawing } from './drawings.js';
+import { migrateStudies, makeInstance } from './studies.js';
 
 const LAYOUT_KEY = 'tv-clone-layout-v1';
 
@@ -54,10 +55,18 @@ export function initUI(v) {
       if (!raw) return null;
       const parsed = deserialize(raw);
       if (Array.isArray(parsed)) return { drawings: parsed, alerts: [] };
+      // Studies migrate to instances on load: legacy string[] ids and
+      // Task-7 indicators flags both become instances; save never writes
+      // legacy (layoutFromState persists state.studies as instances).
+      let studies;
+      if (parsed.studies !== undefined || parsed.indicators) {
+        try { studies = migrateStudies({ studies: parsed.studies || [], indicators: parsed.indicators || {} }); }
+        catch { studies = undefined; }
+      }
       return {
         drawings: parsed.drawings || [],
         alerts: parsed.alerts || [],
-        studies: parsed.studies,
+        studies,
         indicators: parsed.indicators,
         chartType: parsed.chartType,
         symbol: parsed.symbol,
@@ -606,8 +615,27 @@ export function initUI(v) {
         if (!g) { g = { name: s.group, items: [] }; groups.push(g); }
         g.items.push(s);
       }
-      const setStudies = (ids) => { v.set({ studies: ids }); saveLayout(); };
-      const activeIds = () => v.get().studies || [];
+      const setStudies = (ids) => {
+        // Store instances (never legacy string ids). Preserve existing
+        // instances' params/color for ids that stay active; fresh defaults
+        // for newly added ids. Transform radio semantics preserved by the
+        // callers (single transform id in `ids`); chart renders first active.
+        const cur = v.get().studies || [];
+        const keep = new Map();
+        for (const e of cur) {
+          const id = typeof e === 'string' ? e : e?.id;
+          if (id && ids.includes(id) && !keep.has(id)) keep.set(id, e);
+        }
+        const next = [];
+        for (const id of ids) {
+          const prev = keep.get(id);
+          if (prev && typeof prev === 'object' && prev.id) { next.push(prev); keep.delete(id); }
+          else { try { next.push(makeInstance(id)); } catch { /* unknown id — skip */ } }
+        }
+        v.set({ studies: next });
+        saveLayout();
+      };
+      const activeIds = () => (v.get().studies || []).map(e => typeof e === 'string' ? e : e?.id).filter(Boolean);
       const syncStudies = () => {
         const cur = new Set(activeIds());
         host.querySelectorAll('input[data-study]').forEach((cb) => {
@@ -882,7 +910,10 @@ export function initUI(v) {
     else {
       if (L.drawings) patch.drawings = L.drawings;
       if (L.alerts) patch.alerts = L.alerts;
-      if (L.studies) patch.studies = L.studies;
+      if (L.studies !== undefined || L.indicators) {
+        try { patch.studies = migrateStudies({ studies: L.studies || [], indicators: L.indicators || {} }); }
+        catch { /* keep current studies on migration failure */ }
+      }
       if (L.indicators) patch.indicators = L.indicators;
       if (L.chartType) patch.chartType = L.chartType;
       if (L.symbol) {

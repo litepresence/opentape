@@ -1,5 +1,4 @@
 // js/chart.js
-import { sma, ema, rsi } from './indicators.js';
 import { STUDIES, computeStudy } from './studies.js';
 export const PAL = { light: { bg: '#ffffff', grid: '#e0e3eb', text: '#787b86', up: '#089981', down: '#F23645' }, dark: { bg: '#131722', grid: '#2a2e39', text: '#d1d4dc', up: '#089981', down: '#F23645' } };
 export const IND_COLORS = { sma20: '#2962FF', sma50: '#FF6D00', ema20: '#9C27B0', rsi: '#7E57C2' };
@@ -18,17 +17,28 @@ export function studyVals(id, rows, opts) {
   if (!m.has(key)) m.set(key, computeStudy(id, rows, opts || {}));
   return m.get(key).series;
 }
-// Transform studies replace the candle source before render (radio: first active wins).
+// Transform studies replace the candle source before render (radio: first
+// visible active wins). Accepts instance objects; tolerates legacy string ids
+// read-only (rendered with registry defaults, never rewritten).
 export function applyTransform(rows, state) {
   const act = state.studies || [];
-  const t = STUDIES.find(s => s.kind === 'transform' && act.includes(s.id));
+  let t = null, opts = {};
+  for (const e of act) {
+    const id = typeof e === 'string' ? e : e?.id;
+    const meta = STUDIES.find(s => s.id === id);
+    if (!meta || meta.kind !== 'transform') continue;
+    if (e && typeof e === 'object' && e.visible === false) continue;
+    t = meta;
+    opts = (e && typeof e === 'object' && e.params) ? e.params : {};
+    break;
+  }
   if (!t) return rows;
   try {
     if (t.id === 'heikinashi') {
-      const s = studyVals('heikinashi', rows);
+      const s = studyVals('heikinashi', rows, opts);
       return rows.map((r, i) => ({ ...r, o: s.open[i] ?? r.o, h: s.high[i] ?? r.h, l: s.low[i] ?? r.l, c: s.close[i] ?? r.c }));
     }
-    const s = studyVals(t.id, rows);
+    const s = studyVals(t.id, rows, opts);
     return rows.map((r, i) => {
       const c = s.line[i] ?? r.c;
       const o = i === 0 ? c : (s.line[i - 1] ?? c);
@@ -241,75 +251,60 @@ export function renderBase(ctx, state, rows, geom) {
       ctx.globalAlpha = 1;
     }
   }
-  // Indicator overlays (colored lines) on base canvas.
+  // Study instances (parameterized, multi-instance) on base canvas.
   // Full-history compute, then window by the slice offset so warmup/seeds
   // cannot shift on pan/zoom (same offset model as candles/replay).
-  const ind = state.indicators || {};
-  if (ind.sma20) drawIndLine(ctx, windowVals(sma(full, 20), offset, vrows.length), n, state, geom, vrows, IND_COLORS.sma20);
-  if (ind.sma50) drawIndLine(ctx, windowVals(sma(full, 50), offset, vrows.length), n, state, geom, vrows, IND_COLORS.sma50);
-  if (ind.ema20) drawIndLine(ctx, windowVals(ema(full, 20), offset, vrows.length), n, state, geom, vrows, IND_COLORS.ema20);
-  // Task 9 studies: overlay/multiline/bands on the price pane.
+  // Tolerates legacy string ids read-only (registry defaults); visible:false
+  // instances are skipped but kept in state.
   const metaById = (id) => STUDIES.find(s => s.id === id);
-  const active = (state.studies || []).filter(id => metaById(id));
-  for (const id of active) {
-    const meta = metaById(id);
+  const active = [];
+  for (const e of (state.studies || [])) {
+    if (typeof e === 'string') {
+      const meta = metaById(e);
+      if (meta) active.push({ id: e, params: { ...(meta.opts || {}) }, color: null });
+    } else if (e && typeof e === 'object' && typeof e.id === 'string') {
+      const meta = metaById(e.id);
+      if (!meta) continue;
+      if (e.visible === false) continue;
+      active.push({ id: e.id, params: { ...(meta.opts || {}), ...(e.params || {}) }, color: ('color' in e) ? e.color : null });
+    }
+  }
+  const colorFor = (inst, k = 0) => inst.color ?? stuColor(inst.id, k);
+  for (const inst of active) {
+    const meta = metaById(inst.id);
     if (meta.kind !== 'overlay' && meta.kind !== 'multiline') continue;
     let series = null;
-    try { series = studyVals(id, full); } catch { continue; }
+    try { series = studyVals(inst.id, full, inst.params); } catch { continue; }
     meta.lines.forEach((key, k) => {
       const vals = series[key] ? windowVals(series[key], offset, vrows.length) : null;
       if (!vals) return;
-      if (id === 'psar') drawDots(ctx, vals, n, state, geom, vrows, stuColor(id, k));
-      else drawIndLine(ctx, vals, n, state, geom, vrows, stuColor(id, k));
+      if (inst.id === 'psar') drawDots(ctx, vals, n, state, geom, vrows, colorFor(inst, k));
+      else drawIndLine(ctx, vals, n, state, geom, vrows, colorFor(inst, k));
     });
   }
-  for (const id of active) {
-    const meta = metaById(id);
+  for (const inst of active) {
+    const meta = metaById(inst.id);
     if (meta.kind !== 'bands') continue;
     let series = null;
-    try { series = studyVals(id, full); } catch { continue; }
+    try { series = studyVals(inst.id, full, inst.params); } catch { continue; }
     const [f0, f1] = meta.fill || [];
-    if (f0 && f1 && series[f0] && series[f1]) fillBand(ctx, windowVals(series[f0], offset, vrows.length), windowVals(series[f1], offset, vrows.length), n, state, geom, vrows, stuColor(id));
+    if (f0 && f1 && series[f0] && series[f1]) fillBand(ctx, windowVals(series[f0], offset, vrows.length), windowVals(series[f1], offset, vrows.length), n, state, geom, vrows, colorFor(inst));
     meta.lines.forEach((key, k) => {
-      if (series[key]) drawIndLine(ctx, windowVals(series[key], offset, vrows.length), n, state, geom, vrows, stuColor(id, k));
+      if (series[key]) drawIndLine(ctx, windowVals(series[key], offset, vrows.length), n, state, geom, vrows, colorFor(inst, k));
     });
   }
-  // Task 9: shared oscillator pane, scaled to the union min/max of active pane series.
+  // Shared oscillator pane, scaled to the union min/max of active pane series.
   const paneJobs = [];
-  for (const id of active) {
-    const meta = metaById(id);
+  for (const inst of active) {
+    const meta = metaById(inst.id);
     if (meta.kind !== 'pane') continue;
     let series = null;
-    try { series = studyVals(id, full); } catch { continue; }
+    try { series = studyVals(inst.id, full, inst.params); } catch { continue; }
     meta.lines.forEach((key, k) => {
-      if (series[key]) paneJobs.push({ vals: windowVals(series[key], offset, vrows.length), color: stuColor(id, k) });
+      if (series[key]) paneJobs.push({ vals: windowVals(series[key], offset, vrows.length), color: colorFor(inst, k) });
     });
   }
-  if (ind.rsi && paneJobs.length === 0) {
-    const vals = windowVals(rsi(full, 14), offset, vrows.length);
-    const ph = Math.round(height * 0.22), py = top + height - ph;
-    ctx.save();
-    ctx.fillStyle = state.theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
-    ctx.fillRect(left, py, width, ph);
-    ctx.strokeStyle = pal.grid; ctx.setLineDash([2, 3]);
-    for (const lv of [30, 50, 70]) {
-      const y = py + (1 - lv / 100) * ph;
-      ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke();
-    }
-    ctx.strokeStyle = IND_COLORS.rsi; ctx.setLineDash([]); ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    const rstep = width / Math.max(1, vrows.length);
-    let started = false;
-    for (let i = 0; i < n; i++) {
-      const v = vals[i];
-      if (v == null) continue;
-      const x = left + i * rstep + rstep / 2;
-      const y = py + (1 - Math.min(100, Math.max(0, v)) / 100) * ph;
-      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
-    }
-    ctx.stroke(); ctx.restore();
-  } else if (paneJobs.length) {
-    if (ind.rsi) paneJobs.push({ vals: windowVals(rsi(full, 14), offset, vrows.length), color: IND_COLORS.rsi });
+  if (paneJobs.length) {
     let mn = Infinity, mx = -Infinity;
     for (const j of paneJobs) {
       for (const v of j.vals) {

@@ -129,7 +129,7 @@ test('renderBase SMA(20) y is pan-invariant for the same bar', () => {
   const ys = [];
   for (const vis of [visA, visB]) {
     const { ctx, polylines } = recordCtx();
-    const state = { theme: 'light', price, visible: vis, chartType: 'candles', indicators: { sma20: true }, studies: [], replayIndex: null };
+    const state = { theme: 'light', price, visible: vis, chartType: 'candles', indicators: {}, studies: [{ uid: 't-sma20', id: 'sma', params: { period: 20 }, color: '#2962FF', visible: true }], replayIndex: null };
     renderBase(ctx, state, rows, GEOM);
     const pts = polylines.get('#2962FF') || [];
     const sliced = visibleRows(rows, vis);
@@ -154,7 +154,7 @@ test('renderBase EMA(20) y is pan-invariant for the same bar', () => {
   const ys = [];
   for (const vis of [visA, visB]) {
     const { ctx, polylines } = recordCtx();
-    const state = { theme: 'light', price, visible: vis, chartType: 'candles', indicators: { ema20: true }, studies: [], replayIndex: null };
+    const state = { theme: 'light', price, visible: vis, chartType: 'candles', indicators: {}, studies: [{ uid: 't-ema20', id: 'ema', params: { period: 20 }, color: '#9C27B0', visible: true }], replayIndex: null };
     renderBase(ctx, state, rows, GEOM);
     const pts = polylines.get('#9C27B0') || [];
     const sliced = visibleRows(rows, vis);
