@@ -112,3 +112,12 @@ export function renderBase(ctx, state, rows, geom) {
   const last = rows[Math.max(0, n - 1)];
   if (last && n > 0) { const y = yForPrice(last.c, state.price, top, height); ctx.strokeStyle = pal.down; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke(); ctx.setLineDash([]); }
 }
+// Task 8: composite base+overlay for PNG export (used by ui.js export button).
+export function compositeToDataURL(base, overlay) {
+  const c = document.createElement('canvas');
+  c.width = base.width; c.height = base.height;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(base, 0, 0);
+  if (overlay && overlay.width && overlay.height) ctx.drawImage(overlay, 0, 0);
+  return c.toDataURL('image/png');
+}

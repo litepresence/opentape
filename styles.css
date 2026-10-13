@@ -27,7 +27,7 @@ html, body { margin: 0; padding: 0; height: 100%; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 13px;
   display: flex;
   flex-direction: column;
@@ -102,3 +102,14 @@ button:hover { background: var(--btn-hover); }
   background: var(--bg);
 }
 #clock { font-variant-numeric: tabular-nums; }
+/* Task 8 polish: responsive desktop reflow */
+@media (max-width: 1400px) {
+  :root { --axis-w: 56px; }
+  #price-axis { width: 56px; min-width: 56px; }
+  #time-axis { margin-right: var(--axis-w); }
+}
+@media (max-width: 1100px) {
+  :root { --rail-w: 36px; }
+  #rail { width: 36px; min-width: 36px; padding: 2px; }
+  #rail button { font-size: 13px; padding: 4px 0; }
+}

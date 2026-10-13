@@ -1,6 +1,6 @@
 // js/ui.js
 import { fetchOHLCV } from './data.js';
-import { renderBase, PAL } from './chart.js';
+import { renderBase, PAL, compositeToDataURL } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts } from './overlay.js';
 import { snapPrice, serialize, deserialize, addDrawing } from './drawings.js';
@@ -91,11 +91,31 @@ export function initUI(v) {
     if (b.textContent === '↪') b.addEventListener('click', redo);
   });
   window.addEventListener('keydown', (e) => {
+    const isEditable = (el) => {
+      const tag = ((el && el.tagName) || '').toUpperCase();
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || !!(el && el.isContentEditable);
+    };
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
     else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'c' || e.key === 'C')) {
+      if (isEditable(e.target)) return;
+      v.set({ tool: 'cross' });
+      document.querySelectorAll('#rail button').forEach(x => x.classList.toggle('active', x.dataset.tool === 'cross'));
+    }
+    else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 't' || e.key === 'T')) {
+      if (isEditable(e.target)) return;
+      v.set({ tool: 'trend' });
+      document.querySelectorAll('#rail button').forEach(x => x.classList.toggle('active', x.dataset.tool === 'trend'));
+      pending = null;
+    }
+    else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'f' || e.key === 'F')) {
+      if (isEditable(e.target)) return;
+      v.set({ tool: 'fib' });
+      document.querySelectorAll('#rail button').forEach(x => x.classList.toggle('active', x.dataset.tool === 'fib'));
+      pending = null;
+    }
     else if (e.key === 'Delete' || e.key === 'Backspace') {
-      const tag = (e.target && e.target.tagName) || '';
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (isEditable(e.target)) return;
       const s = v.get();
       if (!s.selectedId && !s.drawings.length) return;
       pushHistory();
@@ -156,7 +176,8 @@ export function initUI(v) {
   }
   v.onRender(renderAll);
   fetchOHLCV().then((data) => {
-    rows = data;
+    if (Array.isArray(data) && data.length) rows = data;
+    if (!rows.length) return;
     const s = v.get();
     const patch = {};
     if (!s.visible) patch.visible = { from: rows[0].t, to: rows[rows.length - 1].t };
@@ -171,7 +192,7 @@ export function initUI(v) {
     const cur = v.get();
     if (cur.visible && !fullVisible) fullVisible = { ...cur.visible };
     if (cur.price && !fullPrice) fullPrice = { ...cur.price };
-  });
+  }).catch(() => { /* offline + fallback failed — keep empty, no unhandled rejection */ });
   window.addEventListener('resize', () => renderAll(v.get()));
 
   // Task 5: pan / zoom / crosshair / ranges. All mutations via ViewState.
@@ -411,6 +432,7 @@ export function initUI(v) {
     return s;
   };
   const resetScale = () => {
+    if (!rows.length) return;
     let mn = Infinity, mx = -Infinity;
     for (const r of rows) { if (r.l < mn) mn = r.l; if (r.h > mx) mx = r.h; }
     const pad = (mx - mn) * 0.08;
@@ -421,7 +443,11 @@ export function initUI(v) {
     v.set({ visible, price, replayIndex: null });
   };
   const reload = async (symbol, ccxtTf) => {
-    rows = await fetchOHLCV({ symbol, timeframe: ccxtTf });
+    try {
+      const data = await fetchOHLCV({ symbol, timeframe: ccxtTf });
+      if (Array.isArray(data) && data.length) rows = data;
+    } catch { /* keep existing rows — no unhandled rejection */ }
+    if (!rows.length) return;
     resetScale();
     const symBtn = document.querySelector('#sym');
     if (symBtn) symBtn.textContent = String(symbol).replace('/', '');
@@ -531,5 +557,94 @@ export function initUI(v) {
       const next = ORDER[(ORDER.indexOf(v.get().chartType || 'candles') + 1) % ORDER.length];
       v.set({ chartType: next });
     });
+  }
+
+  // Task 8 polish: PNG export (composites base+overlay) + multi-layout Save dropdown.
+  const LAYOUTS_KEY = 'tv-layouts';
+  const getNamedLayouts = () => {
+    try { return JSON.parse(localStorage.getItem(LAYOUTS_KEY) || '{}') || {}; }
+    catch { return {}; }
+  };
+  const saveNamedLayout = (name) => {
+    try {
+      const s = v.get();
+      const all = getNamedLayouts();
+      all[name] = { drawings: s.drawings || [], alerts: s.alerts || [] };
+      localStorage.setItem(LAYOUTS_KEY, JSON.stringify(all));
+    } catch {}
+  };
+  const loadNamedLayout = (name) => {
+    const all = getNamedLayouts();
+    const L = all[name];
+    if (!L) return;
+    pushHistory();
+    v.set({ drawings: L.drawings || [], alerts: L.alerts || [], selectedId: null });
+    saveLayout();
+  };
+  const exportPNG = () => {
+    const b = document.querySelector('#base');
+    const o = document.querySelector('#overlay');
+    if (!b) return;
+    let url = '';
+    try {
+      url = compositeToDataURL(b, o);
+    } catch {
+      const c = document.createElement('canvas');
+      c.width = b.width; c.height = b.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(b, 0, 0);
+      if (o) ctx.drawImage(o, 0, 0);
+      url = c.toDataURL('image/png');
+    }
+    const a = document.createElement('a');
+    a.download = 'chart.png';
+    a.href = url;
+    a.click();
+  };
+  const saveBtn = [...document.querySelectorAll('#topbar button')].find((b) => (b.textContent || '').includes('Save'));
+  if (!document.querySelector('#export-btn')) {
+    const ex = document.createElement('button');
+    ex.id = 'export-btn';
+    ex.textContent = 'Export PNG';
+    ex.addEventListener('click', exportPNG);
+    if (saveBtn) saveBtn.before(ex);
+    else document.querySelector('#topbar')?.appendChild(ex);
+  }
+  if (!document.querySelector('#layout-select')) {
+    const sel = document.createElement('select');
+    sel.id = 'layout-select';
+    sel.title = 'Layouts';
+    const refresh = () => {
+      sel.innerHTML = '';
+      const ph = document.createElement('option');
+      ph.value = ''; ph.textContent = 'Layouts…';
+      sel.appendChild(ph);
+      for (const k of Object.keys(getNamedLayouts())) {
+        const op = document.createElement('option');
+        op.value = k; op.textContent = k;
+        sel.appendChild(op);
+      }
+      const sv = document.createElement('option');
+      sv.value = '__save__'; sv.textContent = 'Save current…';
+      sel.appendChild(sv);
+    };
+    refresh();
+    sel.addEventListener('change', () => {
+      if (!sel.value) return;
+      if (sel.value === '__save__') {
+        const name = typeof prompt !== 'undefined' ? prompt('Layout name:') : null;
+        if (name) { saveNamedLayout(name); refresh(); }
+      } else loadNamedLayout(sel.value);
+      sel.value = '';
+    });
+    if (saveBtn) saveBtn.after(sel);
+    else document.querySelector('#topbar')?.appendChild(sel);
+    if (saveBtn && !saveBtn.dataset.bound) {
+      saveBtn.dataset.bound = '1';
+      saveBtn.addEventListener('click', () => {
+        const name = typeof prompt !== 'undefined' ? prompt('Layout name:') : null;
+        if (name) { saveNamedLayout(name); refresh(); }
+      });
+    }
   }
 }

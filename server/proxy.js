@@ -1,7 +1,18 @@
-// server/proxy.js — Node http + ccxt.bitstamp, 60s cache
+// server/proxy.js — Node http + ccxt.bitstamp, 60s cache + static for DoD flow
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import ccxt from 'ccxt';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+};
 
 const PORT = process.env.PORT || 8787;
 const cache = new Map(); // key -> { ts, data }
@@ -18,7 +29,7 @@ const server = http.createServer(async (req, res) => {
   if (u.pathname === '/api/ohlcv') {
     const symbol = u.searchParams.get('symbol') || 'BTC/USD';
     const timeframe = u.searchParams.get('timeframe') || '1d';
-    const limit = Math.min(Number(u.searchParams.get('limit')) || 300, 1000);
+    const limit = Math.max(1, Math.min(Number(u.searchParams.get('limit')) || 300, 1000));
     const key = `${symbol}|${timeframe}|${limit}`;
     const hit = cache.get(key);
     if (hit && Date.now() - hit.ts < 60000) {
@@ -31,11 +42,28 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, data, { 'X-Cache': 'MISS' });
     } catch (e) {
       if (hit) return send(res, 200, hit.data, { 'X-Cache': 'STALE' });
-      return send(res, 502, { error: String(e.message || e) });
+      return send(res, 502, { error: String(e?.message ?? e) });
     }
   }
-  if (u.pathname === '/' || u.pathname === '/health') {
+  if (u.pathname === '/health') {
     return send(res, 200, { ok: true });
+  }
+  // Minimal static serving so `node server/proxy.js` + http://localhost:8787/ works
+  // (ES modules are blocked on file://). Directory-traversal-safe.
+  if (req.method === 'GET') {
+    try {
+      const rel = u.pathname === '/' ? '/index.html' : decodeURIComponent(u.pathname);
+      const fsPath = path.normalize(path.join(ROOT, rel));
+      if (fsPath !== ROOT && !fsPath.startsWith(ROOT + path.sep)) {
+        res.writeHead(403); res.end('forbidden'); return;
+      }
+      const body = await readFile(fsPath);
+      const ext = path.extname(fsPath).toLowerCase();
+      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+      res.end(body); return;
+    } catch {
+      res.writeHead(404); res.end('not found'); return;
+    }
   }
   res.writeHead(404); res.end('not found');
 });
