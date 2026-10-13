@@ -101,6 +101,13 @@ export function timeForX(x, sliced, left, width) {
   const t0 = sliced[j].t, t1 = sliced[j + 1].t;
   return t0 + frac * (t1 - t0);
 }
+// Window a full-history value array onto the visible slice (same offset model
+// as candles/replay). Indicators/studies must be computed on FULL rows so
+// warmup null-runs and EMA/RSI seeds cannot shift on pan/zoom.
+export function windowVals(vals, offset, len) {
+  if (!Array.isArray(vals)) return vals;
+  return vals.slice(offset, offset + len);
+}
 export function niceTicks(min, max, n = 7) {
   if (!Number.isFinite(min) || !Number.isFinite(max) || !(max > min)) return [];
   const step0 = (max - min) / n; const mag = 10 ** Math.floor(Math.log10(step0)); const norm = step0 / mag; const step = (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag; const out = []; for (let v = Math.ceil(min / step) * step; v <= max; v += step) out.push(v); return out;
@@ -228,10 +235,12 @@ export function renderBase(ctx, state, rows, geom) {
     }
   }
   // Indicator overlays (colored lines) on base canvas.
+  // Full-history compute, then window by the slice offset so warmup/seeds
+  // cannot shift on pan/zoom (same offset model as candles/replay).
   const ind = state.indicators || {};
-  if (ind.sma20) drawIndLine(ctx, sma(vrows, 20), n, state, geom, vrows, IND_COLORS.sma20);
-  if (ind.sma50) drawIndLine(ctx, sma(vrows, 50), n, state, geom, vrows, IND_COLORS.sma50);
-  if (ind.ema20) drawIndLine(ctx, ema(vrows, 20), n, state, geom, vrows, IND_COLORS.ema20);
+  if (ind.sma20) drawIndLine(ctx, windowVals(sma(full, 20), offset, vrows.length), n, state, geom, vrows, IND_COLORS.sma20);
+  if (ind.sma50) drawIndLine(ctx, windowVals(sma(full, 50), offset, vrows.length), n, state, geom, vrows, IND_COLORS.sma50);
+  if (ind.ema20) drawIndLine(ctx, windowVals(ema(full, 20), offset, vrows.length), n, state, geom, vrows, IND_COLORS.ema20);
   // Task 9 studies: overlay/multiline/bands on the price pane.
   const metaById = (id) => STUDIES.find(s => s.id === id);
   const active = (state.studies || []).filter(id => metaById(id));
@@ -239,9 +248,9 @@ export function renderBase(ctx, state, rows, geom) {
     const meta = metaById(id);
     if (meta.kind !== 'overlay' && meta.kind !== 'multiline') continue;
     let series = null;
-    try { series = studyVals(id, vrows); } catch { continue; }
+    try { series = studyVals(id, full); } catch { continue; }
     meta.lines.forEach((key, k) => {
-      const vals = series[key];
+      const vals = series[key] ? windowVals(series[key], offset, vrows.length) : null;
       if (!vals) return;
       if (id === 'psar') drawDots(ctx, vals, n, state, geom, vrows, stuColor(id, k));
       else drawIndLine(ctx, vals, n, state, geom, vrows, stuColor(id, k));
@@ -251,11 +260,11 @@ export function renderBase(ctx, state, rows, geom) {
     const meta = metaById(id);
     if (meta.kind !== 'bands') continue;
     let series = null;
-    try { series = studyVals(id, vrows); } catch { continue; }
+    try { series = studyVals(id, full); } catch { continue; }
     const [f0, f1] = meta.fill || [];
-    if (f0 && f1 && series[f0] && series[f1]) fillBand(ctx, series[f0], series[f1], n, state, geom, vrows, stuColor(id));
+    if (f0 && f1 && series[f0] && series[f1]) fillBand(ctx, windowVals(series[f0], offset, vrows.length), windowVals(series[f1], offset, vrows.length), n, state, geom, vrows, stuColor(id));
     meta.lines.forEach((key, k) => {
-      if (series[key]) drawIndLine(ctx, series[key], n, state, geom, vrows, stuColor(id, k));
+      if (series[key]) drawIndLine(ctx, windowVals(series[key], offset, vrows.length), n, state, geom, vrows, stuColor(id, k));
     });
   }
   // Task 9: shared oscillator pane, scaled to the union min/max of active pane series.
@@ -264,13 +273,13 @@ export function renderBase(ctx, state, rows, geom) {
     const meta = metaById(id);
     if (meta.kind !== 'pane') continue;
     let series = null;
-    try { series = studyVals(id, vrows); } catch { continue; }
+    try { series = studyVals(id, full); } catch { continue; }
     meta.lines.forEach((key, k) => {
-      if (series[key]) paneJobs.push({ vals: series[key], color: stuColor(id, k) });
+      if (series[key]) paneJobs.push({ vals: windowVals(series[key], offset, vrows.length), color: stuColor(id, k) });
     });
   }
   if (ind.rsi && paneJobs.length === 0) {
-    const vals = rsi(vrows, 14);
+    const vals = windowVals(rsi(full, 14), offset, vrows.length);
     const ph = Math.round(height * 0.22), py = top + height - ph;
     ctx.save();
     ctx.fillStyle = state.theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
@@ -293,7 +302,7 @@ export function renderBase(ctx, state, rows, geom) {
     }
     ctx.stroke(); ctx.restore();
   } else if (paneJobs.length) {
-    if (ind.rsi) paneJobs.push({ vals: rsi(vrows, 14), color: IND_COLORS.rsi });
+    if (ind.rsi) paneJobs.push({ vals: windowVals(rsi(full, 14), offset, vrows.length), color: IND_COLORS.rsi });
     let mn = Infinity, mx = -Infinity;
     for (const j of paneJobs) {
       for (const v of j.vals) {

@@ -25,11 +25,19 @@ function send(res, code, obj, extra = {}) {
 }
 
 // Static allowlist: exactly /, /index.html, /styles.css, /js/*, /data/*,
-// /indicators/*. Dot-segments (/(^|/)\./) are denied with 404.
+// /indicators/*. Decode + normalize FIRST, then allowlist + dot-segment deny
+// on the normalized path so encoded traversal cannot pass the raw prefix.
 export function staticDecision(pathname) {
-  if (/(^|\/)\./.test(pathname)) return 404;
-  if (pathname === '/' || pathname === '/index.html' || pathname === '/styles.css') return 200;
-  if (pathname.startsWith('/js/') || pathname.startsWith('/data/') || pathname.startsWith('/indicators/')) return 200;
+  let dec;
+  try {
+    dec = decodeURIComponent(pathname);
+  } catch {
+    return 404;
+  }
+  const norm = path.posix.normalize(dec);
+  if (/(^|\/)\./.test(norm)) return 404;
+  if (norm === '/' || norm === '/index.html' || norm === '/styles.css') return 200;
+  if (norm.startsWith('/js/') || norm.startsWith('/data/') || norm.startsWith('/indicators/')) return 200;
   return 404;
 }
 

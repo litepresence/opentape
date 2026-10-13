@@ -23,3 +23,14 @@ test('anything else is denied', () => {
   assert.equal(staticDecision('/server/proxy.js'), 404);
   assert.equal(staticDecision('/favicon.ico'), 404);
 });
+test('encoded traversal via /js/* allowlist is denied (normalize-first)', () => {
+  // Bypass proof: raw /js/* prefix passes, but decoded+normalized escapes it.
+  assert.equal(staticDecision('/js/%2e%2e/server/proxy.js'), 404);
+  assert.equal(staticDecision('/js/%2E%2E/server/proxy.js'), 404);
+  assert.equal(staticDecision('/js/..%2fserver%2fproxy.js'), 404);
+});
+test('encoded dot-segments outside allowlist are denied', () => {
+  assert.equal(staticDecision('/%2e%2e/x'), 404);
+  assert.equal(staticDecision('/%2E%2E/x'), 404);
+  assert.equal(staticDecision('/%2e%2e/server/proxy.js'), 404);
+});
