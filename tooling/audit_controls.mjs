@@ -53,7 +53,7 @@ await page.keyboard.press('Escape');
 check('compare/templates recorded as deferred stubs', true, '(no handler by design — see report)');
 
 // --- rail tools with behavior ---
-for (const tool of ['trend', 'fib', 'horizontal', 'brush', 'shape', 'text', 'emoji']) {
+for (const tool of ['trend', 'fib', 'text', 'icon']) {
   await page.click(`#rail button[data-tool="${tool}"]`);
   const n0 = (await st()).drawings;
   await page.mouse.click(cx, cy); await page.mouse.click(cx + 120, cy - 60);
@@ -61,14 +61,33 @@ for (const tool of ['trend', 'fib', 'horizontal', 'brush', 'shape', 'text', 'emo
   const n1 = (await st()).drawings;
   check(`rail:${tool} places unlimited`, n1 > n0, `${n0}->${n1}`);
 }
-check('no ruler button (removed as measure duplicate)', (await page.locator('#rail button[data-tool="ruler"]').count()) === 0);
-check('rail has 15 tools (matches reference)', (await page.locator('#rail button').count()) === 15);
+// xabcd needs its five anchors
+await page.click('#rail button[data-tool="xabcd"]');
+{
+  const n0 = (await st()).drawings;
+  for (let i = 0; i < 5; i++) { await page.mouse.click(cx - 100 + i * 50, cy + (i % 2 ? -40 : 40)); await page.waitForTimeout(160); }
+  const n1 = (await st()).drawings;
+  check('rail:xabcd places after 5 anchors', n1 === n0 + 1, `${n0}->${n1}`);
+}
+// brush is a freehand drag, not clicks
+await page.click('#rail button[data-tool="brush"]');
+{
+  const n0 = (await st()).drawings;
+  await page.mouse.move(cx - 80, cy); await page.mouse.down();
+  for (let i = 0; i < 6; i++) await page.mouse.move(cx - 80 + i * 24, cy + (i % 2 ? 20 : -20));
+  await page.mouse.up(); await page.waitForTimeout(300);
+  const n1 = (await st()).drawings;
+  check('rail:brush places freehand strokes', n1 === n0 + 1, `${n0}->${n1}`);
+}
+check('no ruler button (measure covers it)', (await page.locator('#rail button[data-tool="ruler"]').count()) === 0);
+check('rail matches original tool set', (await page.locator('#rail button').count()) === 17);
 
 // --- lock blocks placement + delete ---
 await page.click('#rail button[data-tool="lock"]');
 check('lock toggles state', (await st()).locked === true);
 const l0 = (await st()).drawings;
-await page.click('#rail button[data-tool="horizontal"]');
+await page.click('#rail button[data-tool="shape"]');
+await page.click('#shape-menu button:has-text("Horizontal line")');
 await page.mouse.click(cx, cy); await page.waitForTimeout(300);
 check('lock blocks placement', (await st()).drawings === l0);
 await page.keyboard.press('Delete'); await page.waitForTimeout(200);

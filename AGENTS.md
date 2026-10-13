@@ -44,6 +44,17 @@ python3 -m http.server 8787   # from the repo root
 - Pan/zoom at 60fps, crosshair + OHLC correct, drawings persist after reload, light/dark toggle without flash.
 - No console errors.
 
+## Drawing Rail Parity (2026-10-13, vs `Screenshot from 2026-10-13 12-16-30.png`)
+All original rail tools implemented — no aliases pretending to be tools: cross, trend, fib,
+xabcd, prediction (dashed extrapolation), brush (freehand), text, icon, geometric shapes
+(horizontal/rect/ellipse/ray/line), measure, zoom, magnet, stay-in-drawing-mode, lock, hide,
+remove. Unified `{id,type,points[]}` model in time/price coords; legacy `{p1,p2,price}`
+records migrate on load. Every drawing supports click-select, body-drag (translates a
+snapshot, so the delta can't accumulate), anchor-handle drag with magnet snap, Delete,
+and undo/redo. Audit: `tooling/audit_drawings.mjs` (22 checks incl. malformed-record
+crash-proofing and sub-pixel drag tracking). Study colors: auto palette advances per
+*instance* as well as per line (`autoColor(id, ord, k)`), so an SMA mesh is multi-colored.
+
 ## REA Findings (2026-10-13, from live tradingview.com capture)
 - Font: `-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif` (no Segoe UI). Text `#0f0f0f`, chrome `#ebebeb`. Brand font EuclidCircular (proprietary — fallback only).
 - Last-price line/tag follows bar direction (green up). Range→interval map: 1D→1m, 5D→5m, 1M→30m, 3M→1h, 6M→2h, YTD/1Y→1d, 5Y→1w, All→1M. 11 stacked canvases. Evidence in `tooling/rea-tv-inspect.json`, `tooling/shots/tv-real-1920.png`, `tooling/rea_tv_facts.mjs` (layout facts only — tree stays clean-room, no TV code/assets).

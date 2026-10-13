@@ -72,6 +72,10 @@ button:hover { background: var(--btn-hover); }
 #rail button { font-size: 15px; padding: 6px 0; text-align: center; }
 #rail button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; margin: 0 auto; }
 #rail button svg .f { fill: currentColor; stroke: none; }
+.rail-sep { display: block; height: 1px; margin: 4px 6px; background: var(--border); }
+#shape-menu { position: fixed; z-index: 60; display: flex; flex-direction: column; min-width: 150px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+#shape-menu button { text-align: left; padding: 7px 10px; border-radius: 4px; font-size: 13px; }
+#shape-menu button:hover { background: var(--btn-hover); }
 #rail button.active { background: var(--btn-hover); outline: 1px solid var(--grid); }
 #chart-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
 #ohlc-head {

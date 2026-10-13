@@ -1,9 +1,9 @@
 // js/ui.js
 import { fetchOHLCV, resolveMarket } from './data.js';
-import { renderBase, PAL, stuColor, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
+import { renderBase, PAL, stuColor, autoColor, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
-import { hitTest, drawCrosshair, drawDrawings, drawAlerts, drawPending } from './overlay.js';
-import { snapPrice, serialize, deserialize, addDrawing } from './drawings.js';
+import { hitTest, drawCrosshair, drawDrawings, drawAlerts, drawPending, hitTestDrawing, hitTestAnchor } from './overlay.js';
+import { snapPrice, serialize, deserialize, addDrawing, makeDrawing, anchorCount, translateDrawing, moveAnchor, migrateDrawings } from './drawings.js';
 import { parseChartUrl, formatChartUrl, normalizeSymbol } from './url.js';
 import { STUDIES, migrateStudies, makeInstance } from './studies.js';
 
@@ -19,6 +19,9 @@ export function initUI(v) {
   document.querySelector('#theme-btn')?.addEventListener('click', () => v.toggleTheme());
   // Task 6 state: magnet, pending 2-click anchor, undo/redo stacks.
   let magnetOn = true;
+  // Stay in drawing mode (original default): the tool persists after each
+  // placement; when off the rail returns to cross. Persisted per user.
+  let stayMode = true;
   let pending = null;
   let measureStart = null;
   const undoStack = [];
@@ -52,6 +55,7 @@ export function initUI(v) {
     locked: !!s.locked,
     drawingsHidden: !!s.drawingsHidden,
     priceAuto: s.priceAuto !== false,
+    stayMode: s.stayMode !== false,
   });
   const saveLayout = () => {
     try {
@@ -90,6 +94,7 @@ export function initUI(v) {
         locked: parsed.locked,
         drawingsHidden: parsed.drawingsHidden,
         priceAuto: parsed.priceAuto,
+        stayMode: parsed.stayMode,
       };
     } catch { return null; }
   };
@@ -118,7 +123,7 @@ export function initUI(v) {
   const persisted = loadLayout();
   if (persisted) {
     const patch = {};
-    if (persisted.drawings) patch.drawings = persisted.drawings;
+    if (persisted.drawings) patch.drawings = migrateDrawings(persisted.drawings);
     if (persisted.alerts) patch.alerts = persisted.alerts;
     if (persisted.studies) patch.studies = persisted.studies;
     if (persisted.chartType) patch.chartType = persisted.chartType;
@@ -128,6 +133,8 @@ export function initUI(v) {
     if (persisted.locked) patch.locked = true;
     if (persisted.drawingsHidden) patch.drawingsHidden = true;
     if (persisted.priceAuto === false) patch.priceAuto = false;
+    if (persisted.stayMode === false) patch.stayMode = false;
+    stayMode = persisted.stayMode !== false;
     if (Object.keys(patch).length) v.set(patch);
   }
   // Parameterized URLs (original-compatible): ?symbol=BITSTAMP:BTCUSD&interval=D
@@ -221,12 +228,25 @@ export function initUI(v) {
       return;
     }
     if (tool === 'extra') { openMenu(b); return; }
-    document.querySelectorAll('#rail button').forEach(x => { if (x.dataset.tool !== 'magnet') x.classList.remove('active'); });
+    if (tool === 'stay') {
+      // Stay in drawing mode: on = the tool persists after each placement
+      // (the original's default); off = return to cross after placing one.
+      stayMode = !stayMode;
+      v.set({ stayMode });
+      b.classList.toggle('active', stayMode);
+      saveLayout();
+      return;
+    }
+    if (tool === 'shape') { openShapeMenu(b); return; }
+    document.querySelectorAll('#rail button').forEach(x => {
+      if (x.dataset.tool !== 'magnet' && x.dataset.tool !== 'stay') x.classList.remove('active');
+    });
     b.classList.add('active'); v.set({ tool });
     pending = null;
   }));
   // Magnet button reflects default-on state.
   document.querySelector('#rail button[data-tool="magnet"]')?.classList.add('active');
+  document.querySelector('#rail button[data-tool="stay"]')?.classList.toggle('active', stayMode);
   // Lock/hide buttons reflect restored persisted state.
   if (v.get().locked) document.querySelector('#rail button[data-tool="lock"]')?.classList.add('active');
   if (v.get().drawingsHidden) document.querySelector('#rail button[data-tool="hide"]')?.classList.add('active');
@@ -277,7 +297,8 @@ export function initUI(v) {
       pending = null;
       measureStart = null;
       closeMenu();
-      v.set({ tool: 'cross' });
+      closeShapeMenu();
+      setTool('cross');
       document.querySelectorAll('#rail button').forEach(x => {
         if (x.dataset.tool === 'magnet') return;
         x.classList.toggle('active', x.dataset.tool === 'cross');
@@ -331,7 +352,10 @@ export function initUI(v) {
     if (!magnetOn || !rows.length) return p;
     const span = state.price.max - state.price.min;
     const tol = (span / Math.max(1, geom.height)) * 8;
-    return snapPrice(p, rows, tol);
+    // Snap against the bars on screen only: snapping to a price that exists
+    // on an off-screen bar puts the drawing where no candle is.
+    const sliced = visibleRows(rows, state.visible);
+    return snapPrice(p, sliced.length ? sliced : rows, tol);
   };
   function renderAll(state) {
     if (!base || !rows.length || !state.visible || !state.price) return;
@@ -512,7 +536,32 @@ export function initUI(v) {
   // CCXT's market-load path (Bitstamp/Coinbase block pairs-info/currencies
   // preflights — verified live). Prefixed symbols (exchange:PAIR) still
   // parse and attempt gracefully. If a second venue verifies, add #ex-btn.
-  const DRAW_TOOLS = new Set(['trend', 'fib', 'text', 'horizontal', 'shape', 'brush', 'emoji']);
+  const DRAW_TOOLS = new Set(['trend', 'prediction', 'fib', 'rect', 'ellipse', 'ray', 'xabcd', 'horizontal', 'text', 'icon']);
+  let brushPath = null;      // in-progress freehand points
+  let brushDrawingId = null; // id of the committed freehand drawing
+  let dragDrawingId = null;  // drawing being moved/edited
+  let dragAnchorIdx = -1;    // anchor index when editing a single point
+  let dragStartPoint = null; // pointer anchor captured at body-drag start
+  let dragOrigin = null;     // original points snapshot for a body drag
+  // Active shape sub-tool (original groups rectangles, ellipses, rays and
+  // plain lines under one button; selection switches the geometry).
+  let shapeKind = 'rect';
+  const cursorPoint = (mx, geom, st, my = null) => {
+    const sliced = visibleRows(rows, st.visible);
+    const src = sliced.length ? sliced : null;
+    return {
+      t: src ? timeForX(mx, src, geom.left, geom.width) : tForX(mx, st.visible, geom.left, geom.width),
+      p: maybeSnap(pForY(my ?? geom.top, st.price, geom.top, geom.height), geom, st),
+    };
+  };
+  const SHAPE_TOOLS = new Set(['horizontal', 'rect', 'ellipse', 'ray']);
+  const setTool = (tool) => {
+    v.set({ tool });
+    document.querySelectorAll('#rail button').forEach(x => {
+      if (x.dataset.tool === 'magnet' || x.dataset.tool === 'stay') return;
+      x.classList.toggle('active', x.dataset.tool === tool || (x.dataset.tool === 'shape' && SHAPE_TOOLS.has(tool)));
+    });
+  };
   if (overlay) {
     let dragging = false;
     let startX = 0, startY = 0;
@@ -544,69 +593,76 @@ export function initUI(v) {
         measureStart = { mx, my };
         return;
       }
+      if (tool === 'brush') {
+        if (st.locked) { showToast('Drawings locked — unlock to draw'); return; }
+        pushHistory();
+        brushPath = [{ t: cursorPoint(mx, geom, st).t, p: maybeSnap(pForY(my, st.price, geom.top, geom.height), geom, st) }];
+        brushDrawingId = null;
+        return;
+      }
       if (DRAW_TOOLS.has(tool)) {
         if (st.locked) { showToast('Drawings locked — unlock to draw'); return; }
-        const sliced = visibleRows(rows, st.visible);
-        const src = sliced.length ? sliced : null;
-        const t = src ? timeForX(mx, src, geom.left, geom.width) : tForX(mx, st.visible, geom.left, geom.width);
-        const p = maybeSnap(pForY(my, st.price, geom.top, geom.height), geom, st);
-        const normTool = tool === 'shape' || tool === 'brush' ? 'horizontal' : tool;
-        // Unlimited-placement guarantee: never reset `tool` on placement.
-        // The tool stays selected across unlimited placements until the user
-        // switches tools or presses Escape (which sets cross + clears pending).
-        if (normTool === 'trend' || normTool === 'fib') {
-          if (!pending) { pending = { type: normTool, p1: { t, p } }; }
-          else {
-            pushHistory();
-            addDrawing(v, { type: pending.type, p1: pending.p1, p2: { t, p } });
-            v.set({ selectedId: v.get().drawings[v.get().drawings.length - 1]?.id });
-            pending = null;
-            saveLayout();
-          }
-        } else if (normTool === 'horizontal') {
+        const { t, p } = cursorPoint(mx, geom, st, my);
+        // Multi-click tools accumulate anchors until the type is complete.
+        if (anchorCount(tool) > 1) {
+          const pts = (pending && pending.type === tool ? pending.points : []).concat([{ t, p }]);
+          if (pts.length < anchorCount(tool)) { pending = { type: tool, points: pts }; return; }
           pushHistory();
-          addDrawing(v, { type: 'horizontal', price: p });
-          v.set({ selectedId: v.get().drawings[v.get().drawings.length - 1]?.id });
+          const d = makeDrawing(tool, pts);
+          addDrawing(v, d);
+          v.set({ selectedId: d.id });
+          pending = null;
           saveLayout();
-        } else if (normTool === 'text') {
-          const text = typeof prompt !== 'undefined' ? prompt('Text:') : null;
-          if (!text) return;
+          if (!stayMode) setTool('cross');
+          return;
+        }
+        if (tool === 'horizontal') {
           pushHistory();
-          addDrawing(v, { type: 'text', t, p, text });
+          const d = makeDrawing('horizontal', [{ t: null, p }]);
+          addDrawing(v, d);
+          v.set({ selectedId: d.id });
           saveLayout();
-        } else if (tool === 'emoji') {
-          const glyph = typeof prompt !== 'undefined' ? (prompt('Emoji:', '⭐') || '⭐') : '⭐';
+        } else if (tool === 'text' || tool === 'icon') {
+          const glyph = tool === 'icon'
+            ? (typeof prompt !== 'undefined' ? (prompt('Icon:', '⭐') || '⭐') : '⭐')
+            : (typeof prompt !== 'undefined' ? prompt('Text:') : null);
+          if (!glyph) return;
           pushHistory();
-          addDrawing(v, { type: 'text', t, p, text: glyph });
+          const d = makeDrawing(tool, [{ t, p }], { text: glyph });
+          addDrawing(v, d);
+          v.set({ selectedId: d.id });
           saveLayout();
         }
+        if (!stayMode) setTool('cross');
         return;
+      }
+      // Cross tool: select an existing drawing (anchor first, then body) and
+      // allow dragging it. Anchor drags move one point; body drags move all.
+      if (!st.locked && !st.drawingsHidden) {
+        const anchorIdx = hitTestAnchor(st.drawings, st, geom, rows, mx, my, 8);
+        if (anchorIdx >= 0) {
+          pushHistory();
+          dragDrawingId = st.selectedId;
+          dragAnchorIdx = anchorIdx;
+          return;
+        }
+        const hit = hitTestDrawing(st.drawings, st, geom, rows, mx, my, 6);
+        if (hit) {
+          pushHistory();
+          dragDrawingId = hit.id;
+          dragAnchorIdx = -1;
+          dragStartPoint = cursorPoint(mx, geom, st, my);
+          // Snapshot the original points: each mousemove translates this
+          // snapshot, so the delta can't re-accumulate across events.
+          dragOrigin = { id: hit.id, points: hit.points.map(p => ({ t: p.t, p: p.p })) };
+          v.set({ selectedId: hit.id });
+          return;
+        }
+        if (st.selectedId) v.set({ selectedId: null });
       }
       dragging = true; startX = e.clientX; startY = e.clientY;
       const s = v.get(); startVis = s.visible ? { ...s.visible } : null;
       startPrice = s.price ? { ...s.price } : null;
-      // Select drawing on click (cross tool): nearest trend endpoint / horizontal within 8px.
-      // Skipped while locked or hidden.
-      let bestId = null, bd = 8;
-      const selSlice = visibleRows(rows, st.visible);
-      const selSrc = selSlice.length ? selSlice : null;
-      for (const d of s.drawings || []) {
-        if (d.type === 'horizontal') {
-          const y = geom.top + (1 - (d.price - s.price.min) / (s.price.max - s.price.min)) * geom.height;
-          const dist = Math.abs(y - my);
-          if (dist <= bd) { bd = dist; bestId = d.id; }
-        } else if ((d.type === 'trend' || d.type === 'fib') && d.p1) {
-          const pts = [d.p1, d.p2].filter(Boolean);
-          for (const pt of pts) {
-            const px = selSrc ? xForRowTime(pt.t, selSrc, geom.left, geom.width) : (pt.t - st.visible.from) / (st.visible.to - st.visible.from) * geom.width + geom.left;
-            const dx = px - mx;
-            const dy = (geom.top + (1 - (pt.p - s.price.min) / (s.price.max - s.price.min)) * geom.height) - my;
-            const dist = Math.hypot(dx, dy);
-            if (dist <= 12) { bestId = d.id; bd = 0; }
-          }
-        }
-      }
-      if (bestId && !s.locked && !s.drawingsHidden) v.set({ selectedId: bestId });
     });
     overlay.addEventListener('mouseup', (e) => {
       if (measureStart) {
@@ -627,12 +683,53 @@ export function initUI(v) {
         measureStart = null;
       }
     });
-    window.addEventListener('mouseup', () => { dragging = false; startVis = null; dragAlertId = null; });
+    window.addEventListener('mouseup', () => {
+      if (brushPath) {
+        // Freehand committed; stay mode keeps the brush for the next stroke.
+        if (brushDrawingId && brushPath.length >= 2) saveLayout();
+        brushPath = null; brushDrawingId = null;
+      }
+      if (dragDrawingId) saveLayout();
+      dragDrawingId = null; dragAnchorIdx = -1; dragStartPoint = null; dragOrigin = null;
+      dragging = false; startVis = null; dragAlertId = null;
+    });
     overlay.addEventListener('mousemove', (e) => {
       const st = v.get();
       if (!rows.length || !st.visible || !st.price) return;
       const geom = geomFor();
       const { mx, my } = toCanvas(e);
+      if (brushPath) {
+        // Freehand: append points, commit on mouseup.
+        const q = cursorPoint(mx, geom, st, my);
+        const last = brushPath[brushPath.length - 1];
+        if (!last || Math.hypot(q.t - last.t, q.p - last.p) > 1e-9) brushPath.push(q);
+        const next = brushDrawingId
+          ? v.get().drawings.map(d => (d.id === brushDrawingId ? { ...d, points: brushPath.slice() } : d))
+          : [...v.get().drawings, makeDrawing('brush', brushPath.slice())];
+        if (!brushDrawingId) brushDrawingId = next[next.length - 1].id;
+        v.set({ drawings: next, selectedId: brushDrawingId });
+        return;
+      }
+      if (dragDrawingId) {
+        const target = v.get().drawings.find(d => d.id === dragDrawingId);
+        if (!target) return;
+        if (dragAnchorIdx >= 0) {
+          // Single anchor edit: the anchor follows the pointer (magnet applies).
+          const q = cursorPoint(mx, geom, st, my);
+          v.set({ drawings: v.get().drawings.map(d => (d.id === dragDrawingId ? moveAnchor(d, dragAnchorIdx, q) : d)) });
+        } else if (dragOrigin) {
+          // Whole-body move: translate the ORIGINAL snapshot by the total
+          // pointer delta (never the already-moved state).
+          const q = cursorPoint(mx, geom, st, my);
+          const dt = q.t - dragStartPoint.t, dp = q.p - dragStartPoint.p;
+          v.set({
+            drawings: v.get().drawings.map(d => (
+              d.id === dragOrigin.id ? { ...d, points: dragOrigin.points.map(pp => ({ t: pp.t == null ? null : pp.t + dt, p: pp.p + dp })) } : d
+            )),
+          });
+        }
+        return;
+      }
       if (dragAlertId) {
         const p = pForY(my, st.price, geom.top, geom.height);
         v.set({ alerts: (st.alerts || []).map(a => a.id === dragAlertId ? { ...a, price: p } : a) });
@@ -692,7 +789,7 @@ export function initUI(v) {
       }
       // Pending rubber-band: anchor dot + dashed preview to cursor while a
       // 2-click anchor is set (non-destructive; renderAll clears it).
-      if (pending && pending.p1) {
+      if (pending && pending.points && pending.points.length) {
         try { drawPending(ctx, pending, { x: mx, y: my }, st, geom, rows); } catch {}
       }
       const pal = PAL[st.theme] || PAL.light;
@@ -1082,7 +1179,12 @@ export function initUI(v) {
         colorInp.dataset.color = inst.uid;
         let shown = inst.color;
         if (typeof shown !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(shown)) {
-          try { shown = stuColor(inst.id, idx); } catch { shown = '#2962FF'; }
+          // Same resolver the renderer uses: palette advances per instance of
+          // this study, so a mesh shows distinct colors here too.
+          try {
+            const ord = instances().filter((x) => x.id === inst.id).findIndex((x) => x.uid === inst.uid);
+            shown = autoColor(inst.id, ord < 0 ? 0 : ord, 0);
+          } catch { shown = '#2962FF'; }
         }
         colorInp.value = shown;
         colorInp.title = inst.color ? 'Custom color (Auto resets to palette)' : 'Palette color (pick to customize)';
@@ -1307,6 +1409,33 @@ export function initUI(v) {
     menu.style.top = Math.max(4, (r.bottom || 48) + 4) + 'px';
     setTimeout(() => document.addEventListener('mousedown', function off(e) {
       if (!menu.contains(e.target)) { closeMenu(); document.removeEventListener('mousedown', off); }
+    }), 0);
+  };
+  // Geometric shapes submenu (rectangle / ellipse / ray / line).
+  function closeShapeMenu() { try { document.querySelector('#shape-menu')?.remove(); } catch {} }
+  const openShapeMenu = (anchor) => {
+    closeShapeMenu();
+    const menu = document.createElement('div');
+    menu.id = 'shape-menu';
+    const kinds = [['horizontal', 'Horizontal line'], ['rect', 'Rectangle'], ['ellipse', 'Ellipse'], ['ray', 'Ray'], ['trend', 'Line']];
+    for (const [kind, label] of kinds) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        shapeKind = kind;
+        closeShapeMenu();
+        setTool(kind);
+        pending = null;
+      });
+      menu.appendChild(b);
+    }
+    document.body.appendChild(menu);
+    const r = anchor?.getBoundingClientRect?.() || { left: 56, bottom: 48 };
+    menu.style.left = (r.right || 56) + 4 + 'px';
+    menu.style.top = Math.max(4, r.top || 48) + 'px';
+    setTimeout(() => document.addEventListener('mousedown', function off(e) {
+      if (!menu.contains(e.target)) { closeShapeMenu(); document.removeEventListener('mousedown', off); }
     }), 0);
   };
   document.querySelector('#menu')?.addEventListener('click', (e) => openMenu(e.currentTarget));
@@ -1600,6 +1729,7 @@ export function initUI(v) {
       if (L.locked != null) patch.locked = !!L.locked;
       if (L.drawingsHidden != null) patch.drawingsHidden = !!L.drawingsHidden;
       if (L.priceAuto != null) patch.priceAuto = L.priceAuto !== false;
+      if (L.stayMode != null) { patch.stayMode = L.stayMode !== false; stayMode = patch.stayMode; }
       void cur;
     }
     v.set(patch);
@@ -1676,7 +1806,11 @@ export function initUI(v) {
   // was present at import. Never used by production code paths.
   try {
     if (HAS_DEBUG && typeof window !== 'undefined') {
-      window.__tv = { view: v, rows: () => rows };
+      window.__tv = {
+        view: v,
+        rows: () => rows,
+        drag: () => ({ id: dragDrawingId, anchor: dragAnchorIdx, origin: !!dragOrigin }),
+      };
     }
   } catch {}
   syncScaleTip();

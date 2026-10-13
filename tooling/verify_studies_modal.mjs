@@ -111,7 +111,8 @@ try {
   };
 
   const beforeH = await drawingsCount();
-  await page.click('#rail button[data-tool="horizontal"]');
+  await page.click('#rail button[data-tool="shape"]');
+  await page.click('#shape-menu button:has-text("Horizontal line")');
   // One tool selection, three placements (no reselect).
   await clickOverlay(0.3, 0.3);
   await clickOverlay(0.5, 0.5);
@@ -119,7 +120,8 @@ try {
   const afterH = await drawingsCount();
   if (afterH - beforeH !== 3) throw new Error(`expected +3 horizontals, got +${afterH - beforeH}`);
   // Tool must still be selected (unlimited-placement guarantee).
-  const hActive = await page.locator('#rail button[data-tool="horizontal"].active').count();
+  // horizontal lives under the shape submenu, so the shape button carries active
+  const hActive = await page.locator('#rail button[data-tool="shape"].active').count();
   if (hActive !== 1) throw new Error('horizontal tool did not stay selected across placements');
   console.log('3 horizontals placed without reselecting');
 
@@ -145,6 +147,50 @@ try {
 
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'tooling/shots/studies-modal-1920.png' });
+  // --- color regressions (fresh debug page; needs the __tv hook) ---
+  {
+    const target = (process.argv[2] || 'http://localhost:8787/').replace(/\/$/, '');
+    const cp = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+    const cpErrors = [];
+    cp.on('pageerror', e => cpErrors.push(String(e)));
+    await cp.goto(target + '/index.html?debug', { waitUntil: 'networkidle' });
+    await cp.waitForFunction(() => window.__tv && window.__tv.rows().length > 0, null, { timeout: 30000 });
+    await cp.waitForTimeout(700);
+    // auto palette must vary per instance (regression: SMA mesh was all blue)
+    await cp.evaluate(() => {
+      window.__tv.view.set({ studies: [
+        { uid: 'm1', id: 'sma', params: { period: 10 }, color: null, visible: true },
+        { uid: 'm2', id: 'sma', params: { period: 20 }, color: null, visible: true },
+        { uid: 'm3', id: 'sma', params: { period: 50 }, color: null, visible: true },
+      ] });
+    });
+    await cp.waitForTimeout(700);
+    const mesh = await cp.evaluate(() => {
+      const c = document.querySelector('#base');
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      const near = (r, g, b) => { let n = 0; for (let i = 0; i < d.length; i += 4) { if (d[i+3] < 200) continue; if (Math.abs(d[i]-r) < 26 && Math.abs(d[i+1]-g) < 26 && Math.abs(d[i+2]-b) < 26) n++; } return n; };
+      return { blue: near(0x29, 0x62, 0xFF), orange: near(0xFF, 0x6D, 0x00), purple: near(0x9C, 0x27, 0xB0) };
+    });
+    const distinct = [mesh.blue, mesh.orange, mesh.purple].filter((n) => n > 500).length;
+    if (distinct < 2) { console.error('MESH COLORS FAIL', JSON.stringify(mesh)); await cp.close(); process.exit(1); }
+    console.log(`auto palette across 3 SMA instances: ${JSON.stringify(mesh)}`);
+    // an explicit color must actually paint
+    await cp.evaluate(() => {
+      window.__tv.view.set({ studies: [{ uid: 'c1', id: 'sma', params: { period: 20 }, color: '#ff0000', visible: true }] });
+    });
+    await cp.waitForTimeout(600);
+    const red = await cp.evaluate(() => {
+      const c = document.querySelector('#base');
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let n = 0; for (let i = 0; i < d.length; i += 4) { if (d[i+3] < 200) continue; if (d[i] > 200 && d[i+1] < 70 && d[i+2] < 70) n++; }
+      return n;
+    });
+    if (red < 500) { console.error('EXPLICIT COLOR FAIL, red px =', red); await cp.close(); process.exit(1); }
+    console.log('explicit #ff0000 instance painted', red, 'red px');
+    if (cpErrors.length) { console.error('color page errors', cpErrors); await cp.close(); process.exit(1); }
+    await cp.close();
+  }
+
   if (errors.length) { console.error('PAGE ERRORS', errors); process.exit(1); }
   console.log('modal verify ok, no page errors');
 } finally {

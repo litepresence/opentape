@@ -1,7 +1,7 @@
 // tests/drawings.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { snapPrice, serialize, deserialize, addDrawing } from '../js/drawings.js';
+import {snapPrice, serialize, deserialize, addDrawing, translateDrawing, moveAnchor, isComplete, migrateDrawing, makeDrawing, bounds, anchorCount } from '../js/drawings.js';
 test('magnet snaps to nearest OHL within tolerance', () => {
   const rows = [{ o: 100, h: 110, l: 90, c: 105 }];
   assert.equal(snapPrice(109, rows, 2), 110);
@@ -64,4 +64,32 @@ test('addDrawing is pure state update (no direct persistence)', () => {
   addDrawing(view, { type: 'horizontal', price: 80000 });
   assert.equal(store.drawings.length, 1);
   assert.equal(store.drawings[0].type, 'horizontal');
+});
+
+// --- rail-parity regression coverage ---
+test('translateDrawing preserves null time anchors (horizontal lines)', () => {
+  const moved = translateDrawing({ type: 'horizontal', points: [{ t: null, p: 100 }] }, 5000, -3);
+  assert.equal(moved.points[0].t, null, 'price-only anchors must not become time-anchored');
+  assert.equal(moved.points[0].p, 97);
+});
+test('isComplete accepts price-only horizontals, rejects short trends', () => {
+  assert.equal(isComplete({ type: 'horizontal', points: [{ t: null, p: 1 }] }), true);
+  assert.equal(isComplete({ type: 'trend', points: [{ t: 1, p: 2 }] }), false);
+  assert.equal(isComplete({ type: 'xabcd', points: [{ t: 1, p: 2 }, { t: 2, p: 3 }, { t: 3, p: 4 }] }), false);
+  assert.equal(isComplete({ type: 'brush', points: [{ t: 1, p: 2 }, { t: 2, p: 3 }] }), true);
+});
+test('migrateDrawing turns legacy half-trends into unusable-but-safe records', () => {
+  const d = migrateDrawing({ id: 'x', type: 'trend', p1: { t: 1, p: 2 } });
+  assert.equal(isComplete(d), false, 'renderers must skip this instead of crashing');
+});
+test('anchor geometry helpers behave', () => {
+  const d = makeDrawing('rect', [{ t: 1, p: 10 }, { t: 5, p: 2 }]);
+  assert.deepEqual(bounds(d), { t0: 1, t1: 5, p0: 2, p1: 10 });
+  const moved = moveAnchor(d, 1, { t: 9, p: 9 });
+  assert.deepEqual(moved.points[1], { t: 9, p: 9 });
+  assert.deepEqual(d.points[1], { t: 5, p: 2 }, 'original is not mutated');
+});
+test('ids are unique across rapid creation', () => {
+  const ids = new Set(Array.from({ length: 200 }, () => makeDrawing('trend', [{ t: 1, p: 1 }, { t: 2, p: 2 }]).id));
+  assert.equal(ids.size, 200);
 });

@@ -8,6 +8,14 @@ export function stuColor(id, k = 0) {
   const i = STUDIES.findIndex(s => s.id === id);
   return STU_COLORS[((i < 0 ? 0 : i) + k + STU_COLORS.length) % STU_COLORS.length];
 }
+// Auto color for an instance: the palette advances per *instance* as well as
+// per line, so several copies of one study (an SMA mesh) get distinct colors
+// instead of all landing on palette[0] blue.
+export function autoColor(id, ord = 0, k = 0) {
+  const i = STUDIES.findIndex(s => s.id === id);
+  const base = i < 0 ? 0 : i;
+  return STU_COLORS[(base + ord + k + STU_COLORS.length) % STU_COLORS.length];
+}
 // Memoized study values per rows array (rows identity is stable across pan/zoom).
 const studyCache = new WeakMap();
 export function studyVals(id, rows, opts) {
@@ -269,7 +277,15 @@ export function renderBase(ctx, state, rows, geom) {
       active.push({ id: e.id, params: { ...(meta.opts || {}), ...(e.params || {}) }, color: ('color' in e) ? e.color : null });
     }
   }
-  const colorFor = (inst, k = 0) => inst.color ?? stuColor(inst.id, k);
+  // Assign each instance an ordinal per study id so auto colors vary across
+  // instances (mesh) as well as across lines.
+  const ordSeen = new Map();
+  for (const inst of active) {
+    const seen = ordSeen.get(inst.id) || 0;
+    inst.ord = seen;
+    ordSeen.set(inst.id, seen + 1);
+  }
+  const colorFor = (inst, k = 0) => inst.color ?? autoColor(inst.id, inst.ord || 0, k);
   for (const inst of active) {
     const meta = metaById(inst.id);
     if (meta.kind !== 'overlay' && meta.kind !== 'multiline') continue;
