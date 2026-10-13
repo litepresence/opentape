@@ -457,13 +457,16 @@ export function initUI(v) {
     const cur = v.get();
     if (!cur.indicators) v.set({ indicators: { sma20: false, sma50: false, ema20: false, rsi: false } });
     if (!cur.chartType) v.set({ chartType: 'candles' });
+    if (!cur.studies) v.set({ studies: [] });
     const dlg = document.createElement('dialog');
     dlg.id = 'ind-dialog';
-    dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:6px;font:13px sans-serif">'
+    dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:6px;font:13px sans-serif;min-width:280px;max-height:80vh;overflow:auto">'
       + '<label><input type="checkbox" data-ind="sma20"> SMA 20</label>'
       + '<label><input type="checkbox" data-ind="sma50"> SMA 50</label>'
       + '<label><input type="checkbox" data-ind="ema20"> EMA 20</label>'
       + '<label><input type="checkbox" data-ind="rsi"> RSI</label>'
+      + '<hr><input id="ind-filter" placeholder="Filter studies…" style="padding:4px">'
+      + '<div id="ind-groups" style="display:flex;flex-direction:column;gap:8px"></div>'
       + '<button value="close">Close</button></form>';
     document.body.appendChild(dlg);
     dlg.querySelectorAll('input[data-ind]').forEach((cb) => {
@@ -472,10 +475,121 @@ export function initUI(v) {
         v.set({ indicators: { ...(v.get().indicators || {}), [cb.dataset.ind]: cb.checked } });
       });
     });
+    // Task 9: all 85 vendored studies, grouped, with filter + transform radios.
+    import('./studies.js').then(({ STUDIES }) => {
+      const host = dlg.querySelector('#ind-groups');
+      const groups = [];
+      for (const s of STUDIES) {
+        let g = groups.find(x => x.name === s.group);
+        if (!g) { g = { name: s.group, items: [] }; groups.push(g); }
+        g.items.push(s);
+      }
+      const setStudies = (ids) => v.set({ studies: ids });
+      const activeIds = () => v.get().studies || [];
+      const syncStudies = () => {
+        const cur = new Set(activeIds());
+        host.querySelectorAll('input[data-study]').forEach((cb) => {
+          cb.checked = cur.has(cb.dataset.study);
+        });
+        const transforms = STUDIES.filter(s => s.kind === 'transform');
+        const activeT = transforms.find(s => cur.has(s.id));
+        host.querySelectorAll('input[data-transform]').forEach((r) => {
+          r.checked = !!activeT && r.dataset.transform === activeT.id;
+        });
+        const noneR = host.querySelector('input[data-transform-none]');
+        if (noneR) noneR.checked = !activeT;
+      };
+      for (const g of groups) {
+        const box = document.createElement('div');
+        box.dataset.group = g.name;
+        const head = document.createElement('div');
+        head.style.cssText = 'display:flex;gap:6px;align-items:center;font-weight:700';
+        const title = document.createElement('span');
+        title.textContent = g.name;
+        title.style.flex = '1';
+        const allB = document.createElement('button');
+        allB.type = 'button'; allB.textContent = 'All'; allB.dataset.all = g.name;
+        const noneB = document.createElement('button');
+        noneB.type = 'button'; noneB.textContent = 'None'; noneB.dataset.none = g.name;
+        head.append(title, allB, noneB);
+        box.appendChild(head);
+        allB.addEventListener('click', () => {
+          const cur = new Set(activeIds());
+          for (const s of g.items) {
+            if (s.kind === 'transform') continue;
+            cur.add(s.id);
+          }
+          setStudies([...cur]);
+          syncStudies();
+        });
+        noneB.addEventListener('click', () => {
+          setStudies(activeIds().filter(id => !g.items.some(s => s.id === id)));
+          syncStudies();
+        });
+        for (const s of g.items) {
+          const lab = document.createElement('label');
+          lab.dataset.label = (s.id + ' ' + s.label).toLowerCase();
+          lab.style.cssText = 'display:flex;gap:6px;align-items:center';
+          const inp = document.createElement('input');
+          if (s.kind === 'transform') {
+            inp.type = 'radio';
+            inp.name = 'tv-transform';
+            inp.dataset.transform = s.id;
+            inp.addEventListener('change', () => {
+              if (!inp.checked) return;
+              setStudies([...activeIds().filter(id => {
+                const m = STUDIES.find(x => x.id === id);
+                return m && m.kind !== 'transform';
+              }), s.id]);
+            });
+          } else {
+            inp.type = 'checkbox';
+            inp.dataset.study = s.id;
+            inp.addEventListener('change', () => {
+              const cur = new Set(activeIds());
+              if (inp.checked) cur.add(s.id);
+              else cur.delete(s.id);
+              setStudies([...cur]);
+            });
+          }
+          lab.appendChild(inp);
+          lab.appendChild(document.createTextNode(` ${s.label} (${s.id})`));
+          box.appendChild(lab);
+        }
+        host.appendChild(box);
+      }
+      // Transform "None" radio clears the active transform.
+      const clearBox = document.createElement('label');
+      clearBox.style.cssText = 'display:flex;gap:6px;align-items:center';
+      const clear = document.createElement('input');
+      clear.type = 'radio';
+      clear.name = 'tv-transform';
+      clear.dataset.transformNone = '1';
+      clear.addEventListener('change', () => {
+        if (!clear.checked) return;
+        setStudies(activeIds().filter(id => {
+          const m = STUDIES.find(x => x.id === id);
+          return m && m.kind !== 'transform';
+        }));
+      });
+      clearBox.appendChild(clear);
+      clearBox.appendChild(document.createTextNode(' No transform'));
+      host.appendChild(clearBox);
+      dlg.addEventListener('close', syncStudies);
+      dlg.querySelector('#ind-filter')?.addEventListener('input', (e) => {
+        const q = String(e.target.value || '').toLowerCase();
+        host.querySelectorAll('label[data-label]').forEach((lab) => {
+          lab.style.display = !q || lab.dataset.label.includes(q) ? 'flex' : 'none';
+        });
+      });
+      dlg._syncStudies = syncStudies;
+      syncStudies();
+    }).catch(() => { /* studies dialog extension unavailable — Task-7 checkboxes still work */ });
     document.querySelector('#ind-btn')?.addEventListener('click', () => {
       dlg.querySelectorAll('input[data-ind]').forEach((cb) => {
         cb.checked = !!(v.get().indicators || {})[cb.dataset.ind];
       });
+      if (typeof dlg._syncStudies === 'function') dlg._syncStudies();
       if (typeof dlg.showModal === 'function') dlg.showModal();
       else dlg.setAttribute('open', '');
     });
