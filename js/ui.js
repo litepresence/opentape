@@ -28,21 +28,37 @@ export function initUI(v) {
   const redoStack = [];
   const tForX = (x, vis, left, width) => vis.from + ((x - left) / Math.max(1, width)) * (vis.to - vis.from);
   const pForY = (y, pr, top, height) => pr.min + (1 - (y - top) / Math.max(1, height)) * (pr.max - pr.min);
-  const showToast = (msg) => {
+  const showToast = (msg, action = null) => {
     console.warn(msg);
     try {
       let el = document.querySelector('#toast');
       if (!el) {
         el = document.createElement('div');
         el.id = 'toast';
-        el.style.cssText = 'position:fixed;bottom:48px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:8px 14px;border-radius:4px;font:13px sans-serif;z-index:9999;opacity:0.95';
+        el.style.cssText = 'position:fixed;bottom:48px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:8px 14px;border-radius:4px;font:13px sans-serif;z-index:9999;opacity:0.95;gap:4px';
         document.body.appendChild(el);
       }
-      el.textContent = msg;
-      el.style.display = 'block';
+      el.textContent = '';
+      const span = document.createElement('span');
+      span.textContent = msg;
+      el.appendChild(span);
+      if (action) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = action.label;
+        btn.style.cssText = 'margin-left:10px;padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;cursor:pointer;font:inherit;font-size:12px';
+        btn.addEventListener('click', () => { action.onAction(); hideToast(); });
+        el.appendChild(btn);
+      }
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
       clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+      showToast._t = setTimeout(() => { el.style.display = 'none'; }, action ? 8000 : 4000);
     } catch {}
+  };
+  const hideToast = () => {
+    const el = document.querySelector('#toast');
+    if (el) el.style.display = 'none';
   };
   const layoutFromState = (s) => ({
     drawings: s.drawings || [],
@@ -186,14 +202,7 @@ export function initUI(v) {
       saveLayout();
       return;
     }
-    if (tool === 'lock') {
-      const locked = !v.get().locked;
-      v.set({ locked });
-      b.classList.toggle('active', locked);
-      showToast(locked ? 'Drawings locked' : 'Drawings unlocked');
-      saveLayout();
-      return;
-    }
+    if (tool === 'lock') { toggleLock(); return; }
     if (tool === 'hide') {
       const hidden = !v.get().drawingsHidden;
       v.set({ drawingsHidden: hidden });
@@ -220,7 +229,7 @@ export function initUI(v) {
     }
     if (tool === 'del') {
       const s = v.get();
-      if (s.locked) { showToast('Drawings locked — unlock to delete'); return; }
+      if (s.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
       if (!s.drawings.length && !s.alerts.length) { showToast('Nothing to remove'); return; }
       pushHistory();
       if (s.selectedId) {
@@ -259,6 +268,7 @@ export function initUI(v) {
   // Lock/hide buttons reflect restored persisted state.
   if (v.get().locked) document.querySelector('#rail button[data-tool="lock"]')?.classList.add('active');
   if (v.get().drawingsHidden) document.querySelector('#rail button[data-tool="hide"]')?.classList.add('active');
+  syncLockBadge(!!v.get().locked);
   // Topbar undo/redo (↩ ↪) + keyboard.
   document.querySelectorAll('#topbar button').forEach(b => {
     if (b.textContent === '↩') b.addEventListener('click', undo);
@@ -316,7 +326,7 @@ export function initUI(v) {
     else if (e.key === 'Delete' || e.key === 'Backspace') {
       if (isEditable(e.target)) return;
       const s = v.get();
-      if (s.locked) { showToast('Drawings locked — unlock to delete'); return; }
+      if (s.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
       if (!s.selectedId && !s.drawings.length) return;
       pushHistory();
       if (s.selectedId) {
@@ -564,6 +574,28 @@ export function initUI(v) {
     };
   };
   const SHAPE_TOOLS = new Set(['horizontal', 'rect', 'ellipse', 'ray']);
+  function toggleLock() {
+    const locked = !v.get().locked;
+    v.set({ locked });
+    document.querySelector('#rail button[data-tool="lock"]')?.classList.toggle('active', locked);
+    syncLockBadge(locked);
+    showToast(locked ? 'Drawings locked' : 'Drawings unlocked');
+    saveLayout();
+  }
+  // Persistent header badge: a mode toggle left on must never look like hover.
+  function syncLockBadge(on) {
+    let el = document.querySelector('#locked-badge');
+    if (!on) { el?.remove(); return; }
+    if (!el) {
+      el = document.createElement('button');
+      el.id = 'locked-badge';
+      el.type = 'button';
+      el.style.cssText = 'font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #2962FF;color:#2962FF;background:transparent;cursor:pointer';
+      el.addEventListener('click', () => toggleLock());
+      document.querySelector('#ohlc-head')?.prepend(el);
+    }
+    el.textContent = 'Drawings locked · click to unlock';
+  }
   const setTool = (tool) => {
     v.set({ tool });
     document.querySelectorAll('#rail button').forEach(x => {
@@ -603,14 +635,14 @@ export function initUI(v) {
         return;
       }
       if (tool === 'brush') {
-        if (st.locked) { showToast('Drawings locked — unlock to draw'); return; }
+        if (st.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
         pushHistory();
         brushPath = [{ t: cursorPoint(mx, geom, st).t, p: maybeSnap(pForY(my, st.price, geom.top, geom.height), geom, st) }];
         brushDrawingId = null;
         return;
       }
       if (DRAW_TOOLS.has(tool)) {
-        if (st.locked) { showToast('Drawings locked — unlock to draw'); return; }
+        if (st.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
         const { t, p } = cursorPoint(mx, geom, st, my);
         // Multi-click tools accumulate anchors until the type is complete.
         if (anchorCount(tool) > 1) {
@@ -899,7 +931,7 @@ export function initUI(v) {
       pDrag = null;
       if (!wasClick) return;
       const st = v.get();
-      if (st.locked) { showToast('Drawings locked — unlock to add alerts'); return; }
+      if (st.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
       if (!rows.length || !st.visible || !st.price) return;
       const p = priceAt(y);
       pushHistory();
@@ -1345,7 +1377,7 @@ export function initUI(v) {
         rm.setAttribute('aria-label', 'Remove alert');
         rm.addEventListener('click', (ev) => {
           ev.preventDefault();
-          if (v.get().locked) { showToast('Drawings locked — unlock to delete'); return; }
+          if (v.get().locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
           pushHistory();
           v.set({ alerts: (v.get().alerts || []).filter(x => x.id !== a.id), selectedId: null });
           saveLayout();
@@ -1357,7 +1389,7 @@ export function initUI(v) {
     };
     dlg.querySelector('#alert-clear').addEventListener('click', (ev) => {
       ev.preventDefault();
-      if (v.get().locked) { showToast('Drawings locked — unlock to delete'); return; }
+      if (v.get().locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
       if (!(v.get().alerts || []).length) return;
       pushHistory();
       v.set({ alerts: [], selectedId: null });
@@ -1399,7 +1431,7 @@ export function initUI(v) {
     const items = [
       ['Reset view', () => { if (fullVisible && fullPrice) v.set({ visible: { ...fullVisible }, price: { ...fullPrice } }); }],
       ['Clear drawings', () => {
-        if (v.get().locked) { showToast('Drawings locked — unlock to delete'); return; }
+        if (v.get().locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
         if (!v.get().drawings.length) return;
         pushHistory();
         v.set({ drawings: [], selectedId: null });

@@ -77,6 +77,13 @@ button:hover { background: var(--btn-hover); }
 #shape-menu button { text-align: left; padding: 7px 10px; border-radius: 4px; font-size: 13px; }
 #shape-menu button:hover { background: var(--btn-hover); }
 #rail button.active { background: var(--btn-hover); outline: 1px solid var(--grid); }
+/* Mode toggles (magnet / stay / lock / hide) must read as *engaged*, which
+   looks nothing like hover — a mode left on can never look "nothing selected". */
+#rail button.active[data-tool="magnet"],
+#rail button.active[data-tool="stay"],
+#rail button.active[data-tool="lock"],
+#rail button.active[data-tool="hide"] { background: rgba(41, 98, 255, 0.16); outline: 1px solid #2962FF; color: #2962FF; border-radius: 4px; }
+#locked-badge { margin-right: 8px; }
 #chart-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
 #ohlc-head {
   display: flex;
