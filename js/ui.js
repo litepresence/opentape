@@ -1,5 +1,5 @@
 // js/ui.js
-import { fetchOHLCV, normalizeOHLCV } from './data.js';
+import { fetchOHLCV } from './data.js';
 import { renderBase, PAL, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts } from './overlay.js';
@@ -541,14 +541,10 @@ export function initUI(v) {
     v.set({ visible, price, replayIndex: null });
   };
   // Symbol/timeframe reload: label + scale update ONLY on success. On
-  // failure the old rows/label/scale are kept and an error toast is shown
-  // (same fallback-toast pattern as data.js). Fetches /api/ohlcv directly
-  // so a proxy failure can't masquerade fallback BTC data as the new symbol.
+  // failure the old rows/label/scale are kept and an error toast is shown.
   const reload = async (symbol, ccxtTf, nextTf) => {
     try {
-      const r = await fetch(`/api/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${ccxtTf}&limit=300`);
-      if (!r.ok) throw new Error('proxy ' + r.status);
-      const data = normalizeOHLCV(await r.json());
+      const data = await fetchOHLCV({ symbol, timeframe: ccxtTf, limit: 300 });
       if (!Array.isArray(data) || !data.length) throw new Error('empty');
       rows = data;
       resetScale();
@@ -762,7 +758,7 @@ export function initUI(v) {
       await reload(sym, curInterval());
     });
   }
-  // Watchlist sidebar: Symbol/Last/Chg/Chg% fed by the proxy (daily bars);
+  // Watchlist sidebar: Symbol/Last/Chg/Chg% fed by browser CCXT (daily bars);
   // click a row to switch the chart to that symbol. Offline rows show em-dash.
   const WATCH = [
     { group: 'CRYPTO', sym: 'BTC/USD', label: 'BTCUSD' },
@@ -785,18 +781,15 @@ export function initUI(v) {
       row.className = 'wrow';
       let last = '—', chg = '—', chgp = '—', cls = '';
       try {
-        const r = await fetch(`/api/ohlcv?symbol=${encodeURIComponent(w.sym)}&timeframe=1d&limit=2`);
-        if (r.ok) {
-          const d = normalizeOHLCV(await r.json());
-          if (d.length) {
-            const c = d[d.length - 1].c;
-            last = c.toLocaleString('en-US', { maximumFractionDigits: c < 10 ? 3 : 0 });
-            if (d.length >= 2) {
-              const p = d[d.length - 2].c, dc = c - p, pct = dc / p * 100;
-              cls = dc >= 0 ? 'up' : 'down';
-              chg = (dc >= 0 ? '+' : '') + dc.toFixed(dc < 10 && dc > -10 ? 3 : 0);
-              chgp = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
-            }
+        const d = await fetchOHLCV({ symbol: w.sym, timeframe: '1d', limit: 2 });
+        if (d.length) {
+          const c = d[d.length - 1].c;
+          last = c.toLocaleString('en-US', { maximumFractionDigits: c < 10 ? 3 : 0 });
+          if (d.length >= 2) {
+            const p = d[d.length - 2].c, dc = c - p, pct = dc / p * 100;
+            cls = dc >= 0 ? 'up' : 'down';
+            chg = (dc >= 0 ? '+' : '') + dc.toFixed(dc < 10 && dc > -10 ? 3 : 0);
+            chgp = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
           }
         }
       } catch {}

@@ -17,11 +17,16 @@ export function resolveMarket(symbol) {
 }
 
 let ccxtReady = null;
-export function whenCcxt() {
+export function whenCcxt(timeoutMs = 15000) {
   if (typeof globalThis.ccxt !== 'undefined') return Promise.resolve(globalThis.ccxt);
   if (!ccxtReady) {
     ccxtReady = new Promise((resolve) => {
-      if (typeof document !== 'undefined') document.addEventListener('ccxt-ready', () => resolve(globalThis.ccxt), { once: true });
+      if (typeof document !== 'undefined') {
+        let done = false;
+        const settle = (v) => { if (!done) { done = true; resolve(v); } };
+        document.addEventListener('ccxt-ready', () => settle(globalThis.ccxt), { once: true });
+        setTimeout(() => settle(undefined), timeoutMs);
+      }
       else resolve(undefined);
     });
   }
