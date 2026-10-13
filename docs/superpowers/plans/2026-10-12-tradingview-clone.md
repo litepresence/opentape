@@ -709,4 +709,141 @@ git commit -m "feat: themes export polish verify"
 
 ## File Map (create order)
 
-`package.json` → `tooling/capture.js` → `server/proxy.js` → `data/btcusd-1d.json` → `js/data.js` → `index.html` → `styles.css` → `js/viewstate.js` → `js/ui.js` → `js/chart.js` → `js/axes.js` → `js/overlay.js` → `js/drawings.js` → `js/indicators.js` → `tooling/verify.mjs`
+`package.json` → `tooling/capture.js` → `server/proxy.js` → `data/btcusd-1d.json` → `js/data.js` → `index.html` → `styles.css` → `js/viewstate.js` → `js/ui.js` → `js/chart.js` → `js/axes.js` → `js/overlay.js` → `js/drawings.js` → `js/indicators.js` → `tooling/verify.mjs` → `js/lib.js` → `js/studies.js`
+
+---
+
+### Task 9: Vendor indicators/ library — wire all 85 studies
+
+**Files:**
+- Keep verbatim (already in repo, untracked): `indicators/indicators.js` (base, 14 studies), `indicators/indicators-osc.js` (11), `indicators/indicators-tulip.js` (11), `indicators/indicators-tmom.js` (17), `indicators/indicators-tvol.js` (15), `indicators/indicators-qx.js` (17). Do NOT edit these files.
+- Create: `js/lib.js` (ESM bridge to the global)
+- Create: `js/studies.js` (registry of all 85 + compute helper)
+- Modify: `index.html` (classic `<script>` tags in load order), `js/chart.js` (study rendering), `js/ui.js` (dialog lists all 85 grouped + search filter)
+- Test: `tests/studies.test.mjs`
+
+**Interfaces:**
+- Consumes: `globalThis.Indicators` (classic scripts), row arrays from `fetchOHLCV`, existing pane/overlay render helpers, Task-7 dialog + `state.indicators`
+- Produces: `STUDIES` (85 entries `{id,label,group,inputs,kind,lines}`), `computeStudy(id, rows, opts)` → `{id, series: {key: (number|null)[]}}`. Later tasks use `STUDIES` for dialog + render.
+
+**Study inventory (85 — every id below must be registered; group = source file):**
+- base `indicators/indicators.js` (14): sma, ema, macd, bbands, stddev, psar, vwap, zlema, trima, hma, renko, heikinashi, ichimoku, frama
+- osc `indicators/indicators-osc.js` (11): rsi, stoch, aroonosc, adx, atr, fisher, mfi, uo, fosc, dmi, msw
+- tulip `indicators/indicators-tulip.js` (11): dema, tema, wma, wilders, vidya, vwma, linreg, tsf, linregslope, kama, md
+- tmom `indicators/indicators-tmom.js` (17): stochrsi, adxr, aroon, cci, cmo, dx, di, mom, roc, rocr, trix, ultosc, willr, apo, ppo, bop, qstick
+- tvol `indicators/indicators-tvol.js` (15): obv, emv, vosc, nvi, pvi, wad, ad, cvi, natr, mass, kvo, adosc, dpo, vhf, volatility
+- qx `indicators/indicators-qx.js` (17): vortex, kst, zigzag, ravi, aema, tsi, smi, eri, awesome, supertrend, arsi, keltner, donchian, ulcer, earsi, holtwinters, kagi
+
+Calling convention (verified uniform): `fn(closes, opts)` for close-only, `fn(high, low, close, opts)` for HLC, `fn(high, low, close, volume, opts)` for HLCV. `opts` always an object with documented defaults (read each fn's `_per(...)` calls). Returns same-length single array or object of same-length arrays; warmup bars are `null`; `null/NaN` in a window yields `null`.
+
+Kind rules (assign per study by reading its doc comment; explicit overrides below, else defaults):
+- `overlay`: single price-scale series → line on price pane (default for single-output close-averages: sma/ema/wma/dema/tema/trima/zlema/hma/kama/frama/vidya/vwma/wilders/linreg/tsf/aema/holtwinters, plus psar dots, supertrend line, zigzag line, vwap line).
+- `bands`: `{upper,lower[,middle]}` → lines + fill (bbands, keltner, donchian).
+- `multiline`: object of price-scale series → N lines on price pane (ichimoku 5 lines).
+- `pane`: oscillators → lines in the shared oscillator pane, scaled to union min/max of active pane studies (rsi, stoch, stochrsi, adx, adxr, dx, di, dmi, aroon, aroonosc, cci, cmo, mom, roc, rocr, trix, ultosc, willr, apo, ppo, bop, qstick, atr, natr, fisher, mfi, uo, fosc, msw, macd, stddev, md, linregslope, obv, emv, vosc, nvi, pvi, wad, ad, cvi, mass, kvo, adosc, dpo, vhf, volatility, vortex, kst, ravi, tsi, smi, eri, awesome, arsi, earsi, ulcer).
+- `transform`: replaces candle source, radio behavior — exactly one active at a time (heikinashi, renko, kagi).
+
+- [ ] **Step 1: Write the failing test**
+
+```js
+// tests/studies.test.mjs
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+
+// Load the classic library exactly as index.html will (base first).
+const ORDER = ['indicators/indicators.js', 'indicators/indicators-osc.js', 'indicators/indicators-tulip.js', 'indicators/indicators-tmom.js', 'indicators/indicators-tvol.js', 'indicators/indicators-qx.js'];
+const ctx = vm.createContext({ console, Math, Number, Array, Object, Error, globalThis: {} });
+ctx.globalThis = ctx;
+for (const f of ORDER) vm.runInContext(readFileSync(f, 'utf8'), ctx, { filename: f });
+const Lib = ctx.Indicators;
+const { STUDIES } = await import('../js/studies.js');
+
+test('library exposes all 85 studies', () => {
+  assert.equal(Object.keys(Lib).length, 85);
+});
+test('registry covers all 85 with no orphans either direction', () => {
+  const ids = STUDIES.map(s => s.id).sort();
+  assert.equal(ids.length, 85);
+  assert.deepEqual(ids, Object.keys(Lib).sort());
+});
+test('every study computes same-length output with null warmup', () => {
+  const N = 60;
+  const closes = Array.from({ length: N }, (_, i) => 60000 + i * 100 + (i % 5) * 50);
+  const high = closes.map(c => c + 120), low = closes.map(c => c - 120), vol = closes.map(() => 1.5);
+  for (const s of STUDIES) {
+    const fn = Lib[s.id];
+    const args = s.inputs === 'close' ? [closes] : s.inputs === 'hlc' ? [high, low, closes] : [high, low, closes, vol];
+    const out = fn(...args, {});
+    const series = Array.isArray(out) ? { line: out } : out;
+    for (const arr of Object.values(series)) {
+      assert.equal(arr.length, N, `${s.id} length`);
+      assert.equal(arr[0], null, `${s.id} warmup`);
+    }
+  }
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `node --test tests/studies.test.mjs`
+Expected: FAIL — `Cannot find module '../js/studies.js'`.
+
+- [ ] **Step 3: Write minimal implementation**
+
+```js
+// js/lib.js — ESM bridge to the classic-script global. index.html loads
+// indicators/*.js before any module, so globalThis.Indicators must exist.
+export function getLib() {
+  const Lib = globalThis.Indicators;
+  if (!Lib) throw new Error('indicators library not loaded — check <script> order in index.html');
+  return Lib;
+}
+```
+
+```html
+<!-- index.html: insert BEFORE the module script, exact order (base first) -->
+<script src="indicators/indicators.js"></script>
+<script src="indicators/indicators-osc.js"></script>
+<script src="indicators/indicators-tulip.js"></script>
+<script src="indicators/indicators-tmom.js"></script>
+<script src="indicators/indicators-tvol.js"></script>
+<script src="indicators/indicators-qx.js"></script>
+```
+
+```js
+// js/studies.js — registry + compute. Pattern per entry (85 total, ids per
+// inventory above; inputs: 'close'|'hlc'|'hlcv'; opts: fn defaults from source):
+import { getLib } from './lib.js';
+export const STUDIES = [
+  { id: 'sma', label: 'SMA', group: 'Trend', inputs: 'close', kind: 'overlay', lines: ['line'], opts: { period: 20 } },
+  { id: 'macd', label: 'MACD', group: 'Trend', inputs: 'close', kind: 'pane', lines: ['macd', 'signal', 'hist'], opts: { short: 12, long: 26, signal: 9 } },
+  { id: 'bbands', label: 'Bollinger Bands', group: 'Trend', inputs: 'close', kind: 'bands', lines: ['upper', 'middle', 'lower'], fill: ['upper', 'lower'], opts: { period: 20, stddev: 2 } },
+  // ... one entry per inventory id (85). Read each fn's doc comment + _per
+  // defaults for exact opts keys; multi-output fns list every returned key.
+];
+export function computeStudy(id, rows, opts = {}) {
+  const Lib = getLib();
+  const meta = STUDIES.find(s => s.id === id);
+  if (!meta || typeof Lib[id] !== 'function') throw new Error('unknown study ' + id);
+  const closes = rows.map(r => r.c), high = rows.map(r => r.h), low = rows.map(r => r.l), vol = rows.map(r => r.v);
+  const args = meta.inputs === 'close' ? [closes] : meta.inputs === 'hlc' ? [high, low, closes] : [high, low, closes, vol];
+  const out = Lib[id](...args, { ...meta.opts, ...opts });
+  return { id, series: Array.isArray(out) ? { line: out } : out };
+}
+```
+
+`js/chart.js`: after existing indicator overlays, loop `state.studies` (array of active ids): `overlay`/`multiline` kinds → colored lines on price pane (color by registry index); `bands` → lines + 12% alpha fill between `fill` pair; `pane` kinds → shared oscillator pane scaled to union min/max of active pane series (existing RSI pane generalizes); `transform` (heikinashi/renko/kagi) → replaces candle source rows before render, radio (selecting one deselects others). `js/ui.js`: Indicators dialog groups the 85 by `group` with per-group All/None + text filter input; checkbox toggles update `state.studies` via `v.set`; transform entries render as radio. Task-7 ESM sma/ema/rsi checkboxes keep working unchanged.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `node --test tests/studies.test.mjs && node --test tests/ && node tooling/verify.mjs http://localhost:8787/ && ls -lh tooling/shots/final-1920.png`
+Expected: studies tests PASS (85/85 callable); full suite PASS; verify ok with studies dialog open showing grouped 85 + several studies rendered, no console errors.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add indicators/ js/lib.js js/studies.js index.html js/chart.js js/ui.js tests/studies.test.mjs tooling/shots/final-1920.png
+git commit -m "feat: wire all 85 vendored studies with dialog and rendering"
+```
