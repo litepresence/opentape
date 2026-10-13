@@ -14,6 +14,7 @@ export function initUI(v) {
   // Task 6 state: magnet, pending 2-click anchor, undo/redo stacks.
   let magnetOn = true;
   let pending = null;
+  let measureStart = null;
   const undoStack = [];
   const redoStack = [];
   const tForX = (x, vis, left, width) => vis.from + ((x - left) / Math.max(1, width)) * (vis.to - vis.from);
@@ -42,6 +43,8 @@ export function initUI(v) {
     symbol: s.symbol || 'BTC/USD',
     timeframe: s.timeframe || '1D',
     interval: s.interval || '1d',
+    locked: !!s.locked,
+    drawingsHidden: !!s.drawingsHidden,
   });
   const saveLayout = () => {
     try {
@@ -71,6 +74,8 @@ export function initUI(v) {
         symbol: parsed.symbol,
         timeframe: parsed.timeframe,
         interval: parsed.interval,
+        locked: parsed.locked,
+        drawingsHidden: parsed.drawingsHidden,
       };
     } catch { return null; }
   };
@@ -106,6 +111,8 @@ export function initUI(v) {
     if (persisted.symbol) patch.symbol = persisted.symbol;
     if (persisted.timeframe) patch.timeframe = persisted.timeframe;
     if (persisted.interval) patch.interval = persisted.interval;
+    if (persisted.locked) patch.locked = true;
+    if (persisted.drawingsHidden) patch.drawingsHidden = true;
     if (Object.keys(patch).length) v.set(patch);
   }
   // One-shot: migrate any in-memory legacy indicators flags to instances,
@@ -124,8 +131,37 @@ export function initUI(v) {
       b.classList.toggle('active', magnetOn);
       return;
     }
+    if (tool === 'lock') {
+      const locked = !v.get().locked;
+      v.set({ locked });
+      b.classList.toggle('active', locked);
+      showToast(locked ? 'Drawings locked' : 'Drawings unlocked');
+      saveLayout();
+      return;
+    }
+    if (tool === 'hide') {
+      const hidden = !v.get().drawingsHidden;
+      v.set({ drawingsHidden: hidden });
+      b.classList.toggle('active', hidden);
+      saveLayout();
+      return;
+    }
+    if (tool === 'zoom') {
+      // Momentary action (not a persistent tool): zoom the time axis one step.
+      const s = v.get();
+      if (s.visible && rows.length) {
+        const span = s.visible.to - s.visible.from;
+        if (span > 0) {
+          const mid = (s.visible.from + s.visible.to) / 2;
+          const nSpan = span * 0.8;
+          v.set({ visible: { from: mid - nSpan / 2, to: mid + nSpan / 2 } });
+        }
+      }
+      return;
+    }
     if (tool === 'del') {
       const s = v.get();
+      if (s.locked) { showToast('Drawings locked — unlock to delete'); return; }
       if (!s.drawings.length && !s.alerts.length) return;
       pushHistory();
       if (s.selectedId) {
@@ -140,12 +176,16 @@ export function initUI(v) {
       saveLayout();
       return;
     }
+    if (tool === 'extra') { openMenu(b); return; }
     document.querySelectorAll('#rail button').forEach(x => { if (x.dataset.tool !== 'magnet') x.classList.remove('active'); });
     b.classList.add('active'); v.set({ tool });
     pending = null;
   }));
   // Magnet button reflects default-on state.
   document.querySelector('#rail button[data-tool="magnet"]')?.classList.add('active');
+  // Lock/hide buttons reflect restored persisted state.
+  if (v.get().locked) document.querySelector('#rail button[data-tool="lock"]')?.classList.add('active');
+  if (v.get().drawingsHidden) document.querySelector('#rail button[data-tool="hide"]')?.classList.add('active');
   // Topbar undo/redo (↩ ↪) + keyboard.
   document.querySelectorAll('#topbar button').forEach(b => {
     if (b.textContent === '↩') b.addEventListener('click', undo);
@@ -191,6 +231,8 @@ export function initUI(v) {
       // from inputs so a stray anchor never survives; dialog Esc still
       // closes natively (no preventDefault).
       pending = null;
+      measureStart = null;
+      closeMenu();
       v.set({ tool: 'cross' });
       document.querySelectorAll('#rail button').forEach(x => {
         if (x.dataset.tool === 'magnet') return;
@@ -200,6 +242,7 @@ export function initUI(v) {
     else if (e.key === 'Delete' || e.key === 'Backspace') {
       if (isEditable(e.target)) return;
       const s = v.get();
+      if (s.locked) { showToast('Drawings locked — unlock to delete'); return; }
       if (!s.selectedId && !s.drawings.length) return;
       pushHistory();
       if (s.selectedId) {
@@ -254,7 +297,7 @@ export function initUI(v) {
     if (overlay) {
       const octx = overlay.getContext('2d');
       octx.clearRect(0, 0, overlay.width, overlay.height);
-      drawDrawings(octx, state.drawings, state, geom, rows);
+      if (!state.drawingsHidden) drawDrawings(octx, state.drawings, state, geom, rows);
       drawAlerts(octx, state.alerts, state, geom);
     }
     renderPriceAxis(priceAxis, rows, state, geom);
@@ -339,7 +382,7 @@ export function initUI(v) {
     const ohlc = document.querySelector('#ohlc');
     if (ohlc && row) ohlc.textContent = `O ${row.o.toFixed(0)} H ${row.h.toFixed(0)} L ${row.l.toFixed(0)} C ${row.c.toFixed(0)}`;
   };
-  const DRAW_TOOLS = new Set(['trend', 'fib', 'text', 'horizontal', 'shape', 'brush']);
+  const DRAW_TOOLS = new Set(['trend', 'fib', 'text', 'horizontal', 'shape', 'brush', 'emoji']);
   if (overlay) {
     let dragging = false;
     let startX = 0;
@@ -357,16 +400,22 @@ export function initUI(v) {
       if (!rows.length || !st.visible || !st.price) return;
       const geom = geomFor();
       const { mx, my } = toCanvas(e);
-      // Alert drag takes priority over pan/draw.
+      // Alert drag takes priority over pan/draw (disabled while locked).
       const hitA = alertAtY(my, st, geom);
-      if (hitA) {
+      if (hitA && !st.locked) {
         pushHistory();
         dragAlertId = hitA.id;
         v.set({ selectedId: hitA.id });
         return;
       }
       const tool = st.tool || 'cross';
+      if (tool === 'measure') {
+        // Measure marquee: drag to read out Δbars / Δprice / Δ%.
+        measureStart = { mx, my };
+        return;
+      }
       if (DRAW_TOOLS.has(tool)) {
+        if (st.locked) { showToast('Drawings locked — unlock to draw'); return; }
         const sliced = visibleRows(rows, st.visible);
         const src = sliced.length ? sliced : null;
         const t = src ? timeForX(mx, src, geom.left, geom.width) : tForX(mx, st.visible, geom.left, geom.width);
@@ -395,12 +444,18 @@ export function initUI(v) {
           pushHistory();
           addDrawing(v, { type: 'text', t, p, text });
           saveLayout();
+        } else if (tool === 'emoji') {
+          const glyph = typeof prompt !== 'undefined' ? (prompt('Emoji:', '⭐') || '⭐') : '⭐';
+          pushHistory();
+          addDrawing(v, { type: 'text', t, p, text: glyph });
+          saveLayout();
         }
         return;
       }
       dragging = true; startX = e.clientX;
       const s = v.get(); startVis = s.visible ? { ...s.visible } : null;
       // Select drawing on click (cross tool): nearest trend endpoint / horizontal within 8px.
+      // Skipped while locked or hidden.
       let bestId = null, bd = 8;
       const selSlice = visibleRows(rows, st.visible);
       const selSrc = selSlice.length ? selSlice : null;
@@ -420,7 +475,26 @@ export function initUI(v) {
           }
         }
       }
-      if (bestId) v.set({ selectedId: bestId });
+      if (bestId && !s.locked && !s.drawingsHidden) v.set({ selectedId: bestId });
+    });
+    overlay.addEventListener('mouseup', (e) => {
+      if (measureStart) {
+        const st = v.get();
+        const geom = geomFor();
+        const r = overlay.getBoundingClientRect();
+        const mx = (e.clientX - r.left) * (overlay.width / Math.max(1, r.width));
+        const my = (e.clientY - r.top) * (overlay.height / Math.max(1, r.height));
+        const pA = pForY(Math.min(measureStart.my, my), st.price, geom.top, geom.height);
+        const pB = pForY(Math.max(measureStart.my, my), st.price, geom.top, geom.height);
+        const dp = Math.abs(pA - pB), base = Math.min(pA, pB);
+        const x0 = Math.min(measureStart.mx, mx), x1 = Math.max(measureStart.mx, mx);
+        const tA = tForX(x0, st.visible, geom.left, geom.width), tB = tForX(x1, st.visible, geom.left, geom.width);
+        const slice = visibleRows(rows, st.visible);
+        const barMs = slice.length > 1 ? (st.visible.to - st.visible.from) / slice.length : 1;
+        const bars = Math.max(1, Math.round(Math.abs(tB - tA) / Math.max(1, barMs)));
+        showToast(`${bars} bars · ${dp >= 100 ? dp.toFixed(0) : dp.toFixed(2)} (${base > 0 ? (dp / base * 100).toFixed(2) : '0.00'}%)`);
+        measureStart = null;
+      }
     });
     window.addEventListener('mouseup', () => { dragging = false; startVis = null; dragAlertId = null; });
     overlay.addEventListener('mousemove', (e) => {
@@ -443,8 +517,35 @@ export function initUI(v) {
       }
       const ctx = overlay.getContext('2d');
       ctx.clearRect(0, 0, overlay.width, overlay.height);
-      drawDrawings(ctx, st.drawings, st, geom, rows);
+      if (!st.drawingsHidden) drawDrawings(ctx, st.drawings, st, geom, rows);
       drawAlerts(ctx, st.alerts, st, geom);
+      // Measure marquee: dashed rect + Δbars / Δprice / Δ% readout while dragging.
+      if (measureStart) {
+        const x0 = Math.min(measureStart.mx, mx), x1 = Math.max(measureStart.mx, mx);
+        const y0 = Math.min(measureStart.my, my), y1 = Math.max(measureStart.my, my);
+        ctx.save();
+        ctx.strokeStyle = '#2962FF'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+        ctx.strokeRect(x0, geom.top, Math.max(1, x1 - x0), geom.height);
+        ctx.setLineDash([]);
+        const pA = pForY(y0, st.price, geom.top, geom.height), pB = pForY(y1, st.price, geom.top, geom.height);
+        const dp = Math.abs(pA - pB), base = Math.min(pA, pB);
+        const tA = tForX(x0, st.visible, geom.left, geom.width), tB = tForX(x1, st.visible, geom.left, geom.width);
+        const slice = visibleRows(rows, st.visible);
+        const barMs = slice.length > 1 ? (st.visible.to - st.visible.from) / slice.length : 1;
+        const bars = Math.max(1, Math.round(Math.abs(tB - tA) / Math.max(1, barMs)));
+        const label = `${bars} bars · ${dp >= 100 ? dp.toFixed(0) : dp.toFixed(2)} (${base > 0 ? (dp / base * 100).toFixed(2) : '0.00'}%)`;
+        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif';
+        const w = ctx.measureText ? ctx.measureText(label).width + 12 : 120;
+        ctx.fillStyle = 'rgba(41,98,255,0.9)';
+        const bx = Math.min(x1 + 6, geom.left + geom.width - w), by = Math.max(geom.top + 4, y0 - 10);
+        ctx.fillRect(bx, by, w, 18);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, bx + 6, by + 13);
+        ctx.restore();
+        const pal = PAL[st.theme] || PAL.light;
+        drawCrosshair(ctx, mx, my, geom, pal);
+        return;
+      }
       // Pending rubber-band: anchor dot + dashed preview to cursor while a
       // 2-click anchor is set (non-destructive; renderAll clears it).
       if (pending && pending.p1) {
@@ -462,7 +563,7 @@ export function initUI(v) {
       const ctx = overlay.getContext('2d');
       ctx.clearRect(0, 0, overlay.width, overlay.height);
       const st = v.get();
-      drawDrawings(ctx, st.drawings, st, geomFor(), rows);
+      if (!st.drawingsHidden) drawDrawings(ctx, st.drawings, st, geomFor(), rows);
       drawAlerts(ctx, st.alerts, st, geomFor());
       if (rows.length) {
         const sliced = visibleRows(rows, st.visible);
@@ -508,6 +609,7 @@ export function initUI(v) {
     priceAxis.style.cursor = 'pointer';
     priceAxis.addEventListener('click', (e) => {
       const st = v.get();
+      if (st.locked) { showToast('Drawings locked — unlock to add alerts'); return; }
       if (!rows.length || !st.visible || !st.price) return;
       const geom = geomFor();
       const rect = priceAxis.getBoundingClientRect();
@@ -860,6 +962,119 @@ export function initUI(v) {
       } else dlg.setAttribute('open', '');
     });
   }
+  // Alerts dialog: list price alerts with per-alert remove + clear-all.
+  // Placement stays on the price-axis click; this dialog manages them.
+  if (!document.querySelector('#alert-dialog')) {
+    const dlg = document.createElement('dialog');
+    dlg.id = 'alert-dialog';
+    dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:8px;font:13px sans-serif;min-width:260px">'
+      + '<strong>Price alerts</strong><div id="alert-list" style="display:flex;flex-direction:column;gap:4px;max-height:40vh;overflow:auto"></div>'
+      + '<div style="color:#787b86;font-size:12px">Tip: click the price axis to place an alert at that price.</div>'
+      + '<div style="display:flex;gap:8px"><button id="alert-clear" type="button">Clear all</button><button value="close">Close</button></div></form>';
+    document.body.appendChild(dlg);
+    const renderAlerts = () => {
+      const host = dlg.querySelector('#alert-list');
+      host.innerHTML = '';
+      const alerts = v.get().alerts || [];
+      if (!alerts.length) {
+        const em = document.createElement('div');
+        em.style.color = '#787b86';
+        em.textContent = 'No alerts yet.';
+        host.appendChild(em);
+      }
+      for (const a of alerts) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:8px;align-items:center';
+        const lb = document.createElement('span');
+        lb.style.flex = '1';
+        lb.textContent = Number(a.price).toLocaleString('en-US', { maximumFractionDigits: 2 });
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.textContent = '✕';
+        rm.setAttribute('aria-label', 'Remove alert');
+        rm.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          if (v.get().locked) { showToast('Drawings locked — unlock to delete'); return; }
+          pushHistory();
+          v.set({ alerts: (v.get().alerts || []).filter(x => x.id !== a.id), selectedId: null });
+          saveLayout();
+          renderAlerts();
+        });
+        row.append(lb, rm);
+        host.appendChild(row);
+      }
+    };
+    dlg.querySelector('#alert-clear').addEventListener('click', (ev) => {
+      ev.preventDefault();
+      if (v.get().locked) { showToast('Drawings locked — unlock to delete'); return; }
+      if (!(v.get().alerts || []).length) return;
+      pushHistory();
+      v.set({ alerts: [], selectedId: null });
+      saveLayout();
+      renderAlerts();
+    });
+    dlg.querySelector('button[value="close"]').addEventListener('click', () => {
+      try { dlg.close(); } catch { dlg.removeAttribute('open'); }
+    });
+    document.querySelector('#alert-btn')?.addEventListener('click', () => {
+      renderAlerts();
+      if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); }
+      else dlg.setAttribute('open', '');
+    });
+  }
+  // App menu (topbar ☰ + rail ⋯ overflow) + About dialog.
+  function closeMenu() { try { document.querySelector('#app-menu')?.remove(); } catch {} }
+  const openAbout = () => {
+    let dlg = document.querySelector('#about-dialog');
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.id = 'about-dialog';
+      dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:8px;font:13px sans-serif;max-width:320px">'
+        + '<strong>About this terminal</strong>'
+        + '<div>Clean-room vanilla HTML/JS/CSS chart terminal. Live public crypto data via CCXT; drawings, 85 studies, replay and layouts included.</div>'
+        + '<div><button value="close">Close</button></div></form>';
+      document.body.appendChild(dlg);
+      dlg.querySelector('button[value="close"]').addEventListener('click', () => {
+        try { dlg.close(); } catch { dlg.removeAttribute('open'); }
+      });
+    }
+    if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); }
+    else dlg.setAttribute('open', '');
+  };
+  const openMenu = (anchor) => {
+    closeMenu();
+    const menu = document.createElement('div');
+    menu.id = 'app-menu';
+    const items = [
+      ['Reset view', () => { if (fullVisible && fullPrice) v.set({ visible: { ...fullVisible }, price: { ...fullPrice } }); }],
+      ['Clear drawings', () => {
+        if (v.get().locked) { showToast('Drawings locked — unlock to delete'); return; }
+        if (!v.get().drawings.length) return;
+        pushHistory();
+        v.set({ drawings: [], selectedId: null });
+        saveLayout();
+      }],
+      ['Toggle theme', () => v.toggleTheme()],
+      ['Export PNG', () => exportPNG()],
+      ['About', () => openAbout()],
+    ];
+    for (const [label, fn] of items) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.addEventListener('click', () => { closeMenu(); fn(); });
+      menu.appendChild(b);
+    }
+    document.body.appendChild(menu);
+    const r = anchor?.getBoundingClientRect?.() || { left: 8, bottom: 48 };
+    menu.style.left = Math.max(4, Math.min(r.left, window.innerWidth - 190)) + 'px';
+    menu.style.top = Math.max(4, (r.bottom || 48) + 4) + 'px';
+    setTimeout(() => document.addEventListener('mousedown', function off(e) {
+      if (!menu.contains(e.target)) { closeMenu(); document.removeEventListener('mousedown', off); }
+    }), 0);
+  };
+  document.querySelector('#menu')?.addEventListener('click', (e) => openMenu(e.currentTarget));
+  document.querySelector('#topbar button[title="Premium"]')?.addEventListener('click', () => openAbout());
   // Replay mode: hides bars after replayIndex, step buttons <- / ->.
   const replayBtn = document.querySelector('#replay-btn');
   if (replayBtn && !replayBtn.dataset.bound) {
@@ -1037,6 +1252,8 @@ export function initUI(v) {
         if (symBtn) symBtn.textContent = String(L.symbol).replace('/', '');
       }
       if (L.timeframe) patch.timeframe = L.timeframe;
+      if (L.locked != null) patch.locked = !!L.locked;
+      if (L.drawingsHidden != null) patch.drawingsHidden = !!L.drawingsHidden;
       void cur;
     }
     v.set(patch);
@@ -1108,4 +1325,11 @@ export function initUI(v) {
       });
     }
   }
+  // Debug hook (audit tooling only): exposes view state + rows when ?debug
+  // is present. Never used by production code paths.
+  try {
+    if (new URLSearchParams(location.search).has('debug') && typeof window !== 'undefined') {
+      window.__tv = { view: v, rows: () => rows };
+    }
+  } catch {}
 }

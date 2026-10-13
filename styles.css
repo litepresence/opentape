@@ -106,6 +106,12 @@ button:hover { background: var(--btn-hover); }
   background: var(--bg);
 }
 #clock { font-variant-numeric: tabular-nums; }
+/* App menu dropdown + dialogs (page language, dark-aware via vars) */
+#app-menu { position: fixed; z-index: 60; display: flex; flex-direction: column; min-width: 180px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+#app-menu button { text-align: left; padding: 7px 10px; border-radius: 4px; font-size: 13px; }
+#app-menu button:hover { background: var(--btn-hover); }
+dialog { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+dialog::backdrop { background: rgba(0,0,0,0.25); }
 /* Watchlist sidebar (matches captured Symbol/Last/Chg/Chg% structure) */
 #watch { width: 320px; min-width: 280px; border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; overflow-y: auto; font-size: 12px; }
 #watch-head { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
