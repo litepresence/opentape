@@ -1,5 +1,5 @@
 // js/ui.js
-import { fetchOHLCV } from './data.js';
+import { fetchOHLCV, wasLive, normalizeOHLCV } from './data.js';
 import { renderBase, PAL, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts } from './overlay.js';
@@ -249,8 +249,7 @@ export function initUI(v) {
     if (!(price.max > price.min)) price.max = price.min + 1000;
     return { visible: { from: list[0].t, to: list[list.length - 1].t }, price };
   };
-  fetchOHLCV({ symbol: v.get().symbol || 'BTC/USD', timeframe: v.get().interval || '1d' }).then((data) => {
-    if (Array.isArray(data) && data.length) rows = data;
+  const paintBootRows = () => {
     if (!rows.length) return;
     fitCanvases();
     const s = v.get();
@@ -268,7 +267,20 @@ export function initUI(v) {
     const cur = v.get();
     if (cur.visible && !fullVisible) fullVisible = { ...cur.visible };
     if (cur.price && !fullPrice) fullPrice = { ...cur.price };
-  }).catch(() => { /* offline + fallback failed — keep empty, no unhandled rejection */ });
+  };
+  // Embedded-first boot: paint local fallback immediately (never awaits
+  // whenCcxt), then upgrade to live rows only when the fetch actually
+  // returned live exchange data (wasLive guard prevents mislabeling
+  // embedded BTC rows as another symbol).
+  fetch('./data/btcusd-1d.json').then((r) => r.json()).then((j) => {
+    const fb = normalizeOHLCV(j);
+    if (fb.length && !rows.length) { rows = fb; paintBootRows(); }
+  }).catch(() => { /* embedded missing — live upgrade below still tries */ }).finally(() => {
+    fetchOHLCV({ symbol: v.get().symbol || 'BTC/USD', timeframe: v.get().interval || '1d' }).then((data) => {
+      if (!wasLive()) return;
+      if (Array.isArray(data) && data.length) { rows = data; paintBootRows(); }
+    }).catch(() => { /* offline + fallback failed — keep embedded/empty, no unhandled rejection */ });
+  });
   let resizeQueued = false;
   window.addEventListener('resize', () => {
     if (resizeQueued) return;
@@ -544,7 +556,7 @@ export function initUI(v) {
   // failure the old rows/label/scale are kept and an error toast is shown.
   const reload = async (symbol, ccxtTf, nextTf) => {
     try {
-      const data = await fetchOHLCV({ symbol, timeframe: ccxtTf, limit: 300 });
+      const data = await fetchOHLCV({ symbol, timeframe: ccxtTf, limit: 300, liveOnly: true });
       if (!Array.isArray(data) || !data.length) throw new Error('empty');
       rows = data;
       resetScale();

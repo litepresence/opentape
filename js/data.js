@@ -17,21 +17,26 @@ export function resolveMarket(symbol) {
 }
 
 let ccxtReady = null;
+let ccxtSettled = false;
 export function whenCcxt(timeoutMs = 15000) {
-  if (typeof globalThis.ccxt !== 'undefined') return Promise.resolve(globalThis.ccxt);
+  if (ccxtSettled) return Promise.resolve(globalThis.ccxt);
+  if (typeof globalThis.ccxt !== 'undefined') { ccxtSettled = true; return Promise.resolve(globalThis.ccxt); }
   if (!ccxtReady) {
     ccxtReady = new Promise((resolve) => {
       if (typeof document !== 'undefined') {
         let done = false;
-        const settle = (v) => { if (!done) { done = true; resolve(v); } };
+        const settle = (v) => { if (!done) { done = true; ccxtSettled = true; resolve(v); } };
         document.addEventListener('ccxt-ready', () => settle(globalThis.ccxt), { once: true });
         setTimeout(() => settle(undefined), timeoutMs);
       }
-      else resolve(undefined);
+      else { ccxtSettled = true; resolve(undefined); }
     });
   }
   return ccxtReady;
 }
+
+let lastWasLive = false;
+export function wasLive() { return lastWasLive; }
 
 /**
  * Fetch OHLCV via browser CCXT, falling back to embedded BTC-daily JSON.
@@ -40,17 +45,19 @@ export function whenCcxt(timeoutMs = 15000) {
  *   fallback and rethrow on failure (choice: throw, so callers can
  *   distinguish offline from cached data; e.g. watchlist renders em-dash).
  */
-export async function fetchOHLCV({ symbol = 'BTC/USD', timeframe = '1d', limit = 300, liveOnly = false } = {}) {
+export async function fetchOHLCV({ symbol = 'BTC/USD', timeframe = '1d', limit = 300, liveOnly = false, timeoutMs = 15000 } = {}) {
   const { exchange, ccxtSymbol } = resolveMarket(symbol);
   try {
-    const cc = typeof globalThis.ccxt !== 'undefined' ? globalThis.ccxt : await whenCcxt();
+    const cc = typeof globalThis.ccxt !== 'undefined' ? globalThis.ccxt : await whenCcxt(timeoutMs);
     if (!cc || typeof cc[exchange] !== 'function') throw new Error('ccxt unavailable');
     const ex = new cc[exchange]({ enableRateLimit: true });
     const raw = await ex.fetchOHLCV(ccxtSymbol, timeframe, undefined, Math.min(limit, 1000));
     const rows = normalizeOHLCV(raw);
     if (!rows.length) throw new Error('empty');
+    lastWasLive = true;
     return rows;
   } catch (e) {
+    lastWasLive = false;
     if (liveOnly) throw e;
     const fb = await fetch('./data/btcusd-1d.json').then(x => x.json());
     console.warn('Live data unavailable — showing cached', e?.message ?? e);
