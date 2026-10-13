@@ -61,7 +61,7 @@ try {
 
   // Persisted studies: 3 sma instances with periods + colors.
   const persisted = await page.evaluate(() => {
-    try { return JSON.parse(localStorage.getItem('tv-clone-layout-v1') || 'null'); }
+    try { return JSON.parse(localStorage.getItem('opentape-layout-v1') || localStorage.getItem('tv-clone-layout-v1') || 'null'); }
     catch { return null; }
   });
   const studies = persisted && persisted.studies;
@@ -99,7 +99,7 @@ try {
   // --- Drawings: unlimited placement without reselecting ---
   const drawingsCount = () => page.evaluate(() => {
     try {
-      const raw = JSON.parse(localStorage.getItem('tv-clone-layout-v1') || 'null');
+      const raw = JSON.parse(localStorage.getItem('opentape-layout-v1') || localStorage.getItem('tv-clone-layout-v1') || 'null');
       return (raw && raw.drawings && raw.drawings.length) || 0;
     } catch { return 0; }
   });

@@ -1,8 +1,9 @@
 {
-  "name": "tv-clone",
+  "name": "opentape",
   "type": "module",
   "scripts": {
-    "test": "node --test tooling/*.test.mjs tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "verify": "node --test tooling/*.test.mjs tests/*.test.mjs"
   },
   "devDependencies": {
     "playwright": "^1.49.0"

@@ -1,9 +1,16 @@
-# AGENTS.md — TradingView Desktop Clone Mission
+# AGENTS.md — Opentape Mission
 
 ## Mission
-Reverse-engineer a pixel-by-pixel identical copy of the provided TradingView desktop screenshot (BTCUSD 1D, Bitstamp) in vanilla HTML/JS/CSS, then evolve it into a fully functional, polished terminal that exceeds the original.
+Build Opentape, an open chart terminal: a pixel-faithful, fully functional BTCUSD 1D desktop terminal in vanilla HTML/JS/CSS that exceeds the reference screenshot below. Clean-room implementation — no TradingView code, assets, logos, or fonts ship in this tree (reference captures under `tooling/` are measurement evidence only).
 
 Reference: `Screenshot from 2026-10-12 18-38-59.png` in this directory. That image is ground truth for V1 visual fidelity.
+
+## Run (Python only — no npm, no build, no server)
+```bash
+python3 -m http.server 8787   # from the repo root
+# open http://localhost:8787/ — live Binance data, embedded fallback offline
+```
+`npm install` is needed only for the Playwright verify/audit harness (`npm run verify`); unit tests are stdlib-only (`npm test`, or bare `node --test tests/*.test.mjs` with no install at all).
 
 ## Objectives
 1. **Pixel fidelity:** Top bar, left drawing rail (15 icons), OHLC header + SELL/BUY pills, candle chart (May–Oct), volume, right price axis (56k–90k), bottom time axis + range footer (1D–All), UTC clock, gear, TradingView watermark — match fonts, spacing, colors, dotted grid.

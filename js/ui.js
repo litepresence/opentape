@@ -6,7 +6,8 @@ import { hitTest, drawCrosshair, drawDrawings, drawAlerts, drawPending } from '.
 import { snapPrice, serialize, deserialize, addDrawing } from './drawings.js';
 import { STUDIES, migrateStudies, makeInstance } from './studies.js';
 
-const LAYOUT_KEY = 'tv-clone-layout-v1';
+const LAYOUT_KEY = 'opentape-layout-v1';
+const LEGACY_LAYOUT_KEY = 'tv-clone-layout-v1';
 
 export function initUI(v) {
   document.documentElement.dataset.theme = v.get().theme;
@@ -53,7 +54,13 @@ export function initUI(v) {
   };
   const loadLayout = () => {
     try {
-      const raw = localStorage.getItem(LAYOUT_KEY);
+      // Opentape key first; one-shot adopt the legacy tv-clone key so
+      // existing users keep their drawings (re-saved under the new key).
+      let raw = localStorage.getItem(LAYOUT_KEY);
+      if (!raw) {
+        raw = localStorage.getItem(LEGACY_LAYOUT_KEY);
+        if (raw) { try { localStorage.setItem(LAYOUT_KEY, raw); localStorage.removeItem(LEGACY_LAYOUT_KEY); } catch {} }
+      }
       if (!raw) return null;
       const parsed = deserialize(raw);
       if (Array.isArray(parsed)) return { drawings: parsed, alerts: [] };
@@ -1030,8 +1037,8 @@ export function initUI(v) {
       dlg = document.createElement('dialog');
       dlg.id = 'about-dialog';
       dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:8px;font:13px sans-serif;max-width:320px">'
-        + '<strong>About this terminal</strong>'
-        + '<div>Clean-room vanilla HTML/JS/CSS chart terminal. Live public crypto data via CCXT; drawings, 85 studies, replay and layouts included.</div>'
+        + '<strong>About Opentape</strong>'
+        + '<div>Opentape is a clean-room vanilla HTML/JS/CSS chart terminal. Live public crypto data via CCXT; drawings, 85 studies, replay and layouts included.</div>'
         + '<div><button value="close">Close</button></div></form>';
       document.body.appendChild(dlg);
       dlg.querySelector('button[value="close"]').addEventListener('click', () => {
