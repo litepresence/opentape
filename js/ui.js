@@ -1,13 +1,18 @@
 // js/ui.js
-import { fetchOHLCV, wasLive, normalizeOHLCV } from './data.js';
+import { fetchOHLCV, wasLive, normalizeOHLCV, resolveMarket } from './data.js';
 import { renderBase, PAL, stuColor, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts, drawPending } from './overlay.js';
 import { snapPrice, serialize, deserialize, addDrawing } from './drawings.js';
+import { parseChartUrl, formatChartUrl, normalizeSymbol } from './url.js';
 import { STUDIES, migrateStudies, makeInstance } from './studies.js';
 
 const LAYOUT_KEY = 'opentape-layout-v1';
 const LEGACY_LAYOUT_KEY = 'tv-clone-layout-v1';
+// Captured at import: later replaceState syncs may rewrite location.search,
+// so the debug hook must not depend on reading it at initUI end.
+let HAS_DEBUG = false;
+try { HAS_DEBUG = new URLSearchParams(location.search).has('debug'); } catch {}
 
 export function initUI(v) {
   document.documentElement.dataset.theme = v.get().theme;
@@ -125,6 +130,35 @@ export function initUI(v) {
     if (persisted.priceAuto === false) patch.priceAuto = false;
     if (Object.keys(patch).length) v.set(patch);
   }
+  // Parameterized URLs (original-compatible): ?symbol=BITSTAMP:BTCUSD&interval=D
+  // overrides the stored layout on load; the URL is kept in sync afterwards
+  // so links are shareable.
+  try {
+    const q = parseChartUrl(location.search);
+    const upatch = {};
+    if (q.symbol) upatch.symbol = q.symbol;
+    if (q.interval) upatch.interval = q.interval;
+    if (q.timeframe) upatch.timeframe = q.timeframe;
+    if (Object.keys(upatch).length) v.set(upatch);
+  } catch {}
+  let lastUrl = '';
+  const syncUrl = () => {
+    try {
+      const s = v.get();
+      // Merge into the live query string so foreign params (debug, theme
+      // overrides, campaign tags) survive UI-driven syncs.
+      const cur = new URLSearchParams(location.search);
+      const next = new URLSearchParams(formatChartUrl({ symbol: s.symbol, interval: s.interval || '1d' }));
+      for (const [k, val] of next) cur.set(k, val);
+      const url = location.pathname + '?' + cur.toString();
+      if (url !== lastUrl) {
+        lastUrl = url;
+        history.replaceState(null, '', url);
+      }
+    } catch {}
+  };
+  v.subscribe(() => syncUrl());
+  syncUrl();
   // One-shot: migrate any in-memory legacy indicators flags to instances,
   // then drop the flags (state relies on migrated instances from here on).
   try {
@@ -350,9 +384,8 @@ export function initUI(v) {
       if (!s.visible && sc) patch.visible = sc.visible;
       if (!s.price && sc) patch.price = sc.price;
     }
-    // Restored symbol/timeframe from layout: reflect in topbar labels.
-    const symBtn0 = document.querySelector('#sym');
-    if (symBtn0 && s.symbol) symBtn0.textContent = String(s.symbol).replace('/', '');
+    // Restored symbol/timeframe from layout: reflect in topbar + header.
+    updateSymbolHead();
     if (Object.keys(patch).length) v.set(patch);
     else renderAll(v.get());
     const cur = v.get();
@@ -413,6 +446,43 @@ export function initUI(v) {
     const ohlc = document.querySelector('#ohlc');
     if (ohlc && row) ohlc.textContent = `O ${row.o.toFixed(0)} H ${row.h.toFixed(0)} L ${row.l.toFixed(0)} C ${row.c.toFixed(0)}`;
   };
+  // Chart header (icon / name / timeframe / exchange) follows state — the
+  // original updates it on every symbol switch, so a static label that says
+  // Bitcoin/Bitstamp under an ETH chart is a bug, not a stub.
+  const SYMBOL_META = {
+    'BTC/USD': { icon: '₿', name: 'Bitcoin / U.S. Dollar' },
+    'ETH/USD': { icon: 'Ξ', name: 'Ethereum / U.S. Dollar' },
+  };
+  const EX_LABEL = { bitstamp: 'Bitstamp', binance: 'Binance', coinbase: 'Coinbase' };
+  const displaySymbol = (s) => String(s || 'BTC/USD').replace(/^[A-Za-z0-9_]+:/, '');
+  const headCache = { key: '' };
+  const updateSymbolHead = () => {
+    const s = v.get();
+    const disp = displaySymbol(s.symbol);
+    let exchange = '', icon = '◉', name = disp.replace('/', ' / ');
+    try {
+      const m = resolveMarket(s.symbol || 'BTC/USD');
+      const ex = String(m.exchange || '').toLowerCase();
+      exchange = EX_LABEL[ex] || (ex ? ex[0].toUpperCase() + ex.slice(1) : '');
+    } catch {}
+    const meta = SYMBOL_META[disp];
+    if (meta) { icon = meta.icon; name = meta.name; }
+    const tf = s.timeframe || '1D';
+    const key = `${icon}|${name}|${tf}|${exchange}`;
+    if (key === headCache.key) return;
+    headCache.key = key;
+    const set = (id, txt) => { const el = document.querySelector(id); if (el) el.textContent = txt; };
+    set('#sym-icon', icon);
+    set('#sym-name', name);
+    set('#sym-tf', tf);
+    set('#sym-ex', exchange);
+    const symBtn = document.querySelector('#sym');
+    if (symBtn) symBtn.textContent = disp.replace('/', '');
+  };
+  // Exchange switching has no button: only Binance is CORS-clean through
+  // CCXT's market-load path (Bitstamp/Coinbase block pairs-info/currencies
+  // preflights — verified live). Prefixed symbols (exchange:PAIR) still
+  // parse and attempt gracefully. If a second venue verifies, add #ex-btn.
   const DRAW_TOOLS = new Set(['trend', 'fib', 'text', 'horizontal', 'shape', 'brush', 'emoji']);
   if (overlay) {
     let dragging = false;
@@ -822,15 +892,8 @@ export function initUI(v) {
     if (t === '1D') return 'D';
     return TF_ORDER.includes(t) ? t : 'D';
   };
-  const normalizeSymbol = (input) => {
-    const s = String(input || '').trim().toUpperCase().replace(/\s+/g, '');
-    if (!s) return null;
-    if (s.includes('/')) return s;
-    for (const q of ['USDT', 'USD', 'EUR', 'BTC']) {
-      if (s.length > q.length && s.endsWith(q)) return s.slice(0, -q.length) + '/' + q;
-    }
-    return s;
-  };
+  // Symbol input accepts plain pairs (BTCUSD, BTC/USD) and TV-style
+  // exchange-qualified forms (BITSTAMP:BTCUSD) — see js/url.js.
   const resetScale = () => {
     if (!rows.length) return;
     let mn = Infinity, mx = -Infinity;
@@ -858,8 +921,7 @@ export function initUI(v) {
       if (nextTf) patch.timeframe = nextTf;
       v.set(patch);
       saveLayout();
-      const symBtn = document.querySelector('#sym');
-      if (symBtn) symBtn.textContent = String(symbol).replace('/', '');
+      updateSymbolHead();
       return true;
     } catch (e) {
       showToast(`Live data unavailable — keeping ${v.get().symbol || 'current chart'}`);
@@ -1260,19 +1322,130 @@ export function initUI(v) {
       step(0);
     });
   }
-  // Symbol search: re-fetch + reset visible (label/state change only on success).
+  // Symbol modal: exchange + pair fields with autosuggest dropdowns.
+  // Exchange list comes from the CCXT bundle (verified venues first);
+  // pair lists come from per-exchange loadMarkets(), cached per session.
+  // Failures degrade gracefully: type anything, apply attempts reload and
+  // keeps last good data + toast on failure (existing reload contract).
+  const VERIFIED_EX = ['binance'];
+  const marketsCache = new Map();
+  const getExchanges = () => {
+    let all = [];
+    try { if (globalThis.ccxt && Array.isArray(globalThis.ccxt.exchanges)) all = globalThis.ccxt.exchanges; } catch {}
+    const ids = all.length ? [...all] : ['binance'];
+    ids.sort((a, b) => (VERIFIED_EX.includes(b) ? 1 : 0) - (VERIFIED_EX.includes(a) ? 1 : 0));
+    return ids.map((id) => ({ id, verified: VERIFIED_EX.includes(id) }));
+  };
+  const getMarkets = async (ex) => {
+    if (marketsCache.has(ex)) return marketsCache.get(ex);
+    const Lib = globalThis.ccxt;
+    if (!Lib || typeof Lib[ex] !== 'function') throw new Error('exchange unavailable');
+    const m = new Lib[ex]({ enableRateLimit: true });
+    await m.loadMarkets();
+    const syms = Object.keys(m.markets || {}).filter((s) => s.includes('/')).sort();
+    marketsCache.set(ex, syms);
+    return syms;
+  };
+  const openSymbolModal = () => {
+    let dlg = document.querySelector('#sym-dialog');
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.id = 'sym-dialog';
+      dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:8px;font:13px sans-serif;min-width:300px">'
+        + '<strong>Switch market</strong>'
+        + '<label>Exchange<input id="sym-ex-input" autocomplete="off" placeholder="binance"></label>'
+        + '<div id="sym-ex-list" class="suggest"></div>'
+        + '<label>Pair<input id="sym-pair-input" autocomplete="off" placeholder="BTC/USDT"></label>'
+        + '<div id="sym-pair-list" class="suggest"></div>'
+        + '<div id="sym-note" style="color:#787b86;font-size:12px"></div>'
+        + '<div style="display:flex;gap:8px"><button id="sym-apply" type="button">Switch</button><button value="close">Close</button></div></form>';
+      document.body.appendChild(dlg);
+      const exInput = dlg.querySelector('#sym-ex-input');
+      const pairInput = dlg.querySelector('#sym-pair-input');
+      const exList = dlg.querySelector('#sym-ex-list');
+      const pairList = dlg.querySelector('#sym-pair-list');
+      const note = dlg.querySelector('#sym-note');
+      const renderList = (host, items, onPick, emptyText) => {
+        host.innerHTML = '';
+        if (!items.length) {
+          const d = document.createElement('div');
+          d.className = 'suggest-empty';
+          d.textContent = emptyText;
+          host.appendChild(d);
+          return;
+        }
+        for (const it of items.slice(0, 8)) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = typeof it === 'string' ? it : `${it.id}${it.verified ? ' ✓' : ''}`;
+          b.addEventListener('click', () => onPick(typeof it === 'string' ? it : it.id));
+          host.appendChild(b);
+        }
+      };
+      const refreshPairs = async () => {
+        const ex = (exInput.value || 'binance').trim().toLowerCase();
+        pairList.innerHTML = '';
+        note.textContent = 'Loading markets…';
+        try {
+          const syms = await getMarkets(ex);
+          note.textContent = `${syms.length} pairs`;
+          const q = pairInput.value.trim().toUpperCase();
+          renderList(pairList, syms.filter((s) => !q || s.toUpperCase().includes(q)), (s) => {
+            pairInput.value = s;
+            renderList(pairList, [], '');
+          }, 'No pairs match.');
+        } catch (e) {
+          note.textContent = 'Could not load market list — you can still type a pair manually.';
+          renderList(pairList, [], '');
+        }
+      };
+      exInput.addEventListener('input', () => {
+        const q = exInput.value.trim().toLowerCase();
+        renderList(exList, getExchanges().filter((e) => !q || e.id.includes(q)), (id) => {
+          exInput.value = id;
+          renderList(exList, [], '');
+          refreshPairs();
+        }, 'No exchanges match.');
+      });
+      exInput.addEventListener('focus', () => {
+        renderList(exList, getExchanges(), (id) => {
+          exInput.value = id;
+          renderList(exList, [], '');
+          refreshPairs();
+        }, '');
+      });
+      pairInput.addEventListener('input', () => refreshPairs());
+      pairInput.addEventListener('focus', () => refreshPairs());
+      const apply = async () => {
+        const ex = (exInput.value || 'binance').trim().toLowerCase();
+        const pair = normalizeSymbol(pairInput.value);
+        if (!pair) { pairInput.focus(); return; }
+        const ok = await reload(`${ex}:${pair}`, curInterval());
+        if (ok) { try { dlg.close(); } catch { dlg.removeAttribute('open'); } }
+      };
+      dlg.querySelector('#sym-apply').addEventListener('click', apply);
+      pairInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); } });
+      dlg.querySelector('button[value="close"]').addEventListener('click', () => {
+        try { dlg.close(); } catch { dlg.removeAttribute('open'); }
+      });
+    }
+    // Prefill from the current market, then show.
+    try {
+      const m = resolveMarket(v.get().symbol || 'BTC/USD');
+      dlg.querySelector('#sym-ex-input').value = String(m.exchange || 'binance');
+      dlg.querySelector('#sym-pair-input').value = m.ccxtSymbol || 'BTC/USDT';
+      dlg.querySelector('#sym-pair-list').innerHTML = '';
+      dlg.querySelector('#sym-note').textContent = '';
+    } catch {}
+    if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); }
+    else dlg.setAttribute('open', '');
+  };
+  // Symbol search: modal with exchange + pair autosuggest (label/state change
+  // only on successful reload — see reload contract).
   const symBtn = document.querySelector('#sym');
   if (symBtn && !symBtn.dataset.bound) {
     symBtn.dataset.bound = '1';
-    symBtn.addEventListener('click', async () => {
-      if (typeof prompt === 'undefined') return;
-      const cur = v.get().symbol || 'BTC/USD';
-      const ans = prompt('Symbol (e.g. BTC/USD, ETH/USD):', cur);
-      if (!ans) return;
-      const sym = normalizeSymbol(ans);
-      if (!sym) return;
-      await reload(sym, curInterval());
-    });
+    symBtn.addEventListener('click', () => openSymbolModal());
   }
   // Watchlist sidebar: Symbol/Last/Chg/Chg% fed by browser CCXT (daily bars);
   // click a row to switch the chart to that symbol. liveOnly skips the
@@ -1393,8 +1566,6 @@ export function initUI(v) {
       if (L.chartType) patch.chartType = L.chartType;
       if (L.symbol) {
         patch.symbol = L.symbol;
-        const symBtn = document.querySelector('#sym');
-        if (symBtn) symBtn.textContent = String(L.symbol).replace('/', '');
       }
       if (L.timeframe) patch.timeframe = L.timeframe;
       if (L.locked != null) patch.locked = !!L.locked;
@@ -1404,6 +1575,7 @@ export function initUI(v) {
     }
     v.set(patch);
     saveLayout();
+    updateSymbolHead();
   };
   const exportPNG = () => {
     const b = document.querySelector('#base');
@@ -1472,9 +1644,9 @@ export function initUI(v) {
     }
   }
   // Debug hook (audit tooling only): exposes view state + rows when ?debug
-  // is present. Never used by production code paths.
+  // was present at import. Never used by production code paths.
   try {
-    if (new URLSearchParams(location.search).has('debug') && typeof window !== 'undefined') {
+    if (HAS_DEBUG && typeof window !== 'undefined') {
       window.__tv = { view: v, rows: () => rows };
     }
   } catch {}
