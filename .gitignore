@@ -1,0 +1,23 @@
+# Dependencies (optional dev tooling only — the app itself has zero deps)
+node_modules/
+.pnpm-store/
+package-lock.json
+pnpm-lock.yaml
+
+# Playwright/CCXT scratch artifacts
+*.log
+
+# One-off diagnostic captures (committed showcase shots live in tooling/shots/readme/)
+tooling/shots/smoke.png
+tooling/shots/shell.png
+tooling/shots/chart.png
+tooling/shots/probe-blocked.png
+tooling/shots/studies-modal-1920.png
+tooling/shots/studies-modal-dialog.png
+
+# Local review bookkeeping
+.superpowers/
+
+# OS noise
+.DS_Store
+Thumbs.db
