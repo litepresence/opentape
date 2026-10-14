@@ -43,7 +43,10 @@ export function initUI(v) {
     textColor = (typeof tc === 'string' && /^#[0-9a-fA-F]{6}$/.test(tc)) ? tc : null;
   } catch {}
   try {
-    const to = Number(localStorage.getItem(TEXT_OPACITY_KEY));
+    // NOTE: getItem returns null when unset and Number(null) === 0, so a
+    // missing key must fall back to 1 (fully opaque), not 0 (invisible).
+    const raw = localStorage.getItem(TEXT_OPACITY_KEY);
+    const to = raw == null ? NaN : Number(raw);
     textOpacity = Number.isFinite(to) ? Math.min(1, Math.max(0, to)) : 1;
   } catch {}
   let pending = null;
@@ -625,6 +628,7 @@ export function initUI(v) {
   let stream = null;
   let streamState = 'off';
   let lastStreamTs = 0;
+  let streamKey = null;
   const streamActive = () => !!stream;
   const setStreamState = (s) => {
     streamState = s;
@@ -654,6 +658,7 @@ export function initUI(v) {
     const symbol = s.symbol || 'BTC/USD';
     const tf = s.interval || '1d';
     lastStreamTs = Date.now();
+    streamKey = { symbol, tf };
     stream = watchCandles({
       symbol,
       timeframe: tf,
@@ -668,6 +673,7 @@ export function initUI(v) {
   function stopStream() {
     try { stream && stream.stop(); } catch {}
     stream = null;
+    streamKey = null;
   }
   const loadData = async () => {
     const s = v.get();
@@ -1383,7 +1389,10 @@ export function initUI(v) {
       rows = data;
       resetScale();
       fitCanvases();
-      const patch = { symbol };
+      // Interval is committed here (not after) so startStream below
+      // subscribes to the market+interval that was actually loaded — the
+      // callers set it again afterwards, harmlessly.
+      const patch = { symbol, interval: ccxtTf };
       if (nextTf) patch.timeframe = nextTf;
       v.set(patch);
       saveLayout();
@@ -2474,7 +2483,7 @@ export function initUI(v) {
         view: v,
         rows: () => rows,
         drag: () => ({ id: dragDrawingId, anchor: dragAnchorIdx, origin: !!dragOrigin }),
-        stream: () => ({ state: streamState, active: !!stream }),
+        stream: () => ({ state: streamState, active: !!stream, key: streamKey }),
       };
     }
   } catch {}
