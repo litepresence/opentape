@@ -21,3 +21,9 @@ tooling/shots/studies-modal-dialog.png
 # OS noise
 .DS_Store
 Thumbs.db
+
+# Python bytecode + caches (companion + launcher are source-only)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+/tmp/opencode
