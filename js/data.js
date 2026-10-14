@@ -88,3 +88,87 @@ export function mergeCandle(rows, candle, cap = 2000) {
   while (next.length > cap) next.shift();
   return next;
 }
+
+const TF_MS = { '1m': 6e4, '3m': 18e4, '5m': 3e5, '15m': 9e5, '30m': 18e5, '1h': 36e5, '2h': 72e5, '4h': 144e5, '1d': 864e5, '1w': 6048e5, '1M': 2592e6 };
+export const timeframeMs = (tf) => TF_MS[String(tf)] || 864e5;
+
+// Live candle subscription. WS (ccxt.pro watchOHLCV) when the exchange
+// supports it, else REST polling. Never throws out — transport problems are
+// reported via onStatus and retried with backoff.
+export function watchCandles({ symbol = 'BTC/USD', timeframe = '1d', onCandle, onStatus, createExchange, pollOnce, pollMs } = {}) {
+  let stopped = false;
+  let exchange = null;
+  const status = (s, d) => { try { onStatus && onStatus(s, d); } catch {} };
+  const emit = (raw) => {
+    const row = Array.isArray(raw)
+      ? normalizeOHLCV([raw])[0]
+      : raw;
+    if (row && Number.isFinite(row.t)) { try { onCandle && onCandle(row); } catch {} }
+  };
+  const defaultExchange = async () => {
+    const { exchange: exId, ccxtSymbol } = resolveMarket(symbol);
+    const cc = typeof globalThis.ccxt !== 'undefined' ? globalThis.ccxt : await whenCcxt();
+    if (!cc || typeof cc[exId] !== 'function') throw new Error('Market data library unavailable');
+    return { instance: new cc[exId]({ enableRateLimit: true }), ccxtSymbol, exId };
+  };
+  const wsLoop = async (inst, ccxtSymbol) => {
+    let backoff = 1000;
+    while (!stopped) {
+      try {
+        const candles = await inst.watchOHLCV(ccxtSymbol, timeframe);
+        backoff = 1000;
+        if (stopped) break;
+        const lastCandle = Array.isArray(candles) ? candles[candles.length - 1] : null;
+        if (lastCandle) emit(lastCandle);
+        status('live');
+      } catch (e) {
+        if (stopped) break;
+        status('offline', e?.message ?? String(e));
+        await new Promise((r) => setTimeout(r, backoff));
+        backoff = Math.min(backoff * 2, 30000);
+      }
+    }
+  };
+  const pollLoop = async (fetchLast) => {
+    const interval = Number.isFinite(+pollMs) && +pollMs > 0
+      ? +pollMs
+      : Math.min(120000, Math.max(10000, Math.round(timeframeMs(timeframe) / 6)));
+    status('polling');
+    while (!stopped) {
+      try {
+        const lastRows = await fetchLast();
+        if (stopped) break;
+        if (Array.isArray(lastRows) && lastRows.length) emit(lastRows[lastRows.length - 1]);
+      } catch (e) {
+        if (!stopped) status('offline', e?.message ?? String(e));
+      }
+      await new Promise((r) => setTimeout(r, interval));
+    }
+  };
+  (async () => {
+    try {
+      const made = createExchange
+        ? { instance: await createExchange(), ccxtSymbol: symbol }
+        : await defaultExchange();
+      if (stopped) return;
+      exchange = made.instance;
+      const supportsWs = !!(exchange && exchange.has && exchange.has.watchOHLCV);
+      if (supportsWs && typeof exchange.watchOHLCV === 'function') {
+        status('live');
+        wsLoop(exchange, made.ccxtSymbol);
+      } else if (pollOnce) {
+        pollLoop(pollOnce);
+      } else {
+        pollLoop(async () => fetchOHLCV({ symbol, timeframe, limit: 2, liveOnly: true }));
+      }
+    } catch (e) {
+      if (!stopped) status('offline', e?.message ?? String(e));
+    }
+  })();
+  return {
+    stop() {
+      stopped = true;
+      try { exchange && exchange.close && exchange.close(); } catch {}
+    },
+  };
+}
