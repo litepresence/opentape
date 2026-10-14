@@ -1,5 +1,5 @@
 // js/ui.js
-import { fetchOHLCV, resolveMarket } from './data.js';
+import { fetchOHLCV, resolveMarket, watchCandles, mergeCandle, timeframeMs } from './data.js';
 import { renderBase, PAL, stuColor, autoColor, compositeToDataURL, visibleRows, sliceOffset, replayCount, xForRowTime, timeForX } from './chart.js';
 import { renderPriceAxis, renderTimeAxis } from './axes.js';
 import { hitTest, drawCrosshair, drawDrawings, drawAlerts, drawPending, hitTestDrawing, hitTestAnchor } from './overlay.js';
@@ -461,6 +461,29 @@ export function initUI(v) {
     }
   });
   setInterval(() => { const el = document.querySelector('#clock'); if (el) el.textContent = new Date().toISOString().slice(11, 19); }, 1000);
+  // Live-stream status dot next to the clock (LIVE / DELAYED / OFFLINE).
+  const rangeClock = document.querySelector('#clock');
+  if (rangeClock && !document.querySelector('#live-dot')) {
+    const dot = document.createElement('span');
+    dot.id = 'live-dot';
+    dot.dataset.state = 'off';
+    dot.style.cssText = 'font-size:11px;margin-left:8px;color:#787b86';
+    rangeClock.after(dot);
+  }
+  // Staleness check: silence longer than two intervals means DELAYED.
+  setInterval(() => {
+    try {
+      if (!streamActive()) return;
+      const limit = Math.max(60000, 2 * timeframeMs(v.get().interval || '1d'));
+      if (Date.now() - lastStreamTs > limit) setStreamState('delayed');
+    } catch {}
+  }, 5000);
+  document.addEventListener('visibilitychange', () => {
+    try {
+      if (document.hidden) stopStream();
+      else if (rows.length) startStream();
+    } catch {}
+  });
 
   // Task 4: fetch OHLCV + render base canvas + axes; re-render on ViewState changes.
   const base = document.querySelector('#base');
@@ -597,6 +620,55 @@ export function initUI(v) {
     el.style.display = state === 'ok' || !rows.length ? 'none' : '';
     if (state === 'error') el.style.display = '';
   };
+  // Live candle streaming: exactly one active subscription. Started after
+  // every successful load/reload, stopped on switch, failure, or hidden tab.
+  let stream = null;
+  let streamState = 'off';
+  let lastStreamTs = 0;
+  const streamActive = () => !!stream;
+  const setStreamState = (s) => {
+    streamState = s;
+    const el = document.querySelector('#live-dot');
+    if (el) {
+      el.dataset.state = s;
+      el.textContent = s === 'live' ? '● LIVE' : s === 'delayed' ? '● DELAYED' : s === 'off' ? '' : '● OFFLINE';
+      el.title = s === 'live' ? 'Streaming live candles' : s === 'delayed' ? 'No candle updates recently' : s === 'off' ? '' : 'Stream offline — showing last data';
+    }
+  };
+  const onStreamCandle = (row) => {
+    if (!row || !rows.length) return;
+    rows = mergeCandle(rows, row);
+    lastStreamTs = Date.now();
+    if (streamState !== 'live') setStreamState('live');
+    const st = v.get();
+    if (st.replayIndex == null || !Number.isFinite(st.replayIndex)) {
+      refitPriceToVisible();
+      const last = rows[rows.length - 1];
+      if (last && fullVisible) fullVisible = { ...fullVisible, to: last.t };
+    }
+    renderAll(v.get());
+  };
+  const startStream = () => {
+    stopStream();
+    const s = v.get();
+    const symbol = s.symbol || 'BTC/USD';
+    const tf = s.interval || '1d';
+    lastStreamTs = Date.now();
+    stream = watchCandles({
+      symbol,
+      timeframe: tf,
+      onCandle: onStreamCandle,
+      onStatus: (st, detail) => {
+        if (st === 'live') { lastStreamTs = Date.now(); setStreamState('live'); }
+        else if (st === 'polling') setStreamState('live');
+        else { setStreamState('offline'); if (detail) console.warn('Stream offline', detail); }
+      },
+    });
+  };
+  function stopStream() {
+    try { stream && stream.stop(); } catch {}
+    stream = null;
+  }
   const loadData = async () => {
     const s = v.get();
     setDataStatus('loading');
@@ -606,9 +678,12 @@ export function initUI(v) {
       rows = data;
       paintBootRows();
       setDataStatus('ok');
+      startStream();
     } catch (e) {
       console.warn('Market data unavailable', e?.message ?? e);
       setDataStatus('error', e?.message ?? String(e));
+      stopStream();
+      setStreamState('off');
     }
   };
   loadData();
@@ -1313,9 +1388,11 @@ export function initUI(v) {
       v.set(patch);
       saveLayout();
       updateSymbolHead();
+      startStream();
       return true;
     } catch (e) {
       showToast(`Live data unavailable — keeping ${v.get().symbol || 'current chart'}`);
+      stopStream();
       return false;
     }
   };
@@ -2397,6 +2474,7 @@ export function initUI(v) {
         view: v,
         rows: () => rows,
         drag: () => ({ id: dragDrawingId, anchor: dragAnchorIdx, origin: !!dragOrigin }),
+        stream: () => ({ state: streamState, active: !!stream }),
       };
     }
   } catch {}
