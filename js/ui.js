@@ -95,6 +95,8 @@ export function initUI(v) {
     symbol: s.symbol || 'BTC/USD',
     timeframe: s.timeframe || '1D',
     interval: s.interval || '1d',
+    source: s.source || '',
+    venue: s.venue || '',
     locked: !!s.locked,
     lockedDrawings: !!s.lockedDrawings,
     lockedIndicators: !!s.lockedIndicators,
@@ -140,6 +142,8 @@ export function initUI(v) {
         symbol: parsed.symbol,
         timeframe: parsed.timeframe,
         interval: parsed.interval,
+        source: parsed.source,
+        venue: parsed.venue,
         locked: parsed.locked,
         lockedDrawings: parsed.lockedDrawings,
         lockedIndicators: parsed.lockedIndicators,
@@ -185,6 +189,8 @@ export function initUI(v) {
     if (persisted.symbol) patch.symbol = persisted.symbol;
     if (persisted.timeframe) patch.timeframe = persisted.timeframe;
     if (persisted.interval) patch.interval = persisted.interval;
+    if (persisted.source) patch.source = persisted.source;
+    if (persisted.venue) patch.venue = persisted.venue;
     if (persisted.locked) patch.locked = true;
     if (persisted.lockedDrawings) patch.lockedDrawings = true;
     if (persisted.lockedIndicators) patch.lockedIndicators = true;
@@ -207,6 +213,15 @@ export function initUI(v) {
     if (q.symbol) upatch.symbol = q.symbol;
     if (q.interval) upatch.interval = q.interval;
     if (q.timeframe) upatch.timeframe = q.timeframe;
+    // Companion routing params (kept in ui.js so js/url.js stays untouched):
+    // ?source=yahoo&venue=US carries the tier-1/tier-2 selection.
+    try {
+      const rawQ = new URLSearchParams(location.search);
+      const so = String(rawQ.get('source') || '').trim().toLowerCase();
+      const ve = String(rawQ.get('venue') || '').trim().toLowerCase();
+      if (/^[a-z][a-z0-9_]*$/.test(so)) upatch.source = so;
+      if (/^[a-z][a-z0-9_]*$/.test(ve)) upatch.venue = ve;
+    } catch {}
     if (Object.keys(upatch).length) v.set(upatch);
   } catch {}
   let lastUrl = '';
@@ -220,6 +235,14 @@ export function initUI(v) {
       try { ex = String(resolveMarket(s.symbol || 'BTC/USD').exchange || '').toLowerCase(); } catch {}
       const next = new URLSearchParams(formatChartUrl({ symbol: s.symbol, interval: s.interval || '1d', exchange: ex }));
       for (const [k, val] of next) cur.set(k, val);
+      // Tier routing survives UI-driven syncs alongside the exchange param
+      // (lowercased in the URL only — state keeps the venue's listed case).
+      const so = String(s.source || '').toLowerCase();
+      if (/^[a-z][a-z0-9_]*$/.test(so)) cur.set('source', so);
+      else cur.delete('source');
+      const ve = String(s.venue || '').toLowerCase();
+      if (/^[a-z][a-z0-9_]*$/.test(ve)) cur.set('venue', ve);
+      else cur.delete('venue');
       const url = location.pathname + '?' + cur.toString();
       if (url !== lastUrl) {
         lastUrl = url;
@@ -2156,6 +2179,184 @@ export function initUI(v) {
     marketsCache.set(ex, syms);
     return syms;
   };
+  // --- Exchange-grade tiers: source (SDK) -> venue -> instrument ---------------
+  // Sources come from the companion `/api/sources` when reachable; otherwise a
+  // static fallback serves the ccxt tier live while companion tiers render
+  // disabled with their reason (dead transports are never silently clickable).
+  const COMPANION_BASE = 'http://127.0.0.1:8788';
+  const CCXT_INTERVALS = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d', '1w', '1M'];
+  const ALL_INTERVALS = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d', '1w', '1wk', '1mo', '1M'];
+  const STATIC_SOURCES = [
+    { id: 'ccxt', label: 'Crypto · CCXT', intervals: CCXT_INTERVALS, stream: { mode: 'live', note: 'WS where supported, else poll' }, transport: 'ccxt' },
+    { id: 'yahoo', label: 'Stocks & Indices', intervals: ['1m', '5m', '15m', '30m', '1h', '1d', '1wk', '1mo'], stream: { mode: 'poll', cadence: 60, note: 'polls ~60s; intraday ≤60d' }, transport: 'companion' },
+    { id: 'india', label: 'India (NSE/BSE)', intervals: ['1d', '1wk', '1mo'], stream: { mode: 'snapshot', note: 'EOD snapshot' }, transport: 'companion' },
+    { id: 'dex', label: 'DEX pools', intervals: ['5m', '15m', '1h', '4h', '1d', '1w'], stream: { mode: 'poll', cadence: 60, note: 'polls ~60s' }, transport: 'companion' },
+    { id: 'bitshares', label: 'BitShares', intervals: ['5m', '15m', '1h', '4h', '1d'], stream: { mode: 'poll', cadence: 15, note: 'polls ~15s' }, transport: 'companion' },
+    { id: 'macro', label: 'Macro & Rates', intervals: ['1d', '1w', '1M'], stream: { mode: 'snapshot', note: 'daily snapshot' }, transport: 'companion' },
+    { id: 'china', label: 'China (CN-A)', intervals: ['1d', '1wk', '1mo'], stream: { mode: 'snapshot', note: 'T+1 snapshot' }, transport: 'companion' },
+  ];
+  let companionSources = null;
+  let companionDownReason = '';
+  let companionDownUntil = 0;
+  const fetchCompanionSources = async () => {
+    if (companionSources) return companionSources;
+    // Negative-cache a refused companion briefly so each modal open doesn't
+    // re-log the same refused fetch (the browser reports refused fetches as
+    // console resource errors; one probe per 30s is enough).
+    if (Date.now() < companionDownUntil) return null;
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => { try { ctl.abort(); } catch {} }, 2500);
+      let res;
+      try {
+        res = await fetch(`${COMPANION_BASE}/api/sources`, { signal: ctl.signal });
+      } finally {
+        clearTimeout(t);
+      }
+      if (!res.ok) throw new Error(`companion ${res.status}`);
+      const body = await res.json();
+      if (!Array.isArray(body)) throw new Error('bad companion source list');
+      companionSources = body;
+      companionDownReason = '';
+    } catch (e) {
+      companionDownReason = 'companion offline (127.0.0.1:8788 unreachable)';
+      companionSources = null;
+      companionDownUntil = Date.now() + 30000;
+    }
+    return companionSources;
+  };
+  const normSource = (s) => ({
+    id: String(s.id || s.source || ''),
+    label: String(s.label || s.id || s.source || ''),
+    intervals: Array.isArray(s.intervals || s.INTERVALS) ? (s.intervals || s.INTERVALS).map(String) : CCXT_INTERVALS.slice(),
+    stream: s.stream || s.STREAM || { mode: 'poll', cadence: 60 },
+    venues: Array.isArray(s.venues) ? s.venues : [],
+  });
+  const allSources = () => {
+    const out = [normSource(STATIC_SOURCES[0])];
+    if (companionSources) {
+      for (const s of companionSources) {
+        const n = normSource(s || {});
+        if (n.id && n.id !== 'ccxt') out.push(n);
+      }
+    } else {
+      for (const s of STATIC_SOURCES.slice(1)) out.push(normSource(s));
+    }
+    return out;
+  };
+  const sourceById = (id) => allSources().find((s) => s.id === id) || null;
+  const sourceTransportOk = (src) => {
+    if (!src || !src.id) return { ok: false, reason: 'unknown source' };
+    if (src.id === 'ccxt') {
+      return ccxtBundleOk()
+        ? { ok: true }
+        : { ok: false, reason: 'market data library not loaded — check connection/adblocker' };
+    }
+    if (companionSources) return { ok: true };
+    return { ok: false, reason: companionDownReason || 'companion offline' };
+  };
+  // Streaming-tip badge text from the source STREAM meta.
+  const streamBadge = (stream) => {
+    try {
+      const m = String(stream?.mode || '').toLowerCase();
+      if (m === 'live') return 'LIVE';
+      if (m === 'poll') {
+        const c = Number(stream?.cadence);
+        return Number.isFinite(c) && c > 0 ? `~${c}s poll` : 'poll';
+      }
+      if (m === 'snapshot') return 'snapshot';
+    } catch {}
+    return 'poll';
+  };
+  // Recents: click applies, updated on every successful switch (max 8).
+  const RECENTS_KEY = 'opentape-recents';
+  const getRecents = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(RECENTS_KEY) || '[]');
+      return Array.isArray(raw) ? raw.filter((r) => r && r.symbol).slice(0, 8) : [];
+    } catch { return []; }
+  };
+  const pushRecent = (entry) => {
+    try {
+      const list = getRecents().filter((r) => !(
+        String(r.symbol) === String(entry.symbol)
+        && String(r.venue || '') === String(entry.venue || '')
+        && String(r.source || '') === String(entry.source || '')
+      ));
+      list.unshift({ source: entry.source || 'ccxt', venue: entry.venue || '', symbol: entry.symbol, label: entry.label || entry.symbol, ts: Date.now() });
+      localStorage.setItem(RECENTS_KEY, JSON.stringify(list.slice(0, 8)));
+    } catch {}
+  };
+  // Companion candle normalization (contract shape: ascending {t,o,h,l,c,v}).
+  const normCompanionRows = (input) => {
+    const list = Array.isArray(input) ? input : (input && Array.isArray(input.candles) ? input.candles : []);
+    return list
+      .map((r) => (Array.isArray(r)
+        ? { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }
+        : { t: +r.t, o: +r.o, h: +r.h, l: +r.l, c: +r.c, v: +(r.v ?? 0) }))
+      .filter((r) => r && Number.isFinite(r.t) && Number.isFinite(r.o) && Number.isFinite(r.h)
+        && Number.isFinite(r.l) && Number.isFinite(r.c) && r.h >= r.l)
+      .map((r) => ({ ...r, v: Number.isFinite(r.v) ? r.v : 0 }))
+      .sort((a, b) => a.t - b.t);
+  };
+  // Companion-aware apply path. Mirrors reload's post-load steps (scale via
+  // resetScale, fitCanvases, saveLayout, updateSymbolHead) and reuses the
+  // onStreamCandle stream flow through a companion poll at the source cadence.
+  // On failure it toasts the reason and keeps last good data (no state change).
+  const loadCompanion = async (source, venue, symbol, interval) => {
+    // Probe tiers first so restored layouts (boot path, no modal open yet)
+    // route against live sources instead of the static fallback.
+    try { await fetchCompanionSources(); } catch {}
+    const src = sourceById(source) || normSource({ id: source });
+    const gate = sourceTransportOk(src);
+    if (!gate.ok) {
+      showToast(`Companion unavailable — keeping ${v.get().symbol || 'current chart'} (${gate.reason})`);
+      return false;
+    }
+    const cadence = Number(src.stream?.cadence) > 0 ? Number(src.stream.cadence) : 60;
+    const urlFor = (limit) => `${COMPANION_BASE}/api/candles?source=${encodeURIComponent(source)}`
+      + `&venue=${encodeURIComponent(venue || '')}&symbol=${encodeURIComponent(symbol)}`
+      + `&interval=${encodeURIComponent(interval)}&limit=${limit}`;
+    try {
+      const res = await fetch(urlFor(300));
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.reason || body?.error || `companion ${res.status}`);
+      const data = normCompanionRows(body.candles ?? body);
+      if (!data.length) throw new Error('companion returned no rows');
+      rows = data;
+      resetScale();
+      fitCanvases();
+      const qualified = `${source}:${symbol}`;
+      v.set({ symbol: qualified, interval, source, venue: venue || '' });
+      saveLayout();
+      updateSymbolHead();
+      stopStream();
+      stream = watchCandles({
+        symbol: qualified,
+        timeframe: interval,
+        pollMs: Math.max(5000, cadence * 1000),
+        createExchange: async () => ({}),
+        pollOnce: async () => {
+          const r2 = await fetch(urlFor(2));
+          const b2 = await r2.json().catch(() => ({}));
+          if (!r2.ok) throw new Error(b2?.reason || b2?.error || `companion ${r2.status}`);
+          return normCompanionRows(b2.candles ?? b2);
+        },
+        onCandle: onStreamCandle,
+        onStatus: (st, detail) => {
+          if (st === 'live' || st === 'polling') { lastStreamTs = Date.now(); setStreamState('live'); }
+          else { setStreamState('offline'); if (detail) console.warn('Stream offline', detail); }
+        },
+      });
+      lastStreamTs = Date.now();
+      setStreamState('live');
+      pushRecent({ source, venue: venue || '', symbol: qualified, label: `${src.label} · ${symbol}` });
+      return true;
+    } catch (e) {
+      showToast(`Live data unavailable — keeping ${v.get().symbol || 'current chart'} (${String(e?.message || e).slice(0, 90)})`);
+      return false;
+    }
+  };
   const openSymbolModal = () => {
     let dlg = document.querySelector('#sym-dialog');
     if (!dlg) {
@@ -2163,11 +2364,27 @@ export function initUI(v) {
       dlg.id = 'sym-dialog';
       dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:8px;font:13px sans-serif;min-width:300px">'
         + '<strong>Switch market</strong>'
+        + '<div id="sym-tabs" role="tablist" aria-label="Market views"></div>'
+        + '<div id="sym-recents"></div>'
+        + '<div id="sym-pane-markets" style="display:flex;flex-direction:column;gap:8px">'
+        + '<div id="sym-source-tabs" role="tablist" aria-label="Sources"></div>'
+        + '<div id="sym-source-note" style="color:#787b86;font-size:12px"></div>'
         + '<label>Exchange<input id="sym-ex-input" autocomplete="off" placeholder="binance"></label>'
-        + '<div id="sym-ex-list" class="suggest"></div>'
+        + '<div id="sym-ex-list" class="suggest sym-deep"></div>'
         + '<label>Pair<input id="sym-pair-input" autocomplete="off" placeholder="BTC/USDT"></label>'
-        + '<div id="sym-pair-list" class="suggest"></div>'
+        + '<div id="sym-pair-list" class="suggest sym-deep"></div>'
         + '<div id="sym-note" style="color:#787b86;font-size:12px"></div>'
+        + '<label>Interval<select id="sym-interval"></select></label>'
+        + '<div id="sym-stream-note" style="color:#787b86;font-size:12px"></div>'
+        + '</div>'
+        + '<div id="sym-pane-split" style="display:none;flex-direction:column;gap:8px">'
+        + '<div id="sym-split-dir" style="display:flex;gap:4px"></div>'
+        + '<div id="sym-split-cols"></div>'
+        + '</div>'
+        + '<div id="sym-pane-plot" style="display:none;flex-direction:column;gap:8px">'
+        + '<canvas id="sym-plot" width="620" height="300"></canvas>'
+        + '<div id="sym-plot-note" style="color:#787b86;font-size:12px"></div>'
+        + '</div>'
         + '<div style="display:flex;gap:8px"><button id="sym-apply" type="button">Switch</button><button value="close">Close</button></div></form>';
       document.body.appendChild(dlg);
       const exInput = dlg.querySelector('#sym-ex-input');
@@ -2175,8 +2392,50 @@ export function initUI(v) {
       const exList = dlg.querySelector('#sym-ex-list');
       const pairList = dlg.querySelector('#sym-pair-list');
       const note = dlg.querySelector('#sym-note');
-      const renderList = (host, items, onPick, emptyText) => {
+      const sourceTabs = dlg.querySelector('#sym-source-tabs');
+      const sourceNote = dlg.querySelector('#sym-source-note');
+      const intSel = dlg.querySelector('#sym-interval');
+      const streamNote = dlg.querySelector('#sym-stream-note');
+      const recentsHost = dlg.querySelector('#sym-recents');
+      const tabHost = dlg.querySelector('#sym-tabs');
+      const panes = {
+        markets: dlg.querySelector('#sym-pane-markets'),
+        split: dlg.querySelector('#sym-pane-split'),
+        plot: dlg.querySelector('#sym-pane-plot'),
+      };
+      let curSource = 'ccxt';
+      let curPairs = [];
+      let pairReq = 0;
+      let venueReq = 0;
+      const splitDir = { mode: 'base' };
+      let plotNodes = [];
+      // 120ms-debounced char-by-char autofill (one timer per field so the two
+      // inputs never cancel each other).
+      const debounceEach = () => {
+        let t = null;
+        return (fn) => { clearTimeout(t); t = setTimeout(fn, 120); };
+      };
+      const debounceEx = debounceEach();
+      const debouncePair = debounceEach();
+      const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      // Match highlight for the autofill lists.
+      const hiHtml = (text, q) => {
+        const t = String(text ?? '');
+        if (!q) return escHtml(t);
+        const i = t.toUpperCase().indexOf(String(q).toUpperCase());
+        if (i < 0) return escHtml(t);
+        return escHtml(t.slice(0, i)) + '<mark>' + escHtml(t.slice(i, i + String(q).length)) + '</mark>' + escHtml(t.slice(i + String(q).length));
+      };
+      // Full scrollable pulldowns with counts + sticky section headers (no row
+      // cap). Every row carries its streaming-tip badge; host.dataset.first
+      // feeds Enter-applies-first.
+      const renderList = (host, items, onPick, emptyText, opts = {}) => {
         host.innerHTML = '';
+        host.dataset.first = '';
+        const head = document.createElement('div');
+        head.className = 'sym-count';
+        head.textContent = `${opts.title || 'Results'} (${items.length})`;
+        host.appendChild(head);
         if (!items.length) {
           const d = document.createElement('div');
           d.className = 'suggest-empty';
@@ -2184,22 +2443,23 @@ export function initUI(v) {
           host.appendChild(d);
           return;
         }
-        // The dropdown shows the first 8 matches; the footer says how many
-        // more exist so the list never looks truncated.
-        const shown = items.slice(0, 8);
-        for (const it of shown) {
+        const badge = streamBadge((sourceById(curSource) || {}).stream);
+        let first = '';
+        for (const it of items) {
+          const id = typeof it === 'string' ? it : it.id;
+          if (!id) continue;
+          if (!first) first = id;
+          const label = typeof it === 'string' ? it : `${it.id}${it.verified ? ' ✓' : ''}${it.name ? ` — ${it.name}` : ''}`;
           const b = document.createElement('button');
           b.type = 'button';
-          b.textContent = typeof it === 'string' ? it : `${it.id}${it.verified ? ' ✓' : ''}`;
-          b.addEventListener('click', () => onPick(typeof it === 'string' ? it : it.id));
+          b.dataset.pick = id;
+          const live = badge === 'LIVE';
+          b.innerHTML = `<span class="sym-label">${hiHtml(label, opts.q || '')}</span>`
+            + `<span class="sym-badge${live ? ' live' : ''}">${escHtml(opts.badge === false ? '' : badge)}</span>`;
+          b.addEventListener('click', () => onPick(id));
           host.appendChild(b);
         }
-        if (items.length > shown.length) {
-          const more = document.createElement('div');
-          more.className = 'suggest-more';
-          more.textContent = `+${items.length - shown.length} more — keep typing to filter`;
-          host.appendChild(more);
-        }
+        host.dataset.first = first;
       };
       const bundleWarn = (host) => {
         if (ccxtBundleOk()) return;
@@ -2208,65 +2468,451 @@ export function initUI(v) {
         w.textContent = 'Market data library not loaded — check connection/adblocker and reopen. Falling back to binance.';
         host.prepend(w);
       };
+      const renderSourceTabs = () => {
+        sourceTabs.innerHTML = '';
+        for (const src of allSources()) {
+          const gate = sourceTransportOk(src);
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.dataset.source = src.id;
+          b.className = 'sym-tab' + (src.id === curSource ? ' on' : '');
+          b.disabled = !gate.ok;
+          b.title = gate.ok ? `${src.label} · ${streamBadge(src.stream)}` : `${src.label} — ${gate.reason}`;
+          const live = gate.ok && streamBadge(src.stream) === 'LIVE';
+          b.innerHTML = `<span class="sym-tab-label">${escHtml(src.label)}</span>`
+            + `<span class="sym-badge${live ? ' live' : ''}">${escHtml(gate.ok ? streamBadge(src.stream) : 'off')}</span>`
+            + (gate.ok ? '' : `<span class="sym-reason">${escHtml(gate.reason)}</span>`);
+          b.addEventListener('click', () => {
+            // A new tier means a new venue namespace: drop the stale venue
+            // filter so the venue list isn't pre-filtered to empty.
+            if (curSource !== src.id) exInput.value = '';
+            curSource = src.id;
+            renderSourceTabs();
+            renderIntervals();
+            refreshVenues(true);
+          });
+          sourceTabs.appendChild(b);
+        }
+        const cur = sourceById(curSource);
+        const gate = cur ? sourceTransportOk(cur) : { ok: false, reason: 'unknown source' };
+        if (!cur) sourceNote.textContent = 'Unknown source.';
+        else if (!gate.ok) sourceNote.textContent = `${cur.label} disabled — ${gate.reason}`;
+        else sourceNote.textContent = `${cur.label} · intervals: ${cur.intervals.join(', ')} · ${cur.stream?.note || streamBadge(cur.stream)}`;
+      };
+      // Per-source interval select: supported sizes selectable, the rest
+      // rendered unselectable (disabled).
+      const renderIntervals = () => {
+        const cur = sourceById(curSource) || { intervals: CCXT_INTERVALS, stream: {} };
+        const supported = new Set(cur.intervals);
+        const want = v.get().interval || curInterval();
+        intSel.innerHTML = '';
+        let marked = false;
+        for (const iv of ALL_INTERVALS) {
+          const op = document.createElement('option');
+          op.value = iv;
+          op.textContent = iv;
+          if (!supported.has(iv)) op.disabled = true;
+          else if (!marked && iv === want) { op.selected = true; marked = true; }
+          intSel.appendChild(op);
+        }
+        if (!supported.has(intSel.value)) {
+          const firstOk = cur.intervals.find((x) => supported.has(x)) || cur.intervals[0];
+          if (firstOk) intSel.value = firstOk;
+        }
+        streamNote.textContent = `Streaming: ${streamBadge(cur.stream)}${cur.stream?.note ? ` — ${cur.stream.note}` : ''}`;
+      };
+      const renderRecents = () => {
+        const list = getRecents();
+        recentsHost.innerHTML = '';
+        if (!list.length) return;
+        const title = document.createElement('div');
+        title.className = 'sym-count';
+        title.textContent = `Recent (${list.length})`;
+        recentsHost.appendChild(title);
+        const row = document.createElement('div');
+        row.className = 'sym-recents-row';
+        for (const r of list) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'sym-recent';
+          b.title = `${r.source || 'ccxt'} · ${r.symbol}`;
+          b.textContent = r.label || r.symbol;
+          b.addEventListener('click', async () => {
+            if ((r.source || 'ccxt') !== 'ccxt') {
+              const raw = String(r.symbol).includes(':') ? String(r.symbol).split(':').slice(1).join(':') : String(r.symbol);
+              const ok = await loadCompanion(r.source, r.venue || '', raw, v.get().interval || curInterval());
+              if (ok) { renderRecents(); try { dlg.close(); } catch { dlg.removeAttribute('open'); } }
+            } else {
+              const venue = r.venue || 'binance';
+              const m = String(r.symbol).includes(':') ? String(r.symbol) : `${venue}:${r.symbol}`;
+              const ok = await reload(m, v.get().interval || curInterval());
+              if (ok) {
+                try { v.set({ source: 'ccxt', venue }); saveLayout(); } catch {}
+                pushRecent(r);
+                renderRecents();
+                try { dlg.close(); } catch { dlg.removeAttribute('open'); }
+              }
+            }
+          });
+          row.appendChild(b);
+        }
+        recentsHost.appendChild(row);
+      };
+      const venueListFor = async (srcId) => {
+        if (srcId === 'ccxt') return getExchanges().map((e) => ({ id: e.id, verified: e.verified }));
+        const src = sourceById(srcId);
+        return (src?.venues || []).map((x) => (typeof x === 'string' ? { id: x } : { id: String(x.id), label: x.label }));
+      };
+      const instrumentsFor = async (srcId, venue, query) => {
+        if (srcId === 'ccxt') return getMarkets(venue);
+        if (!companionSources) throw new Error(companionDownReason || 'companion offline');
+        // The companion requires a non-empty q: the typed filter doubles as
+        // the query, and the venue id seeds the initial (unfiltered) listing.
+        const q = String(query || '').trim() || venue || 'a';
+        const res = await fetch(`${COMPANION_BASE}/api/search?source=${encodeURIComponent(srcId)}&venue=${encodeURIComponent(venue)}&q=${encodeURIComponent(q)}`);
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body?.reason || body?.error || `companion ${res.status}`);
+        const list = Array.isArray(body) ? body : (body.results || body.symbols || []);
+        // Objects keep the picked symbol clean while the row can still show
+        // the venue's display name (renderList labels `id — name`).
+        return list.map((r) => {
+          if (typeof r === 'string') return r;
+          const s = String(r.symbol || r.id || '');
+          const nm = String(r.name || '');
+          if (!s) return '';
+          return (nm && !s.toUpperCase().includes(nm.toUpperCase())) ? { id: s, name: nm } : s;
+        }).filter((x) => (typeof x === 'string' ? x : x && x.id));
+      };
+      const refreshVenues = async (resetPairs) => {
+        const myReq = ++venueReq;
+        const q = exInput.value.trim().toLowerCase();
+        let venues = [];
+        try {
+          venues = await venueListFor(curSource);
+        } catch { venues = []; }
+        if (myReq !== venueReq) return;
+        renderList(exList, venues.filter((e) => !q || e.id.includes(q)), (id) => {
+          exInput.value = id;
+          // Companion lists are server-filtered per venue: drop the stale
+          // pair filter (same rule as tab switches above) so the list isn't
+          // pre-filtered to empty, then hand over the cursor for type-to-search.
+          // CCXT filters locally, so its filter is kept as-is.
+          if (curSource !== 'ccxt') pairInput.value = '';
+          try { pairInput.focus(); } catch {}
+          refreshPairs();
+        }, curSource === 'ccxt' ? 'No exchanges match.' : 'No venues for this source.', { title: curSource === 'ccxt' ? 'Exchanges' : 'Venues', q });
+        bundleWarn(exList);
+        if (resetPairs) refreshPairs();
+      };
       const refreshPairs = async () => {
-        const ex = (exInput.value || 'binance').trim().toLowerCase();
-        pairList.innerHTML = '';
+        const myReq = ++pairReq;
+        // CCXT venue ids are lowercase; companion venue ids keep their listed
+        // case (e.g. STUB, CN-A) — lowercasing them breaks venue routing.
+        const venue = curSource === 'ccxt'
+          ? (exInput.value || 'binance').trim().toLowerCase()
+          : (exInput.value || '').trim();
         note.textContent = 'Loading markets…';
         try {
-          const syms = await getMarkets(ex);
+          const inputQ = pairInput.value.trim();
+          const syms = await instrumentsFor(curSource, venue, inputQ);
+          if (myReq !== pairReq) return;
+          curPairs = syms.map((s) => (typeof s === 'string' ? s : s.id)).filter(Boolean);
           note.textContent = `${syms.length} pairs`;
-          const q = pairInput.value.trim().toUpperCase();
-          renderList(pairList, syms.filter((s) => !q || s.toUpperCase().includes(q)), (s) => {
+          // CCXT lists filter locally; companion results arrive pre-filtered
+          // by the server query, so they render as returned (highlighted).
+          const q = inputQ.toUpperCase();
+          const list = curSource === 'ccxt'
+            ? syms.filter((s) => {
+              const id = typeof s === 'string' ? s : s.id;
+              return !q || id.toUpperCase().includes(q);
+            })
+            : syms;
+          renderList(pairList, list, (s) => {
             pairInput.value = s;
-            renderList(pairList, [], '');
-          }, 'No pairs match.');
+            pairList.dataset.first = s;
+          }, !inputQ && curSource !== 'ccxt' ? `Type to search ${venue || 'these'} markets.` : 'No pairs match.', { title: 'Pairs', q: inputQ });
+          renderSplit();
+          drawPlot();
         } catch (e) {
+          if (myReq !== pairReq) return;
+          curPairs = [];
           const reason = String(e?.message || e || 'unknown error').slice(0, 90);
-          note.textContent = ccxtBundleOk()
-            ? `Could not load market list (${reason}) — you can still type a pair manually.`
-            : 'Market data library not loaded — type the pair manually (e.g. BTC/USDT).';
-          renderList(pairList, [], '');
+          note.textContent = curSource === 'ccxt'
+            ? (ccxtBundleOk()
+              ? `Could not load market list (${reason}) — you can still type a pair manually.`
+              : 'Market data library not loaded — type the pair manually (e.g. BTC/USDT).')
+            : `Instrument list unavailable (${reason}).`;
+          renderList(pairList, [], curSource === 'ccxt' ? '' : `Companion offline — ${reason}`, { title: 'Pairs' });
         }
       };
-      exInput.addEventListener('input', () => {
-        const q = exInput.value.trim().toLowerCase();
-        renderList(exList, getExchanges().filter((e) => !q || e.id.includes(q)), (id) => {
-          exInput.value = id;
-          renderList(exList, [], '');
-          refreshPairs();
-        }, 'No exchanges match.');
-        bundleWarn(exList);
-      });
-      exInput.addEventListener('focus', () => {
-        renderList(exList, getExchanges(), (id) => {
-          exInput.value = id;
-          renderList(exList, [], '');
-          refreshPairs();
-        }, '');
-        bundleWarn(exList);
-      });
-      pairInput.addEventListener('input', () => refreshPairs());
-      pairInput.addEventListener('focus', () => refreshPairs());
+      // Base/quote split view: pick a base to list all its quotes (or flip to
+      // quote → all its bases). Clicking an instrument applies the switch.
+      const renderSplit = () => {
+        const cols = dlg.querySelector('#sym-split-cols');
+        const dirHost = dlg.querySelector('#sym-split-dir');
+        if (!cols || !dirHost) return;
+        dirHost.innerHTML = '';
+        cols.innerHTML = '';
+        // Keep the switch-tab row in sync even though renderSplit also runs
+        // from background refreshes while another pane is visible.
+        for (const mode of ['base', 'quote']) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'sym-tab' + (splitDir.mode === mode ? ' on' : '');
+          b.textContent = mode === 'base' ? 'Base → quotes' : 'Quote → bases';
+          b.addEventListener('click', () => { splitDir.mode = mode; renderSplit(); });
+          dirHost.appendChild(b);
+        }
+        const leftMap = new Map();
+        for (const s of curPairs) {
+          const i = s.indexOf('/');
+          if (i < 0) continue;
+          const a = s.slice(0, i), bq = s.slice(i + 1);
+          const key = splitDir.mode === 'base' ? a : bq;
+          const other = splitDir.mode === 'base' ? bq : a;
+          if (!leftMap.has(key)) leftMap.set(key, new Set());
+          leftMap.get(key).add(other);
+        }
+        const keys = [...leftMap.keys()].sort();
+        const leftCol = document.createElement('div');
+        leftCol.className = 'sym-split-col';
+        const lh = document.createElement('div');
+        lh.className = 'sym-count';
+        lh.textContent = `${splitDir.mode === 'base' ? 'Bases' : 'Quotes'} (${keys.length})`;
+        leftCol.appendChild(lh);
+        const leftList = document.createElement('div');
+        leftList.className = 'sym-split-list';
+        leftCol.appendChild(leftList);
+        const rightCol = document.createElement('div');
+        rightCol.className = 'sym-split-col';
+        cols.append(leftCol, rightCol);
+        const showRight = (key) => {
+          rightCol.innerHTML = '';
+          const others = [...(leftMap.get(key) || [])].sort();
+          const rh = document.createElement('div');
+          rh.className = 'sym-count';
+          rh.textContent = `${key} → ${splitDir.mode === 'base' ? 'quotes' : 'bases'} (${others.length})`;
+          rightCol.appendChild(rh);
+          const rl = document.createElement('div');
+          rl.className = 'sym-split-list';
+          for (const o of others) {
+            const full = splitDir.mode === 'base' ? `${key}/${o}` : `${o}/${key}`;
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.dataset.inst = full;
+            b.textContent = full;
+            b.addEventListener('click', async () => {
+              pairInput.value = full;
+              pairList.dataset.first = full;
+              await apply();
+            });
+            rl.appendChild(b);
+          }
+          rightCol.appendChild(rl);
+        };
+        for (const k of keys) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.dataset.base = k;
+          b.innerHTML = `<span class="sym-label">${escHtml(k)}</span><span class="sym-badge">${leftMap.get(k).size}</span>`;
+          b.addEventListener('click', () => {
+            leftList.querySelectorAll('button').forEach((x) => x.classList.remove('on'));
+            b.classList.add('on');
+            showRight(k);
+          });
+          leftList.appendChild(b);
+        }
+        const pre = keys.includes('BTC') ? 'BTC' : keys[0];
+        if (pre) {
+          const btn = leftList.querySelector(`button[data-base="${CSS.escape(pre)}"]`);
+          if (btn) btn.click();
+        }
+      };
+      // Network-plot tab: own canvas mini-graph (vanilla 2D, no libs). The
+      // venue sits at the center, top assets orbit sized by market counts,
+      // edges = markets. Clicking an asset node filters the pair list.
+      const drawPlot = () => {
+        const cv = dlg.querySelector('#sym-plot');
+        const pnote = dlg.querySelector('#sym-plot-note');
+        if (!cv) return;
+        let ctx = null;
+        try { ctx = cv.getContext('2d'); } catch {}
+        if (!ctx) return;
+        const dark = (document.documentElement.dataset.theme || 'dark') === 'dark';
+        const W = cv.width || 620, H = cv.height || 300;
+        plotNodes = [];
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = dark ? '#131722' : '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+        const venue = (exInput.value || (curSource === 'ccxt' ? 'binance' : curSource)).trim() || 'venue';
+        const counts = new Map();
+        for (const s of curPairs) {
+          const i = s.indexOf('/');
+          const base = i >= 0 ? s.slice(0, i) : s;
+          if (base) counts.set(base, (counts.get(base) || 0) + 1);
+        }
+        const tops = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
+        const cx = W / 2, cy = H / 2;
+        const maxC = tops.length ? tops[0][1] : 1;
+        const ink = dark ? '#d1d4dc' : '#0f0f0f';
+        const accent = '#2962FF';
+        const ringR = Math.min(W, H) / 2 - 46;
+        tops.forEach(([base, c], i) => {
+          const a = (i / Math.max(1, tops.length)) * Math.PI * 2 - Math.PI / 2;
+          const x = cx + Math.cos(a) * ringR, y = cy + Math.sin(a) * ringR;
+          const r = 10 + 18 * (c / maxC);
+          ctx.strokeStyle = dark ? '#2a2e39' : '#e0e3eb';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(41,98,255,0.16)';
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = accent;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = ink;
+          ctx.font = '11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(base, x, y + r + 12);
+          ctx.fillText(String(c), x, y + 4);
+          plotNodes.push({ x, y, r: r + 6, kind: 'asset', id: base });
+        });
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(venue).slice(0, 10), cx, cy + 4);
+        plotNodes.push({ x: cx, y: cy, r: 32, kind: 'venue', id: venue });
+        try { cv._nodes = plotNodes.slice(); } catch {}
+        if (pnote) {
+          pnote.textContent = tops.length
+            ? `${tops.length} assets · ${curPairs.length} markets · click an asset node to filter pairs`
+            : 'No markets loaded yet — pick a venue on the Markets tab.';
+        }
+      };
+      const switchTab = (name) => {
+        for (const [k, el] of Object.entries(panes)) {
+          if (el) el.style.display = k === name ? 'flex' : 'none';
+        }
+        tabHost.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+        if (name === 'plot') drawPlot();
+        if (name === 'split') renderSplit();
+      };
       const apply = async () => {
+        // Companion tiers route to the companion loader; the ccxt path below
+        // keeps the byte-identical reload call for ccxt symbols.
+        if (curSource && curSource !== 'ccxt') {
+          let sym = normalizeSymbol(pairInput.value) || String(pairInput.value || '').trim();
+          if (!sym) { pairInput.focus(); return; }
+          // A pasted `source:SYM` qualifier would double up (`stub:stub:X`)
+          // since loadCompanion qualifies itself — strip it to the raw symbol.
+          const pre = `${curSource}:`.toLowerCase();
+          if (sym.toLowerCase().startsWith(pre)) sym = sym.slice(pre.length);
+          if (!sym) { pairInput.focus(); return; }
+          const venue = (exInput.value || '').trim();
+          const ok = await loadCompanion(curSource, venue, sym, intSel.value || curInterval());
+          if (ok) { renderRecents(); try { dlg.close(); } catch { dlg.removeAttribute('open'); } }
+          return;
+        }
         const ex = (exInput.value || 'binance').trim().toLowerCase();
         const pair = normalizeSymbol(pairInput.value);
         if (!pair) { pairInput.focus(); return; }
-        const ok = await reload(`${ex}:${pair}`, curInterval());
-        if (ok) { try { dlg.close(); } catch { dlg.removeAttribute('open'); } }
+        const ok = await reload(`${ex}:${pair}`, intSel.value || curInterval());
+        if (ok) {
+          try { v.set({ source: 'ccxt', venue: ex }); saveLayout(); } catch {}
+          pushRecent({ source: 'ccxt', venue: ex, symbol: `${ex}:${pair}`, label: `${ex} · ${pair}` });
+          renderRecents();
+          try { dlg.close(); } catch { dlg.removeAttribute('open'); }
+        }
       };
+      exInput.addEventListener('input', () => debounceEx(() => refreshVenues(false)));
+      exInput.addEventListener('focus', () => refreshVenues(false));
+      exInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (exList.dataset.first) { exInput.value = exList.dataset.first; refreshPairs(); }
+        }
+      });
+      pairInput.addEventListener('input', () => debouncePair(() => refreshPairs()));
+      pairInput.addEventListener('focus', () => refreshPairs());
       dlg.querySelector('#sym-apply').addEventListener('click', apply);
-      pairInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); } });
+      pairInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (pairList.dataset.first) pairInput.value = pairList.dataset.first;
+          apply();
+        }
+      });
       dlg.querySelector('button[value="close"]').addEventListener('click', () => {
         try { dlg.close(); } catch { dlg.removeAttribute('open'); }
       });
+      // Plot clicks filter (asset node) or clear the filter (venue node).
+      dlg.querySelector('#sym-plot')?.addEventListener('click', (e) => {
+        const cv = dlg.querySelector('#sym-plot');
+        if (!cv) return;
+        const r = cv.getBoundingClientRect();
+        if (!(r.width > 0 && r.height > 0)) return;
+        const x = (e.clientX - r.left) * (cv.width / r.width);
+        const y = (e.clientY - r.top) * (cv.height / r.height);
+        const hit = plotNodes.find((n) => (x - n.x) * (x - n.x) + (y - n.y) * (y - n.y) <= n.r * n.r);
+        if (!hit) return;
+        if (hit.kind === 'asset') {
+          // CCXT nodes are bases, so the trailing slash scopes the quote list
+          // to that base; companion nodes are bare symbols, filtered verbatim.
+          pairInput.value = curSource === 'ccxt' ? `${hit.id}/` : hit.id;
+          switchTab('markets');
+          refreshPairs();
+          showToast(`${hit.id} filter — pick a quote to switch`);
+        } else {
+          pairInput.value = '';
+          switchTab('markets');
+          refreshPairs();
+        }
+      });
+      // Top-level view tabs.
+      tabHost.innerHTML = '';
+      for (const [id, label] of [['markets', 'Markets'], ['split', 'Bases/Quotes'], ['plot', 'Network']]) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.tab = id;
+        b.textContent = label;
+        b.setAttribute('role', 'tab');
+        b.addEventListener('click', () => switchTab(id));
+        tabHost.appendChild(b);
+      }
+      // Per-open refresh (async: companion tiers resolve, then lists paint).
+      dlg._api = {
+        setSource: (id) => { if (sourceById(id)) curSource = id; },
+        refreshAll: async () => {
+          await fetchCompanionSources();
+          try { renderSourceTabs(); } catch {}
+          try { renderIntervals(); } catch {}
+          try { renderRecents(); } catch {}
+          try { switchTab('markets'); } catch {}
+          try { await refreshVenues(false); } catch {}
+          try { await refreshPairs(); } catch {}
+        },
+      };
     }
-    // Prefill from the current market, then show.
+    // Prefill from the current market (tiers included), then show. Lists
+    // refresh async per open so companion reachability is re-probed.
     try {
-      const m = resolveMarket(v.get().symbol || 'BTC/USD');
-      dlg.querySelector('#sym-ex-input').value = String(m.exchange || 'binance');
+      const st = v.get();
+      const m = resolveMarket(st.symbol || 'BTC/USD');
+      if (st.source && dlg._api) dlg._api.setSource(st.source);
+      dlg.querySelector('#sym-ex-input').value = st.venue || String(m.exchange || 'binance');
       dlg.querySelector('#sym-pair-input').value = m.ccxtSymbol || 'BTC/USDT';
       dlg.querySelector('#sym-pair-list').innerHTML = '';
       dlg.querySelector('#sym-note').textContent = '';
+      if (dlg._api) dlg._api.refreshAll();
     } catch {}
     if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); }
     else dlg.setAttribute('open', '');
@@ -2278,6 +2924,16 @@ export function initUI(v) {
     symBtn.dataset.bound = '1';
     symBtn.addEventListener('click', () => openSymbolModal());
   }
+  // Companion boot: a restored companion layout (source/venue/symbol) loads via
+  // the companion path. The generic boot above already attempted the ccxt path,
+  // which errors honestly for companion-qualified symbols (no mislabel).
+  try {
+    const st0 = v.get();
+    if (st0.source && st0.source !== 'ccxt' && st0.symbol) {
+      const raw = String(st0.symbol).includes(':') ? String(st0.symbol).split(':').slice(1).join(':') : String(st0.symbol);
+      loadCompanion(st0.source, st0.venue || '', raw, st0.interval || '1d');
+    }
+  } catch {}
   // Watchlist sidebar: Symbol/Last/Chg/Chg% fed by browser CCXT (daily bars);
   // click a row to switch the chart to that symbol. liveOnly skips the
   // embedded BTC fallback so offline rows keep em-dash via the catch below.
