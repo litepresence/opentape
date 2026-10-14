@@ -24,6 +24,28 @@ export function initUI(v) {
   // Stay in drawing mode (original default): the tool persists after each
   // placement; when off the rail returns to cross. Persisted per user.
   let stayMode = true;
+  // Last-used tool per rail group (the original toolbar slot keeps the picked
+  // variant: the glyph re-arms it, and re-clicking the armed group opens the
+  // flyout instead). Defaults to each group's first tool.
+  const groupCurrent = {};
+  // Text-tool style (size 1–100x of the 13px base, indicator-style color with
+  // Auto = inherit, opacity). Chosen in the text picker, carried onto each
+  // placed drawing, persisted across sessions like the icon scale.
+  const TEXT_BASE = 13;
+  const TEXT_SCALE_KEY = 'opentape-text-scale';
+  const TEXT_COLOR_KEY = 'opentape-text-color';
+  const TEXT_OPACITY_KEY = 'opentape-text-opacity';
+  const clampTextScale = (n) => Math.min(100, Math.max(1, Math.round(Number(n) || 1)));
+  let textScale = 1, textColor = null, textOpacity = 1;
+  try { textScale = clampTextScale(localStorage.getItem(TEXT_SCALE_KEY)); } catch {}
+  try {
+    const tc = localStorage.getItem(TEXT_COLOR_KEY);
+    textColor = (typeof tc === 'string' && /^#[0-9a-fA-F]{6}$/.test(tc)) ? tc : null;
+  } catch {}
+  try {
+    const to = Number(localStorage.getItem(TEXT_OPACITY_KEY));
+    textOpacity = Number.isFinite(to) ? Math.min(1, Math.max(0, to)) : 1;
+  } catch {}
   let pending = null;
   let measureStart = null;
   const undoStack = [];
@@ -71,9 +93,15 @@ export function initUI(v) {
     timeframe: s.timeframe || '1D',
     interval: s.interval || '1d',
     locked: !!s.locked,
+    lockedDrawings: !!s.lockedDrawings,
+    lockedIndicators: !!s.lockedIndicators,
     drawingsHidden: !!s.drawingsHidden,
+    indicatorsHidden: !!s.indicatorsHidden,
     priceAuto: s.priceAuto !== false,
     stayMode: s.stayMode !== false,
+    snapIndicators: !!s.snapIndicators,
+    valuesTooltip: !!s.valuesTooltip,
+    removeLocked: !!s.removeLocked,
   });
   const saveLayout = () => {
     try {
@@ -110,9 +138,15 @@ export function initUI(v) {
         timeframe: parsed.timeframe,
         interval: parsed.interval,
         locked: parsed.locked,
+        lockedDrawings: parsed.lockedDrawings,
+        lockedIndicators: parsed.lockedIndicators,
         drawingsHidden: parsed.drawingsHidden,
+        indicatorsHidden: parsed.indicatorsHidden,
         priceAuto: parsed.priceAuto,
         stayMode: parsed.stayMode,
+        snapIndicators: parsed.snapIndicators,
+        valuesTooltip: parsed.valuesTooltip,
+        removeLocked: parsed.removeLocked,
       };
     } catch { return null; }
   };
@@ -149,9 +183,15 @@ export function initUI(v) {
     if (persisted.timeframe) patch.timeframe = persisted.timeframe;
     if (persisted.interval) patch.interval = persisted.interval;
     if (persisted.locked) patch.locked = true;
+    if (persisted.lockedDrawings) patch.lockedDrawings = true;
+    if (persisted.lockedIndicators) patch.lockedIndicators = true;
     if (persisted.drawingsHidden) patch.drawingsHidden = true;
+    if (persisted.indicatorsHidden) patch.indicatorsHidden = true;
     if (persisted.priceAuto === false) patch.priceAuto = false;
     if (persisted.stayMode === false) patch.stayMode = false;
+    if (persisted.snapIndicators) patch.snapIndicators = true;
+    if (persisted.valuesTooltip) patch.valuesTooltip = true;
+    if (persisted.removeLocked) patch.removeLocked = true;
     stayMode = persisted.stayMode !== false;
     if (Object.keys(patch).length) v.set(patch);
   }
@@ -243,19 +283,27 @@ export function initUI(v) {
       stay: stayMode,
     };
   };
+  const currentOf = (gid) => groupCurrent[gid] || firstToolOf(gid);
   const syncRail = () => {
     const tool = v.get().tool;
     const flags = modeFlags();
     for (const [gid, b] of railBtns) {
       const g = RAIL_GROUPS[gid];
+      // Keep the glyph's armed-tool pointer and tooltip on the last-used
+      // variant so re-arming (and the plain-key shortcuts below) stay exact.
+      if (g && !g.direct && currentOf(gid)) {
+        b.dataset.tool = currentOf(gid);
+        b.title = `${g.label} — click to use ${ITEMS[currentOf(gid)]?.label || ''}`;
+      }
       const armed = g.direct ? flags[gid] === true || tool === gid : tool && groupOf(tool) === gid;
       b.classList.toggle('active', !!armed);
       b.classList.toggle('engaged', !!flags[gid]);
     }
   };
-  // Rail glyph click: arm the group's tool, or run its direct action.
-  // The chevron (bound below) is what opens a tool menu — clicking the glyph
-  // itself arms the tool, exactly like the original sidebar.
+  // Rail glyph click: arm the group's last-used tool, or run its direct
+  // action. Re-clicking the already-armed group's glyph toggles its menu —
+  // the original toolbar re-click opens the flyout — so every button reaches
+  // its submenu with plain clicks; the chevron opens it directly.
   const setMode = (key, on) => { v.set({ [key]: on }); syncRail(); saveLayout(); };
   const removeWhat = (what) => {
     const s = v.get();
@@ -264,7 +312,12 @@ export function initUI(v) {
     if (what === 'drawings' && !nD) { showToast('No drawings to remove'); return; }
     if (what === 'indicators' && !nS) { showToast('No indicators to remove'); return; }
     if (what === 'all' && !nD && !nS) { showToast('Nothing to remove'); return; }
-    if (s.locked || s.lockedDrawings) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+    // "Always remove locked drawings" bypasses the drawings lock for explicit
+    // removals; the indicators lock always holds for indicator removals.
+    const drawingsLocked = (s.locked || s.lockedDrawings) && !s.removeLocked;
+    const indicatorsLocked = !!(s.locked || s.lockedIndicators);
+    if ((what === 'drawings' || what === 'all') && nD && drawingsLocked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+    if ((what === 'indicators' || what === 'all') && nS && indicatorsLocked) { showToast('Indicators are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
     pushHistory();
     const patch = { selectedId: null };
     if (what === 'drawings' || what === 'all') { patch.drawings = []; patch.alerts = []; }
@@ -286,12 +339,12 @@ export function initUI(v) {
     'remove:all': () => removeWhat('all'),
     'magnet:weak': () => { magnetOn = true; magnetStrength = 'weak'; syncRail(); saveLayout(); showToast('Weak magnet — snaps to the nearest OHLC'); },
     'magnet:strong': () => { magnetOn = true; magnetStrength = 'strong'; syncRail(); saveLayout(); showToast('Strong magnet — snaps to open/close/high/low'); },
-    'cursor:cross': () => setTool('cross'),
-    'cursor:dot': () => setTool('dot'),
-    'cursor:arrow': () => setTool('arrow-cursor'),
-    'cursor:demo': () => setTool('demonstration'),
-    'cursor:magic': () => setTool('magic'),
-    'cursor:eraser': () => setTool('eraser'),
+    'cursor:cross': () => armTool('cross'),
+    'cursor:dot': () => armTool('dot'),
+    'cursor:arrow': () => armTool('arrow-cursor'),
+    'cursor:demo': () => armTool('demonstration'),
+    'cursor:magic': () => armTool('magic'),
+    'cursor:eraser': () => armTool('eraser'),
     'open:emoji': () => openEmojiPicker(),
   };
   document.querySelectorAll('#rail button[data-group-id]').forEach((b) => {
@@ -300,7 +353,7 @@ export function initUI(v) {
       const g = RAIL_GROUPS[gid];
       if (!g) return;
       if (g.id === 'magnets') { magnetOn = !magnetOn; syncRail(); saveLayout(); showToast(magnetOn ? `Magnet on (${magnetStrength}) — drawings snap to OHLC` : 'Magnet off'); return; }
-      if (g.id === 'stay') { stayMode = !stayMode; v.set({ stayMode }); syncRail(); saveLayout(); return; }
+      if (g.id === 'stay') { stayMode = !stayMode; v.set({ stayMode }); syncRail(); saveLayout(); showToast(stayMode ? 'Stay in drawing mode on' : 'Stay in drawing mode off'); return; }
       if (g.id === 'lock') { toggleLock(); return; }
       if (g.id === 'hide') { const on = !v.get().drawingsHidden; setMode('drawingsHidden', on); showToast(on ? 'Drawings hidden' : 'Drawings shown'); return; }
       if (g.id === 'zoom') {
@@ -318,7 +371,7 @@ export function initUI(v) {
       if (g.id === 'icons') { openEmojiPicker(); return; }
       if (g.id === 'remove') {
         const s = v.get();
-        if (s.locked || s.lockedDrawings) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+        if ((s.locked || s.lockedDrawings) && !s.removeLocked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
         if (!s.drawings.length && !s.alerts.length) { showToast('Nothing to remove'); return; }
         pushHistory();
         v.set({
@@ -330,9 +383,17 @@ export function initUI(v) {
         showToast(s.selectedId ? 'Object removed' : 'Last object removed');
         return;
       }
-      // groups: arm the group's current tool
-      const t = firstToolOf(gid);
-      if (t) { pending = null; setTool(t); }
+      // Variant groups: first click arms the last-used tool; re-clicking the
+      // already-armed group toggles its menu (original flyout behavior), so
+      // plain button clicks always reach the submenu. Mode groups (magnets,
+      // lock, hide, remove) never arm a tool, so their glyphs keep toggling.
+      const cur = v.get().tool;
+      if (!g.direct && g.id !== 'icons' && g.sections.length && cur && groupOf(cur) === gid) {
+        openToolMenu(gid, b.parentElement);
+        return;
+      }
+      const t = currentOf(gid);
+      if (t) { pending = null; armTool(t); }
     });
   });
   // Reflect persisted mode state on the freshly built rail.
@@ -350,53 +411,41 @@ export function initUI(v) {
     };
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
     else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    else if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      // Original sidebar shortcuts: Alt+T/F/H/J/V/C arm the matching tool.
+      // Shown in the menus; previously displayed but unbound.
+      if (isEditable(e.target)) return;
+      const k = (e.key || '').toLowerCase();
+      const map = { t: 'trend', f: 'fib', h: 'horizontal', j: 'hray', v: 'vertical', c: 'crossline' };
+      if (map[k]) { e.preventDefault(); armTool(map[k]); }
+    }
     else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'c' || e.key === 'C')) {
       if (isEditable(e.target)) return;
-      pending = null;
-      v.set({ tool: 'cross' });
-      document.querySelectorAll('#rail button').forEach(x => {
-        if (x.dataset.tool === 'magnet') return;
-        x.classList.toggle('active', x.dataset.tool === 'cross');
-      });
+      armTool('cross');
     }
     else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 't' || e.key === 'T')) {
       if (isEditable(e.target)) return;
-      v.set({ tool: 'trend' });
-      document.querySelectorAll('#rail button').forEach(x => {
-        if (x.dataset.tool === 'magnet') return;
-        x.classList.toggle('active', x.dataset.tool === 'trend');
-      });
-      pending = null;
+      armTool('trend');
     }
     else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'f' || e.key === 'F')) {
       if (isEditable(e.target)) return;
-      v.set({ tool: 'fib' });
-      document.querySelectorAll('#rail button').forEach(x => {
-        if (x.dataset.tool === 'magnet') return;
-        x.classList.toggle('active', x.dataset.tool === 'fib');
-      });
-      pending = null;
+      armTool('fib');
     }
     else if (e.key === 'Escape') {
-      // Escape exits any drawing tool -> cross + clear pending anchor +
-      // sync rail active class (mirrors c/t/f handler pattern). Runs even
-      // from inputs so a stray anchor never survives; dialog Esc still
-      // closes natively (no preventDefault).
+      // Escape exits any drawing tool -> cross + clear pending anchor.
+      // Runs even from inputs so a stray anchor never survives; dialog Esc
+      // still closes natively (no preventDefault).
       pending = null;
       measureStart = null;
       closeMenu();
       closeToolMenu();
       toolMenuOpen = false;
-      setTool('cross');
-      document.querySelectorAll('#rail button').forEach(x => {
-        if (x.dataset.tool === 'magnet') return;
-        x.classList.toggle('active', x.dataset.tool === 'cross');
-      });
+      armTool('cross');
     }
     else if (e.key === 'Delete' || e.key === 'Backspace') {
       if (isEditable(e.target)) return;
       const s = v.get();
-      if (s.locked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+      if ((s.locked || s.lockedDrawings) && !s.removeLocked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
       if (!s.selectedId && !s.drawings.length) return;
       pushHistory();
       if (s.selectedId) {
@@ -440,7 +489,9 @@ export function initUI(v) {
   const maybeSnap = (p, geom, state) => {
     if (!magnetOn || !rows.length) return p;
     const span = state.price.max - state.price.min;
-    const tol = (span / Math.max(1, geom.height)) * 8;
+    // Weak magnet: 8px tolerance; strong magnet: wider 16px pull.
+    const px = magnetStrength === 'strong' ? 16 : 8;
+    const tol = (span / Math.max(1, geom.height)) * px;
     // Snap against the bars on screen only: snapping to a price that exists
     // on an off-screen bar puts the drawing where no candle is.
     const sliced = visibleRows(rows, state.visible);
@@ -477,14 +528,28 @@ export function initUI(v) {
   }
   v.onRender(renderAll);
   fitCanvases();
+  // Price bounds snap outward to a magnitude-aware step (a tenth of the
+  // data-span decade) instead of a hardcoded 1000 — a $150 coin needs $1
+  // steps and a $0.15 coin $0.001 steps, or market switches land on a
+  // collapsed 0–1000 scale with the candles squeezed invisible.
+  const priceBounds = (mn, mx) => {
+    if (!Number.isFinite(mn) || !Number.isFinite(mx)) return null;
+    if (!(mx > mn)) { mn -= 1; mx += 1; }
+    const pad = (mx - mn) * 0.08;
+    const lo = mn - pad, hi = mx + pad;
+    const mag = 10 ** Math.floor(Math.log10(Math.max(hi - lo, 1e-12)));
+    const step = mag / 10;
+    const price = { min: Math.floor(lo / step) * step, max: Math.ceil(hi / step) * step };
+    if (!(price.max > price.min)) price.max = price.min + step;
+    return price;
+  };
   const scaleFor = (list) => {
     let mn = Infinity, mx = -Infinity;
     for (const r of list) { if (r.l < mn) mn = r.l; if (r.h > mx) mx = r.h; }
     if (!Number.isFinite(mn) || !Number.isFinite(mx)) return null;
     if (!(mx > mn)) { mn -= 1; mx += 1; }
-    const pad = (mx - mn) * 0.08;
-    const price = { min: Math.floor((mn - pad) / 1000) * 1000, max: Math.ceil((mx + pad) / 1000) * 1000 };
-    if (!(price.max > price.min)) price.max = price.min + 1000;
+    const price = priceBounds(mn, mx);
+    if (!price) return null;
     return { visible: { from: list[0].t, to: list[list.length - 1].t }, price };
   };
   // Live-only boot: show a loading state until real bars arrive, then paint.
@@ -705,6 +770,14 @@ export function initUI(v) {
     v.set({ tool });
     pending = null;
     syncRail();
+    syncTextPicker();
+  };
+  // Single arming path: remember the variant per group (toolbar-slot memory)
+  // then arm it. Cursor/mode ids that belong to no variant group skip memory.
+  const armTool = (tool) => {
+    const g = groupOf(tool);
+    if (g) groupCurrent[g] = tool;
+    setTool(tool);
   };
   if (overlay) {
     let dragging = false;
@@ -736,7 +809,7 @@ export function initUI(v) {
       if (tool === 'eraser') {
         const hit = hitTestDrawing(st.drawings, st, geom, rows, mx, my, 10);
         if (hit) {
-          if (st.locked || st.lockedDrawings) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
+          if ((st.locked || st.lockedDrawings) && !st.removeLocked) { showToast('Drawings are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
           pushHistory();
           v.set({ drawings: st.drawings.filter((d) => d.id !== hit.id), selectedId: null });
           saveLayout();
@@ -807,9 +880,19 @@ export function initUI(v) {
         }
         pushHistory();
         const extras = drawingExtras(spec);
-        // An emoji chosen from the Icons picker already carries its own glyph.
+        // An emoji chosen from the Icons picker already carries its own glyph
+        // (and size scale) — no caption prompt involved.
         if (extras.cancel && pending && pending.type === tool && pending.glyph) delete extras.cancel;
         if (pending && pending.type === tool && pending.glyph) extras.text = pending.glyph;
+        if (pending && pending.type === tool && Number.isFinite(pending.scale)) {
+          extras.iconScale = Math.min(10, Math.max(1, Math.round(pending.scale)));
+        }
+        // Text-tool style from the text picker (size/color/opacity).
+        if (tool === 'text') {
+          if (textScale > 1) extras.size = Math.round(TEXT_BASE * textScale);
+          if (textColor) extras.color = textColor;
+          if (textOpacity < 1) extras.opacity = textOpacity;
+        }
         if (extras.cancel) { pending = null; if (!stayMode) setTool('cross'); return; }
         const d = makeDrawing(tool, [{ t, p }], extras);
         addDrawing(v, d);
@@ -1209,10 +1292,9 @@ export function initUI(v) {
     for (const r of rows) { if (r.l < mn) mn = r.l; if (r.h > mx) mx = r.h; }
     if (!Number.isFinite(mn) || !Number.isFinite(mx)) return;
     if (!(mx > mn)) { mn -= 1; mx += 1; }
-    const pad = (mx - mn) * 0.08;
     const visible = { from: rows[0].t, to: rows[rows.length - 1].t };
-    const price = { min: Math.floor((mn - pad) / 1000) * 1000, max: Math.ceil((mx + pad) / 1000) * 1000 };
-    if (!(price.max > price.min)) price.max = price.min + 1000;
+    const price = priceBounds(mn, mx);
+    if (!price) return;
     fullVisible = { ...visible };
     fullPrice = { ...price };
     v.set({ visible, price, replayIndex: null });
@@ -1261,6 +1343,8 @@ export function initUI(v) {
     const countById = (id) => instances().filter((e) => e.id === id).length;
 
     const commitStudies = (next) => {
+      const s = v.get();
+      if (s.locked || s.lockedIndicators) { showToast('Indicators are locked', { label: 'Unlock', onAction: () => toggleLock() }); return; }
       v.set({ studies: next });
       saveLayout();
       renderActive();
@@ -1597,18 +1681,27 @@ export function initUI(v) {
   // Rail flyouts: the chevron on a group icon opens its tool menu, the way the
   // original sidebar does. Menus mirror the captured structure — section
   // headers, keyboard shortcuts on the right, switches at the bottom.
-  function closeToolMenu() { try { document.querySelector('#tool-menu')?.remove(); } catch {} }
+  function closeToolMenu() { try { document.querySelector('#tool-menu')?.remove(); } catch {} try { document.querySelectorAll('.rail-item.open').forEach((x) => x.classList.remove('open')); } catch {} }
   let toolMenuOpen = false;
 
-  const menuState = { snapIndicators: false, valuesTooltip: false, removeLocked: false };
+  // Switches persist in ViewState + layout so they survive reload; the menu
+  // reflects the stored value on open.
+  const menuState = {
+    snapIndicators: !!v.get().snapIndicators,
+    valuesTooltip: !!v.get().valuesTooltip,
+    removeLocked: !!v.get().removeLocked,
+  };
   const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
   const itemLabel = (item) => {
     if (!item.dynamic) return item.label;
     const s = v.get();
     const nD = (s.drawings || []).length;
     const nS = (s.studies || []).length;
+    // Templates use %d (drawings) and %i (indicators); %n is the legacy alias
+    // for the drawings count seen in older captures — expand it too so no
+    // literal placeholder ever reaches the menu.
     return item.dynamic
-      .replace('%d', plural(nD, 'drawing'))
+      .replace(/%d|%n/g, plural(nD, 'drawing'))
       .replace('%i', plural(nS, 'indicator'));
   };
 
@@ -1670,7 +1763,7 @@ export function initUI(v) {
           }
           closeToolMenu(); toolMenuOpen = false;
           pending = null;
-          setTool(item.id);
+          armTool(item.id);
           const need = anchorCount(item.id);
           showToast(need > 1
             ? `${item.label} — click ${need} points on the chart`
@@ -1685,7 +1778,12 @@ export function initUI(v) {
     menu.style.left = ((r.right || 48) + 2) + 'px';
     menu.style.top = Math.max(4, Math.min((r.top || 80), (window.innerHeight || 900) - h - 8)) + 'px';
     toolMenuOpen = true;
+    try { anchorBtn?.classList?.add('open'); } catch {}
     setTimeout(() => document.addEventListener('mousedown', function off(e) {
+      // A row click or Escape closes the menu without an outside mousedown,
+      // leaving this closer stale: without the isConnected guard it would eat
+      // the next menu's first row mousedown (menu vanishes, click lost).
+      if (!menu.isConnected) { document.removeEventListener('mousedown', off); return; }
       if (!menu.contains(e.target) && e.target !== anchorBtn && !anchorBtn?.contains?.(e.target)) {
         closeToolMenu(); toolMenuOpen = false; document.removeEventListener('mousedown', off);
       }
@@ -1699,6 +1797,124 @@ export function initUI(v) {
 
   // Emoji / icon picker (the Icons group opens a grid, like the original).
   const EMOJI = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','👽','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🙈','🙉','🙊','💋','💌','💘','💝','💖','💗','💓','💞','💕','💟','❣️','💔','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','⭐','🌟','✨','⚡','🔥','💥','💯','✅','❌','❓','❗','💤','🚀','🏆','🥇','🎯','🎉','🎊'];
+  // Text-tool picker: size slider (1–100x of the base), indicator-style
+  // color swatch + Auto (inherit), and opacity. Shown while the text tool is
+  // armed; the choice rides onto each placed drawing (see placement above).
+  function closeTextPicker() { try { document.querySelector('#text-size-picker')?.remove(); } catch {} }
+  function syncTextPicker() {
+    try {
+      if ((v.get().tool || 'cross') === 'text') openTextPicker();
+      else closeTextPicker();
+    } catch {}
+  }
+  function openTextPicker() {
+    if (document.querySelector('#text-size-picker')) return;
+    closeToolMenu(); toolMenuOpen = false;
+    const wrap = document.createElement('div');
+    wrap.id = 'text-size-picker';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-label', 'Text style');
+    const preview = document.createElement('span');
+    preview.className = 'emoji-size-preview';
+    preview.textContent = 'Ag';
+    const syncUI = () => {
+      wrap.querySelector('[data-tval]').textContent = `${textScale}x`;
+      wrap.querySelector('[data-toval]').textContent = `${Math.round(textOpacity * 100)}%`;
+      const hex = wrap.querySelector('[data-thex]');
+      if (hex) hex.textContent = textColor || 'Auto';
+      preview.style.fontSize = `${Math.min(TEXT_BASE * textScale, 56)}px`;
+      preview.style.color = textColor || '';
+      preview.style.opacity = String(textOpacity);
+    };
+    const persist = () => {
+      try {
+        localStorage.setItem(TEXT_SCALE_KEY, String(textScale));
+        if (textColor) localStorage.setItem(TEXT_COLOR_KEY, textColor);
+        else localStorage.removeItem(TEXT_COLOR_KEY);
+        localStorage.setItem(TEXT_OPACITY_KEY, String(textOpacity));
+      } catch {}
+    };
+    const sizeRow = document.createElement('div');
+    sizeRow.className = 'emoji-size';
+    const sizeLabel = document.createElement('span');
+    sizeLabel.textContent = 'Size';
+    const sizeInput = document.createElement('input');
+    sizeInput.type = 'range';
+    sizeInput.min = '1';
+    sizeInput.max = '100';
+    sizeInput.step = '1';
+    sizeInput.value = String(textScale);
+    sizeInput.setAttribute('aria-label', 'Text size (1 to 100 times)');
+    const sizeVal = document.createElement('span');
+    sizeVal.className = 'emoji-size-val';
+    sizeVal.dataset.tval = '1';
+    sizeInput.addEventListener('input', () => {
+      textScale = clampTextScale(sizeInput.value);
+      persist();
+      syncUI();
+    });
+    sizeRow.append(sizeLabel, sizeInput, sizeVal, preview);
+    const colorRow = document.createElement('div');
+    colorRow.className = 'emoji-size';
+    const colorLabel = document.createElement('span');
+    colorLabel.textContent = 'Color';
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = textColor || '#d1d4dc';
+    colorInput.setAttribute('aria-label', 'Text color');
+    colorInput.addEventListener('input', () => {
+      const hex = String(colorInput.value || '').trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+        textColor = hex;
+        persist();
+        syncUI();
+      }
+    });
+    const autoBtn = document.createElement('button');
+    autoBtn.type = 'button';
+    autoBtn.className = 'text-auto';
+    autoBtn.textContent = 'Auto';
+    autoBtn.title = 'Inherit the drawing color';
+    autoBtn.addEventListener('click', () => {
+      textColor = null;
+      persist();
+      syncUI();
+    });
+    const hexVal = document.createElement('span');
+    hexVal.className = 'emoji-size-val';
+    hexVal.dataset.thex = '1';
+    colorRow.append(colorLabel, colorInput, autoBtn, hexVal);
+    const opRow = document.createElement('div');
+    opRow.className = 'emoji-size';
+    const opLabel = document.createElement('span');
+    opLabel.textContent = 'Opacity';
+    const opInput = document.createElement('input');
+    opInput.type = 'range';
+    opInput.min = '0';
+    opInput.max = '100';
+    opInput.step = '1';
+    opInput.value = String(Math.round(textOpacity * 100));
+    opInput.setAttribute('aria-label', 'Text opacity percent');
+    const opVal = document.createElement('span');
+    opVal.className = 'emoji-size-val';
+    opVal.dataset.toval = '1';
+    opInput.addEventListener('input', () => {
+      const n = Number(opInput.value);
+      textOpacity = Number.isFinite(n) ? Math.min(1, Math.max(0, n / 100)) : 1;
+      persist();
+      syncUI();
+    });
+    opRow.append(opLabel, opInput, opVal);
+    wrap.append(sizeRow, colorRow, opRow);
+    document.body.appendChild(wrap);
+    syncUI();
+    const r = railBtns.get('text')?.getBoundingClientRect?.() || { left: 48, top: 300 };
+    wrap.style.left = ((r.right || 48) + 2) + 'px';
+    wrap.style.top = Math.max(4, r.top || 300) + 'px';
+    setTimeout(() => document.addEventListener('mousedown', function off(e) {
+      if (!wrap.contains(e.target)) { wrap.remove(); document.removeEventListener('mousedown', off); }
+    }), 0);
+  }
   function openEmojiPicker() {
     closeToolMenu(); toolMenuOpen = false;
     document.querySelector('#emoji-picker')?.remove();
@@ -1706,6 +1922,40 @@ export function initUI(v) {
     wrap.id = 'emoji-picker';
     wrap.setAttribute('role', 'dialog');
     wrap.setAttribute('aria-label', 'Icons');
+    // Icon size: 1x–10x the base 18px glyph. Persists across sessions; the
+    // picked emoji carries the scale onto its drawing record.
+    const ICON_SCALE_KEY = 'opentape-icon-scale';
+    const clampScale = (n) => Math.min(10, Math.max(1, Math.round(Number(n) || 1)));
+    let iconScale = 1;
+    try { iconScale = clampScale(localStorage.getItem(ICON_SCALE_KEY)); } catch {}
+    const sizeRow = document.createElement('div');
+    sizeRow.className = 'emoji-size';
+    const sizeLabel = document.createElement('span');
+    sizeLabel.textContent = 'Size';
+    const sizeInput = document.createElement('input');
+    sizeInput.type = 'range';
+    sizeInput.min = '1';
+    sizeInput.max = '10';
+    sizeInput.step = '1';
+    sizeInput.value = String(iconScale);
+    sizeInput.setAttribute('aria-label', 'Icon size (1 to 10 times)');
+    const sizeVal = document.createElement('span');
+    sizeVal.className = 'emoji-size-val';
+    const sizePreview = document.createElement('span');
+    sizePreview.className = 'emoji-size-preview';
+    sizePreview.textContent = '⭐';
+    const syncSizeUI = () => {
+      sizeVal.textContent = `${iconScale}x`;
+      sizePreview.style.fontSize = `${Math.min(18 * iconScale, 56)}px`;
+    };
+    sizeInput.addEventListener('input', () => {
+      iconScale = clampScale(sizeInput.value);
+      try { localStorage.setItem(ICON_SCALE_KEY, String(iconScale)); } catch {}
+      syncSizeUI();
+    });
+    syncSizeUI();
+    sizeRow.append(sizeLabel, sizeInput, sizeVal, sizePreview);
+    wrap.appendChild(sizeRow);
     const grid = document.createElement('div');
     grid.className = 'emoji-grid';
     for (const e of EMOJI) {
@@ -1716,8 +1966,8 @@ export function initUI(v) {
       b.addEventListener('click', () => {
         wrap.remove();
         setTool('icon');
-        pending = { type: 'icon', points: [], glyph: e };
-        showToast('Icon armed — click the chart to place it');
+        pending = { type: 'icon', points: [], glyph: e, scale: iconScale };
+        showToast(`Icon armed (${iconScale}x) — click the chart to place it`);
       });
       grid.appendChild(b);
     }
@@ -1785,6 +2035,16 @@ export function initUI(v) {
   // keeps last good data + toast on failure (existing reload contract).
   const VERIFIED_EX = ['binance'];
   const marketsCache = new Map();
+  // True when the CCXT browser bundle actually loaded (exchange classes
+  // present). When false the modal falls back to a single exchange and pair
+  // lists cannot load — the UI says so explicitly instead of looking broken.
+  const ccxtBundleOk = () => {
+    try {
+      const cc = globalThis.ccxt;
+      return !!cc && Object.keys(cc).some((k) => typeof cc[k] === 'function'
+        && k === k.toLowerCase() && /^[a-z][a-z0-9_]*$/.test(k));
+    } catch { return false; }
+  };
   const getExchanges = () => {
     let all = [];
     try {
@@ -1838,13 +2098,29 @@ export function initUI(v) {
           host.appendChild(d);
           return;
         }
-        for (const it of items.slice(0, 8)) {
+        // The dropdown shows the first 8 matches; the footer says how many
+        // more exist so the list never looks truncated.
+        const shown = items.slice(0, 8);
+        for (const it of shown) {
           const b = document.createElement('button');
           b.type = 'button';
           b.textContent = typeof it === 'string' ? it : `${it.id}${it.verified ? ' ✓' : ''}`;
           b.addEventListener('click', () => onPick(typeof it === 'string' ? it : it.id));
           host.appendChild(b);
         }
+        if (items.length > shown.length) {
+          const more = document.createElement('div');
+          more.className = 'suggest-more';
+          more.textContent = `+${items.length - shown.length} more — keep typing to filter`;
+          host.appendChild(more);
+        }
+      };
+      const bundleWarn = (host) => {
+        if (ccxtBundleOk()) return;
+        const w = document.createElement('div');
+        w.className = 'suggest-warn';
+        w.textContent = 'Market data library not loaded — check connection/adblocker and reopen. Falling back to binance.';
+        host.prepend(w);
       };
       const refreshPairs = async () => {
         const ex = (exInput.value || 'binance').trim().toLowerCase();
@@ -1859,7 +2135,10 @@ export function initUI(v) {
             renderList(pairList, [], '');
           }, 'No pairs match.');
         } catch (e) {
-          note.textContent = 'Could not load market list — you can still type a pair manually.';
+          const reason = String(e?.message || e || 'unknown error').slice(0, 90);
+          note.textContent = ccxtBundleOk()
+            ? `Could not load market list (${reason}) — you can still type a pair manually.`
+            : 'Market data library not loaded — type the pair manually (e.g. BTC/USDT).';
           renderList(pairList, [], '');
         }
       };
@@ -1870,6 +2149,7 @@ export function initUI(v) {
           renderList(exList, [], '');
           refreshPairs();
         }, 'No exchanges match.');
+        bundleWarn(exList);
       });
       exInput.addEventListener('focus', () => {
         renderList(exList, getExchanges(), (id) => {
@@ -1877,6 +2157,7 @@ export function initUI(v) {
           renderList(exList, [], '');
           refreshPairs();
         }, '');
+        bundleWarn(exList);
       });
       pairInput.addEventListener('input', () => refreshPairs());
       pairInput.addEventListener('focus', () => refreshPairs());

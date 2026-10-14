@@ -74,17 +74,22 @@ button:hover { background: var(--btn-hover); }
 #rail button svg .f { fill: currentColor; stroke: none; }
 .rail-sep { display: block; height: 1px; margin: 4px 6px; background: var(--border); }
 
-/* Each rail entry pairs the glyph (arms the group's tool) with a chevron
-   (opens the tool menu), the way the original sidebar splits them. */
+/* Each rail entry pairs the glyph (arms the group's tool; re-clicking the
+   armed group's glyph toggles its menu) with a chevron (opens the tool menu),
+   the way the original sidebar splits them. The chevron is always visible —
+   like the original's persistent arrow — as a full-height strip on the
+   button's right edge, so the menu is discoverable without hovering. */
 .rail-item { position: relative; display: block; }
 #rail .rail-btn { width: 100%; padding: 6px 0; color: var(--text); background: none; border: 0; border-radius: 4px; cursor: pointer; }
 #rail .rail-chev {
-  position: absolute; top: 50%; right: 1px; transform: translateY(-50%);
-  width: 12px; padding: 0; border: 0; background: none; color: var(--muted);
-  opacity: 0; cursor: pointer;
+  position: absolute; top: 0; bottom: 0; right: 0;
+  width: 15px; padding: 0; border: 0; background: none; color: var(--text);
+  opacity: 1; cursor: pointer; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
 }
-#rail .rail-chev svg { width: 10px; height: 14px; stroke-width: 2; }
-.rail-item:hover .rail-chev { opacity: 1; }
+#rail .rail-chev svg { width: 8px; height: 12px; stroke-width: 2.5; }
+.rail-item:hover .rail-chev { opacity: 1; color: var(--text); }
+.rail-item.open .rail-chev { opacity: 1; color: #2962FF; }
 .rail-item:hover .rail-btn { background: var(--btn-hover); }
 #rail .rail-btn.active { background: var(--btn-hover); outline: 1px solid var(--grid); }
 #rail .rail-btn.engaged { background: rgba(41, 98, 255, 0.16); outline: 1px solid #2962FF; color: #2962FF; }
@@ -110,6 +115,16 @@ button:hover { background: var(--btn-hover); }
 .emoji-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
 .emoji-grid button { border: 0; background: none; font-size: 18px; line-height: 1; padding: 4px 0; border-radius: 4px; cursor: pointer; }
 .emoji-grid button:hover { background: var(--btn-hover); }
+/* Icon size slider: 1x–10x the base glyph, with a live preview. */
+.emoji-size { display: flex; align-items: center; gap: 8px; padding: 6px 4px 8px; font-size: 12px; color: #787b86; }
+.emoji-size input[type="range"] { flex: 1; accent-color: #2962FF; cursor: pointer; }
+.emoji-size-val { min-width: 28px; text-align: right; color: var(--text); }
+.emoji-size-preview { min-width: 60px; text-align: center; line-height: 1; }
+/* Text tool picker: same rows as the icon picker (size 1–100x, indicator-
+   style color + Auto, opacity), shown while the text tool is armed. */
+#text-size-picker { position: fixed; z-index: 70; width: 300px; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; box-shadow: 0 8px 26px rgba(0,0,0,0.3); }
+#text-size-picker input[type="color"] { width: 30px; height: 22px; padding: 0; border: 1px solid var(--border); border-radius: 4px; background: none; cursor: pointer; }
+#text-size-picker .text-auto { font-size: 12px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
 #locked-badge { margin-right: 8px; }
 #chart-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
 #ohlc-head {
@@ -165,6 +180,8 @@ dialog label { display: flex; flex-direction: column; gap: 2px; font-size: 12px;
 .suggest button { text-align: left; padding: 6px 8px; border-radius: 4px; font-size: 13px; }
 .suggest button:hover { background: var(--btn-hover); }
 .suggest-empty { color: #787b86; font-size: 12px; padding: 4px 8px; }
+.suggest-more { color: #787b86; font-size: 12px; padding: 4px 8px; }
+.suggest-warn { color: #F23645; font-size: 12px; padding: 4px 8px; }
 /* Watchlist sidebar (matches captured Symbol/Last/Chg/Chg% structure) */
 #watch { width: 320px; min-width: 280px; border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; overflow-y: auto; font-size: 12px; }
 #watch-head { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }

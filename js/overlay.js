@@ -158,7 +158,7 @@ export function paintPrimitives(ctx, prims, d, gctx) {
           ctx.fillStyle = ctx.strokeStyle; ctx.fill(); ctx.restore();
         }
         ctx.save();
-        if (p.thick) { ctx.lineWidth = p.thick; ctx.globalAlpha = p.thick > 4 ? 0.35 : 1; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
+        if (p.thick) { ctx.lineWidth = p.thick; ctx.globalAlpha = p.thick > 4 ? 0.2 : 1; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
         ctx.setLineDash(p.dash || []);
         ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
         pts.slice(1).forEach((q) => ctx.lineTo(q.x, q.y));
@@ -168,10 +168,19 @@ export function paintPrimitives(ctx, prims, d, gctx) {
       }
       case 'rect': {
         if (p.fill != null && (p.w > 0 || p.h > 0)) {
-          ctx.save(); ctx.globalAlpha = p.fill;
-          ctx.fillStyle = ctx.strokeStyle; ctx.fillRect(p.x, p.y, Math.max(0, p.w), Math.max(0, p.h)); ctx.restore();
+          ctx.save();
+          let ralpha = p.fill;
+          if (Number.isFinite(p.opacity)) ralpha *= Math.min(1, Math.max(0, p.opacity));
+          ctx.globalAlpha = ralpha;
+          ctx.fillStyle = p.bg || ctx.strokeStyle; ctx.fillRect(p.x, p.y, Math.max(0, p.w), Math.max(0, p.h)); ctx.restore();
         }
-        if (p.w > 0 && p.h > 0) ctx.strokeRect(p.x, p.y, p.w, p.h);
+        if (p.w > 0 && p.h > 0 && !p.noStroke) {
+          ctx.save();
+          ctx.setLineDash(p.dash || []);
+          if (p.border) ctx.strokeStyle = p.border;
+          ctx.strokeRect(p.x, p.y, p.w, p.h);
+          ctx.restore();
+        }
         break;
       }
       case 'ellipse':
@@ -182,30 +191,50 @@ export function paintPrimitives(ctx, prims, d, gctx) {
       case 'arc':
         ctx.beginPath(); ctx.arc(p.cx, p.cy, Math.abs(p.r), p.a0, p.a1); ctx.stroke();
         break;
-      case 'text':
+      case 'text': {
         ctx.save();
-        if (p.size) ctx.font = `${p.size}px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif`;
+        const tparts = [];
+        if (p.italic) tparts.push('italic');
+        if (p.bold) tparts.push('700');
+        const tsize = p.size || 11;
+        ctx.font = `${tparts.length ? tparts.join(' ') + ' ' : ''}${tsize}px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif`;
         ctx.textAlign = p.align || 'left';
+        if (p.color && d.id !== gctx?.selectedId) ctx.fillStyle = p.color;
+        if (Number.isFinite(p.opacity)) ctx.globalAlpha *= Math.min(1, Math.max(0, p.opacity));
         ctx.fillText(p.text ?? '', p.x, p.y);
         ctx.restore();
         break;
+      }
       case 'box': {
         const w = p.w, h = p.h;
+        const isNote = p.variant === 'note' || p.variant === 'comment';
         if (p.image) {
           const img = gctx?.images?.get?.(p.image);
-          if (img) ctx.drawImage(img, p.x, p.y, w, h);
+          if (img) {
+            ctx.save();
+            if (Number.isFinite(p.opacity)) ctx.globalAlpha *= Math.min(1, Math.max(0, p.opacity));
+            ctx.drawImage(img, p.x, p.y, w, h);
+            ctx.restore();
+          }
           else ctx.strokeRect(p.x, p.y, w, h);
         } else {
           ctx.save(); ctx.globalAlpha = 0.92;
-          ctx.fillStyle = d.id === gctx?.selectedId ? '#2962FF' : '#1e222d';
+          if (isNote) {
+            ctx.fillStyle = d.id === gctx?.selectedId ? '#2962FF'
+              : (p.variant === 'comment' ? '#f5f5f0' : '#fff3c4');
+          } else {
+            ctx.fillStyle = d.id === gctx?.selectedId ? '#2962FF' : '#1e222d';
+          }
           ctx.fillRect(p.x, p.y, w, h); ctx.restore();
           ctx.strokeRect(p.x, p.y, w, h);
         }
         ctx.save();
-        ctx.fillStyle = '#f0f3fa';
-        ctx.textAlign = 'center';
+        const selected = d.id === gctx?.selectedId;
+        ctx.fillStyle = (isNote && !selected) ? '#1a1a1a' : '#f0f3fa';
+        ctx.textAlign = isNote ? 'left' : 'center';
         const lines = String(p.label || '').split('\n').slice(0, 4);
-        lines.forEach((ln, i) => ctx.fillText(ln, p.x + w / 2, p.y + 18 + i * 14));
+        const tx = isNote ? p.x + 8 : p.x + w / 2;
+        lines.forEach((ln, i) => ctx.fillText(ln, tx, p.y + 18 + i * 14));
         ctx.restore();
         break;
       }
@@ -284,6 +313,17 @@ function primDist(prims, mx, my) {
     } else if (p.op === 'box') {
       const inside = mx >= p.x && mx <= p.x + p.w && my >= p.y && my <= p.y + p.h;
       if (inside) best = Math.min(best, 0.5);
+    } else if (p.op === 'text') {
+      // Labels are body-selectable: estimated text bounds (builders have no
+      // canvas measure hook). Selections still prefer nearer line/path hits.
+      const s = p.size || 11;
+      const tw = String(p.text ?? '').length * s * 0.6;
+      let tx0 = p.x;
+      if (p.align === 'center') tx0 = p.x - tw / 2;
+      else if (p.align === 'right') tx0 = p.x - tw;
+      if (mx >= tx0 - 4 && mx <= tx0 + tw + 4 && my >= p.y - s - 4 && my <= p.y + 4) {
+        best = Math.min(best, 0.5);
+      }
     }
   }
   return best;

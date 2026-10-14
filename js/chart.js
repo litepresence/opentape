@@ -198,7 +198,8 @@ function drawPaneLine(ctx, vals, n, scale, geom, rows, color, paneTop, paneHeigh
   ctx.stroke(); ctx.restore();
 }
 export function renderBase(ctx, state, rows, geom) {
-  const full = applyTransform(rows, state);
+  // Hide indicators: skip transforms and overlays so the chart shows raw bars.
+  const full = state.indicatorsHidden ? rows : applyTransform(rows, state);
   // Model (a): slice to the visible window BEFORE layout; every layer
   // (candles, indicators, studies, axes, drawings, hitTest) operates on
   // this same sliced array with index-based x (step = width / sliced.length).
@@ -263,9 +264,10 @@ export function renderBase(ctx, state, rows, geom) {
   // Full-history compute, then window by the slice offset so warmup/seeds
   // cannot shift on pan/zoom (same offset model as candles/replay).
   // Tolerates legacy string ids read-only (registry defaults); visible:false
-  // instances are skipped but kept in state.
+  // instances are skipped but kept in state. Hidden indicators render nothing.
   const metaById = (id) => STUDIES.find(s => s.id === id);
   const active = [];
+  if (!state.indicatorsHidden) {
   for (const e of (state.studies || [])) {
     if (typeof e === 'string') {
       const meta = metaById(e);
@@ -276,6 +278,7 @@ export function renderBase(ctx, state, rows, geom) {
       if (e.visible === false) continue;
       active.push({ id: e.id, params: { ...(meta.opts || {}), ...(e.params || {}) }, color: ('color' in e) ? e.color : null });
     }
+  }
   }
   // Assign each instance an ordinal per study id so auto colors vary across
   // instances (mesh) as well as across lines.

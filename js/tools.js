@@ -132,7 +132,7 @@ export const RAIL = [
       {
         title: 'Cycles',
         items: [
-          { id: 'cyclic', label: 'Cyclic lines', kind: 'cyclic', anchors: 3 },
+          { id: 'cyclic', label: 'Cyclic lines', kind: 'cyclic', anchors: 2 },
           { id: 'timecycles', label: 'Time cycles', kind: 'timecycles', anchors: 2 },
           { id: 'sineline', label: 'Sine line', kind: 'sine', anchors: 2 },
         ],
@@ -305,7 +305,7 @@ export const RAIL = [
       title: '',
       items: [
         { id: 'removedrawings', label: 'Remove drawings', kind: 'mode', anchors: 0, action: 'remove:drawings', dynamic: 'Remove %d' },
-        { id: 'removeindicators', label: 'Remove indicators', kind: 'mode', anchors: 0, action: 'remove:indicators', dynamic: 'Remove %n indicator' },
+        { id: 'removeindicators', label: 'Remove indicators', kind: 'mode', anchors: 0, action: 'remove:indicators', dynamic: 'Remove %i' },
         { id: 'removeall', label: 'Remove drawings and indicators', kind: 'mode', anchors: 0, action: 'remove:all', dynamic: 'Remove %d & %i' },
         { id: 'removelocked', label: 'Always remove locked drawings', kind: 'switch', anchors: 0, toggle: 'removeLocked' },
       ],
