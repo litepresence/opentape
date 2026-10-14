@@ -65,3 +65,26 @@ export async function fetchOHLCV({ symbol = 'BTC/USD', timeframe = '1d', limit =
   if (!rows.length) throw new Error(`${exchange} returned no data for ${ccxtSymbol}`);
   return rows;
 }
+
+// Fold one live candle into rows (pure — returns a new array, or the input
+// reference when the candle is older than everything held).
+export function mergeCandle(rows, candle, cap = 2000) {
+  const list = Array.isArray(rows) ? rows : [];
+  if (!candle || !Number.isFinite(candle.t)) return list;
+  const last = list[list.length - 1];
+  if (last && candle.t === last.t) {
+    const next = list.slice();
+    next[next.length - 1] = {
+      ...last,
+      h: Math.max(last.h, candle.h),
+      l: Math.min(last.l, candle.l),
+      c: candle.c,
+      v: candle.v,
+    };
+    return next;
+  }
+  if (last && candle.t < last.t) return list;
+  const next = [...list, { ...candle }];
+  while (next.length > cap) next.shift();
+  return next;
+}
