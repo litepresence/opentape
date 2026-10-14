@@ -5,9 +5,9 @@ Build Opentape, an open chart terminal: a pixel-faithful, fully functional BTCUS
 
 Reference: `Screenshot from 2026-10-12 18-38-59.png` in this directory. That image is ground truth for V1 visual fidelity.
 
-## Run (Python only — no npm, no build, no server)
+## Run (Python only — no npm, no build)
 ```bash
-python3 -m http.server 8787   # from the repo root
+python opentape.py        # from the repo root: static terminal :8787 + data proxy :8788, opens browser
 # open http://localhost:8787/ — live Binance data; offline/blocked shows an error state (no fake candles)
 ```
 `npm install` is needed only for the Playwright verify/audit harness (`npm run verify`); unit tests are stdlib-only (`npm test`, or bare `node --test tests/*.test.mjs` with no install at all).
@@ -24,7 +24,42 @@ python3 -m http.server 8787   # from the repo root
 ## Scope / Non-Goals V1
 - In: chart core, axes, drawings, indicators dialog, alert lines, replay, themes, browser-CCXT live data.
 - Out: real brokerage execution, social/community, Pine Script editor, mobile layout.
-- Aims: crypto-only data terminal (GET-only public data; no trading desk, no secrets). `server/` deleted — no backend, no npm `ccxt` dep. Stocks/forex deferred pending a CORS-open keyless or BYOK source.
+- Aims: all-asset data terminal (GET-only public data; no trading desk, no secrets). No *hosted* backend — the local companion (`python opentape.py`, `tooling/companion/`) is allowed and is how every non-browser source ships. No npm `ccxt` dep.
+
+## Data Universe (2026-10-14 mandate — supersedes the old crypto-only scope)
+Wire in **everything that is not a CORS issue in the hosted version, plus
+every well-maintained (ccxt-grade) keyless pricing pipeline via the local
+companion**: CEX crypto, DEX pools, US + foreign stonks (incl. India NSE/BSE,
+China A, Korea KRX, Euronext satellites), forex, commodities, rates,
+BitShares. Evidence and per-source plan:
+`docs/superpowers/plans/2026-10-14-data-pipeline.md`.
+
+- **Hosted rule:** a source ships browser-direct only if it is CORS-open
+  (verified in-browser, never inferred from curl). Today: CCXT/Binance-class
+  hosts, CNBC quotes. Everything else goes through the companion or stays out.
+- **Companion rule:** keyless only, no secrets in repo; well-maintained
+  aggregator SDKs preferred, in rank order: CCXT (Python) → akshare →
+  yfinance → baostock → nsepython (**GPL — HTTP boundary only, never import**)
+  → Stooq CSV → World Bank slice → yahooquery → raw BitShares WS →
+  python-bitshares → quarantined tvdatafeed → bsedata. OUT: investpy, nsetools,
+  nsepy, IEX, tushare, all keyed vendors (AlphaVantage/Finnhub/TwelveData/
+  Marketstack/EODHD/FRED/EIA/CoinGlass).
+- **Source notes worth remembering:** Naver `siseJson` + polling is the Korean
+  workhorse (KRX official needs keys/login; pykrx KRX leg is credential-gated;
+  Yahoo `.KS` is delayed fallback). China = baostock primary + akshare
+  secondary, Yahoo last resort. Europe directs worth integrating: SIX
+  `charts.json`, Nasdaq Nordic `DataFeedProxy`, Borsa Italiana `grafici.` API
+  (WAF warmup); Euronext/Xetra proper are keyed. MOEX ISS is keyless and open
+  (`iss.moex.com`, candles/orderbook/FX/OFZ/FORTS) — display with a
+  jurisdiction note (MOEX/NCC/NSD are US/UK SDN-listed; read-only display,
+  never execution/custody). Suffix fixes shipped: Tadawul `.SAU` (not `.SR`),
+  Madrid `.MC` (not `.ES`). Delisted/empty tickers surface "history
+  unavailable", never silent drops (survivorship).
+- **Demand ranking (volume × diversity × readiness):** BTC/ETH/SOL → US cult
+  (TSLA/NVDA/AAPL) → EURUSD/XAU → Nifty/Sensex + RELIANCE/HDFCBANK/TCS/INFY →
+  WTI/gold → Nikkei → SSE/ChiNext → Solana/Base memecoins + Hyperliquid →
+  KRX/KOSDAQ + Euronext/TSX/B3 tail. Marginal users come from US cult-stock +
+  crypto-meme overlap, India's options army, and Solana/Base churn.
 
 ## Architecture (Approved Option A)
 - `index.html` — shell: topbar / left-rail / chart-area / axes / footer.
@@ -33,7 +68,7 @@ python3 -m http.server 8787   # from the repo root
 - `js/chart.js` — base canvas render; `js/axes.js` — price/time axes; `js/overlay.js` — crosshair/drawings; `js/data.js` — browser-CCXT driver (global `ccxt` bundle, `resolveMarket` routing, `whenCcxt`/`fetchOHLCV`); `js/drawings.js`, `js/indicators.js`, `js/ui.js` — toolbar wiring.
 
 ## Conventions
-- Vanilla only: no React/Vue/Tailwind, no chart libs. `ccxt` allowed only via the pinned CDN script tag (no npm dep, no server code).
+- Vanilla only: no React/Vue/Tailwind, no chart libs. `ccxt` allowed only via the pinned CDN script tag (no npm dep). Page stays dependency-free; the local companion is Python (stdlib-first, pinned pip libs for SDK backends), bound to `127.0.0.1` only.
 - Canvas text: `-apple-system, Segoe UI, Roboto` to match TradingView; 1px wicks, 60% candle body spacing.
 - All state mutations go through ViewState then `requestRender()`. No direct canvas writes from UI handlers.
 - Tooling scripts (if any) live in `tooling/` per global rules — no inline scripts.
@@ -110,5 +145,5 @@ blanked the app. Audit: `tooling/audit_lock.mjs` (10 checks).
 - Last-price line/tag follows bar direction (green up). Range→interval map: 1D→1m, 5D→5m, 1M→30m, 3M→1h, 6M→2h, YTD/1Y→1d, 5Y→1w, All→1M. 11 stacked canvases. Evidence in `tooling/rea-tv-inspect.json`, `tooling/shots/tv-real-1920.png`, `tooling/rea_tv_facts.mjs` (layout facts only — tree stays clean-room, no TV code/assets).
 
 ## Working Agreement
-- Brainstorm → spec → plan → implement in phases: 1) core chart, 2) drawings, 3) indicators/alerts/replay, 4) themes/polish.
+- Brainstorm → spec → plan → implement in phases: 1) core chart, 2) drawings, 3) indicators/alerts/replay, 4) themes/polish, 5) data universe (local companion + all-source mandate per `docs/superpowers/plans/2026-10-14-data-pipeline.md`).
 - Ask before adding deps beyond the pinned `ccxt` CDN bundle. Keep vanilla promise.
