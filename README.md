@@ -1,7 +1,8 @@
 # Opentape — an open chart terminal
 
-Opentape is a clean-room, dependency-free crypto chart terminal in vanilla
-HTML/JS/CSS. No frameworks, no chart libraries, no backend, no build step:
+Opentape is a clean-room crypto chart terminal in vanilla
+HTML/JS/CSS — dependency-free in the browser. No frameworks, no chart
+libraries, no hosted backend, no build step:
 one static page with a pure-canvas chart engine, live public market data,
 drawings, 85 technical studies, replay mode, and a watchlist.
 
@@ -10,15 +11,45 @@ drawings, 85 technical studies, replay mode, and a watchlist.
 ## Run it
 
 ```bash
-python3 -m http.server 8787   # from the repo root
+python opentape.py        # from the repo root: static terminal :8787 + data proxy :8788, opens browser
 # open http://localhost:8787/
 ```
 
 That's the whole thing — Python only. Live Binance candles load automatically from
 the browser; if the data can't load you get an explicit error and a retry rather
 than a stale or mislabeled chart. `npm install` exists solely for
-the optional Playwright verify/audit harness (`npm run verify`); the 46 unit
+the optional Playwright verify/audit harness (`npm run verify`); the 69 unit
 tests are stdlib-only (`npm test`, or bare `node --test tests/*.test.mjs`).
+
+## Installation
+
+Python 3.8+ only — no install step, no build, no other dependencies:
+
+```bash
+python opentape.py                 # terminal + proxy, opens your browser
+python opentape.py --no-browser    # serve only
+python opentape.py --port 8787 --companion-port 8788
+```
+
+`opentape.py` boots two localhost servers: the static terminal (`:8787`)
+and the data proxy (`:8788`), which fetches every source the browser cannot
+reach directly (CORS-blocked APIs) and serves it back as JSON. Without the
+proxy, the CCXT/browser-direct markets keep working and every proxied picker
+tier shows disabled *with its reason* (each links back here).
+
+Optional pip packages unlock more proxy sources. They are never
+auto-installed — a source whose library is missing simply reports why:
+
+| Package | Unlocks |
+|---|---|
+| `yfinance` | Stocks & indices history (already covered stdlib-only; the lib adds search robustness) |
+| `websocket-client` | BitShares live reads |
+| `akshare` | China spot data |
+| `baostock` | China history |
+
+```bash
+pip install yfinance websocket-client akshare baostock   # any subset; restart opentape.py after
+```
 
 ## What it does
 
@@ -84,6 +115,6 @@ All plots below are rendered by the app itself (BTCUSD daily, dark theme).
 ## Status
 
 Working terminal, actively refined against the live reference. See
-`AGENTS.md` for the mission, conventions, and evidence notes. Stocks/forex
-are out of scope until a CORS-open keyless (or bring-your-own-key) source
-appears — crypto only, by design.
+`AGENTS.md` for the mission, conventions, and evidence notes. Beyond spot
+crypto, stocks/indices/DEX pools/BitShares flow through the optional local
+proxy (`python opentape.py`) — see Installation.

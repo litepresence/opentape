@@ -2468,6 +2468,19 @@ export function initUI(v) {
         w.textContent = 'Market data library not loaded — check connection/adblocker and reopen. Falling back to binance.';
         host.prepend(w);
       };
+        // Degraded transports boil up with a pointer to the setup docs: a dead
+        // tier is fixed by starting the companion or installing a pip lib, both
+        // covered under ## Installation in the GitHub README.
+        const INSTALL_URL = 'https://github.com/litepresence/opentape#installation';
+        const installLink = () => {
+          const a = document.createElement('a');
+          a.className = 'sym-install-link';
+          a.href = INSTALL_URL;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.textContent = 'Installation →';
+          return a;
+        };
       const renderSourceTabs = () => {
         sourceTabs.innerHTML = '';
         for (const src of allSources()) {
@@ -2496,7 +2509,12 @@ export function initUI(v) {
         const cur = sourceById(curSource);
         const gate = cur ? sourceTransportOk(cur) : { ok: false, reason: 'unknown source' };
         if (!cur) sourceNote.textContent = 'Unknown source.';
-        else if (!gate.ok) sourceNote.textContent = `${cur.label} disabled — ${gate.reason}`;
+        else if (!gate.ok) {
+          // Companion-routed tiers are fixed via setup (companion running +
+          // pip libs); the CCXT tier is a connection/adblocker issue instead.
+          sourceNote.textContent = `${cur.label} disabled — ${gate.reason} `;
+          if (cur.id !== 'ccxt') sourceNote.appendChild(installLink());
+        }
         else sourceNote.textContent = `${cur.label} · intervals: ${cur.intervals.join(', ')} · ${cur.stream?.note || streamBadge(cur.stream)}`;
       };
       // Per-source interval select: supported sizes selectable, the rest
@@ -2641,7 +2659,8 @@ export function initUI(v) {
             ? (ccxtBundleOk()
               ? `Could not load market list (${reason}) — you can still type a pair manually.`
               : 'Market data library not loaded — type the pair manually (e.g. BTC/USDT).')
-            : `Instrument list unavailable (${reason}).`;
+            : `Instrument list unavailable (${reason}). `;
+          if (curSource !== 'ccxt') note.appendChild(installLink());
           renderList(pairList, [], curSource === 'ccxt' ? '' : `Companion offline — ${reason}`, { title: 'Pairs' });
         }
       };
