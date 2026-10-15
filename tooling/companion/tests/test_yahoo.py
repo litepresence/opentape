@@ -119,7 +119,8 @@ class ContractTest(unittest.TestCase):
         self.assertEqual(
             yahoo.STREAM,
             {'mode': 'poll', 'cadence': 60,
-             'note': 'intraday \u226460d; daily decades'},
+             'note': ('intraday \u226460d; daily decades; '
+                      'China .SS/.SZ fallback-only (primary: source china)')},
         )
 
     def test_venues(self):
@@ -127,11 +128,18 @@ class ContractTest(unittest.TestCase):
         self.assertEqual(
             [v['id'] for v in venues],
             ['US', 'NSE', 'BSE', 'LSE', 'TSE', 'TSX', 'ASX', 'B3',
-             'HKEX', 'Euronext', 'FX', 'Commodities', 'Rates', 'Indices'],
+             'HKEX', 'Euronext', 'Tadawul', 'BME',
+             'FX', 'Commodities', 'Rates', 'Indices'],
         )
         for v in venues:
             self.assertTrue(v['id'])
             self.assertTrue(v['label'])
+
+    def test_stream_notes_china_fallback(self):
+        # Yahoo .SS/.SZ is last-resort only; the primary lives in china.py.
+        note = yahoo.STREAM['note'].lower()
+        self.assertIn('china', note)
+        self.assertIn('fallback', note)
 
 
 # --- ticker construction ------------------------------------------------------
@@ -169,8 +177,8 @@ class TickerTest(unittest.TestCase):
                 self.assertEqual(yahoo.build_ticker(venue, symbol), expected)
 
     def test_sau_mc_passthrough(self):
-        # No dedicated Tadawul/Madrid venues in the 14-venue contract; already
-        # suffixed tickers pass through verbatim (e.g. via US), so no data loss.
+        # Dedicated Tadawul/BME venues exist; already-suffixed tickers also
+        # still pass through verbatim via US, so no data loss.
         self.assertEqual(yahoo.build_ticker('US', '2222.SAU'), '2222.SAU')
         self.assertEqual(yahoo.build_ticker('US', 'BBVA.MC'), 'BBVA.MC')
 
@@ -183,6 +191,105 @@ class TickerTest(unittest.TestCase):
             yahoo.build_ticker('US', 'AA PL')  # space not in symbol charset
         with self.assertRaises(Exception):
             yahoo.build_ticker('Euronext', 'XX:FOO')
+
+
+# --- suffix corrections (verified 2026-10-14) ---------------------------------
+
+
+class SuffixCorrectionTest(unittest.TestCase):
+    def test_tadawul_bme_venues(self):
+        ids = [v['id'] for v in yahoo.venues()]
+        self.assertIn('Tadawul', ids)
+        self.assertIn('BME', ids)
+        cases = [
+            ('Tadawul', '2222', '2222.SAU'),
+            ('Tadawul', '2222.SAU', '2222.SAU'),
+            ('Tadawul', '2222.sau', '2222.SAU'),
+            ('BME', 'SAN', 'SAN.MC'),
+            ('BME', 'SAN.MC', 'SAN.MC'),
+            ('BME', 'san.mc', 'SAN.MC'),
+        ]
+        for venue, symbol, expected in cases:
+            with self.subTest(venue=venue, symbol=symbol):
+                self.assertEqual(yahoo.build_ticker(venue, symbol), expected)
+
+    def test_stale_sr_es_raise_with_redirect(self):
+        # Stale forms fail loudly with the correct suffix named, on every
+        # venue (including the verbatim US passthrough).
+        cases = [
+            ('US', '2222.SR', '.SAU'),
+            ('Tadawul', '2222.SR', '.SAU'),
+            ('US', 'SAN.ES', '.MC'),
+            ('BME', 'SAN.ES', '.MC'),
+        ]
+        for venue, symbol, hint in cases:
+            with self.subTest(venue=venue, symbol=symbol):
+                with self.assertRaises(Exception) as ctx:
+                    yahoo.build_ticker(venue, symbol)
+                self.assertIn(hint, str(ctx.exception))
+                self.assertIn('stale', str(ctx.exception).lower())
+
+    def test_egypt_ca_index_only(self):
+        # EGX single names have no Yahoo history: clean raise, never empty.
+        for venue, symbol in [('US', 'COMI.CA'), ('Euronext', 'COMI.CA')]:
+            with self.subTest(venue=venue, symbol=symbol):
+                with self.assertRaises(Exception) as ctx:
+                    yahoo.build_ticker(venue, symbol)
+                self.assertIn('EGX single names unsupported',
+                              str(ctx.exception))
+
+    def test_hnx_beijing_unsupported(self):
+        # No Yahoo suffix exists for these markets: name them, never empty.
+        cases = [
+            ('US', 'XYZ.HN', 'Hanoi HNX'),
+            ('US', 'XYZ.HNX', 'Hanoi HNX'),
+            ('US', '430047.BJ', 'Beijing BSE'),
+            ('US', 'bj.430047', 'Beijing BSE'),
+        ]
+        for venue, symbol, hint in cases:
+            with self.subTest(venue=venue, symbol=symbol):
+                with self.assertRaises(Exception) as ctx:
+                    yahoo.build_ticker(venue, symbol)
+                self.assertIn(hint, str(ctx.exception))
+
+    def test_b3_intraday_passes_through(self):
+        # Documented B3 ~16:55 truncation needs no resampling: the interval
+        # reaches Yahoo verbatim.
+        fetch = _recording_fetcher([_chart_payload()])
+        bars = yahoo.candles('B3', 'PETR4', '1m', limit=10, _fetcher=fetch)
+        self.assertTrue(bars)
+        self.assertIn('PETR4.SA', fetch.calls[0])
+        self.assertIn('interval=1m', fetch.calls[0])
+
+
+# --- thin / empty listings -----------------------------------------------------
+
+
+class ThinNamesTest(unittest.TestCase):
+    def test_valid_ticker_but_empty_is_no_data_yet(self):
+        # Venture/GEM thin names (.V/.CN/.NE/HK GEM/ASX/B3 smallcaps) parse
+        # fine but carry no history: calm 'no data yet', never silent empty.
+        for venue, symbol in [
+            ('US', 'FAKE.V'),
+            ('US', 'FAKE.CN'),
+            ('US', 'FAKE.NE'),
+            ('US', '0000.HK'),
+            ('ASX', 'FAKE'),
+        ]:
+            fetch = _recording_fetcher([EMPTY_CHART])
+            with self.subTest(venue=venue, symbol=symbol):
+                with self.assertRaises(Exception) as ctx:
+                    yahoo.candles(venue, symbol, '1d', _fetcher=fetch)
+                self.assertIn('no data yet for this listing',
+                              str(ctx.exception))
+
+    def test_error_path_stays_distinct_from_thin_path(self):
+        # Upstream error payloads keep the retryable error text and never
+        # borrow the thin-listing message.
+        fetch = _recording_fetcher([ERROR_CHART])
+        with self.assertRaises(Exception) as ctx:
+            yahoo.candles('US', 'AAPL', '1d', _fetcher=fetch)
+        self.assertNotIn('no data yet for this listing', str(ctx.exception))
 
 
 # --- range sizing --------------------------------------------------------------

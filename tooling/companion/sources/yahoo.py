@@ -8,10 +8,19 @@ Live-only honesty: every fetch raises ``Exception(detail)`` on failure and
 never substitutes another symbol — except the contracted NSE ``.NS`` → ``.BO``
 fallback, which is the same issuer on its alternate domestic listing.
 
-Plan note: workstream C mentions Tadawul ``.SAU`` / Madrid ``.MC`` suffixes,
-but the 14-venue contract has no Tadawul/Madrid venues. Already-suffixed
-tickers pass through verbatim (e.g. ``2222.SAU`` via the US venue), so those
-markets remain reachable without a dedicated venue.
+Suffix notes (verified 2026-10-14): Tadawul is ``.SAU`` (NOT ``.SR``) with a
+dedicated ``Tadawul`` venue; Madrid/BME is ``.MC`` (NOT ``.ES``) with a
+dedicated ``BME`` venue. Stale ``.SR`` / ``.ES`` tickers raise with a
+redirect note instead of fetching empty data. Egypt ``.CA`` is index-only —
+equity-looking ``.CA`` symbols raise ('EGX single names unsupported').
+Hanoi HNX and Beijing BSE have no Yahoo suffix and raise as unsupported
+(Beijing names point at source ``china`` with its ``bj.`` prefix).
+Parseable-but-empty responses (typical for venture/GEM thin names such as
+``.V`` / ``.CN`` / ``.NE`` / HK GEM / ASX / B3 smallcaps, or delisted
+tickers) raise 'no data yet for this listing', distinct from the
+network/upstream error-retry path. China A ``.SS`` / ``.SZ`` tickers remain
+reachable here but are a last-resort fallback — the primary China pipeline
+lives in source ``china`` (see STREAM note).
 """
 
 import json
@@ -26,7 +35,8 @@ LABEL = 'Stocks & Indices'
 INTERVALS = ['1m', '2m', '5m', '15m', '30m', '1h',
              '1d', '5d', '1wk', '1mo', '3mo']
 STREAM = {'mode': 'poll', 'cadence': 60,
-          'note': 'intraday \u226460d; daily decades'}
+          'note': ('intraday \u226460d; daily decades; '
+                   'China .SS/.SZ fallback-only (primary: source china)')}
 
 HOSTS = ('query1.finance.yahoo.com', 'query2.finance.yahoo.com')
 _HTTP_TIMEOUT = 15
@@ -51,6 +61,8 @@ _VENUES = [
     {'id': 'B3', 'label': 'Brazil B3'},
     {'id': 'HKEX', 'label': 'Hong Kong'},
     {'id': 'Euronext', 'label': 'Euronext'},
+    {'id': 'Tadawul', 'label': 'Saudi Tadawul'},
+    {'id': 'BME', 'label': 'Spain BME'},
     {'id': 'FX', 'label': 'FX'},
     {'id': 'Commodities', 'label': 'Commodities'},
     {'id': 'Rates', 'label': 'Rates & Yields'},
@@ -61,6 +73,7 @@ _VENUE_IDS = frozenset(v['id'] for v in _VENUES)
 _EQUITY_SUFFIX = {
     'NSE': '.NS', 'BSE': '.BO', 'LSE': '.L', 'TSE': '.T',
     'TSX': '.TO', 'ASX': '.AX', 'B3': '.SA',
+    'Tadawul': '.SAU', 'BME': '.MC',
 }
 _EURONEXT_SUFFIXES = ('.PA', '.AS', '.BR', '.LS')
 _EURONEXT_PREFIX = {
@@ -72,6 +85,31 @@ _EURONEXT_PREFIX = {
 
 _SYM_RE = re.compile(r'^[A-Za-z0-9.\-=^:/]{1,64}$')
 
+# Stale/wrong-market suffix guards (verified 2026-10-14). Checked in
+# build_ticker() before any venue dispatch so every venue (including the
+# verbatim US passthrough) fails loudly instead of charting empty data.
+_STALE_SUFFIX_REDIRECT = {
+    '.SR': ("stale suffix '.SR' for Saudi Tadawul; use '.SAU' "
+            "(e.g. '2222.SAU') via venue Tadawul"),
+    '.ES': ("stale suffix '.ES' for Madrid/BME; use '.MC' "
+            "(e.g. 'SAN.MC') via venue BME"),
+}
+_EGX_UNSUPPORTED = (
+    'EGX single names unsupported: Yahoo .CA is index-only '
+    '(single-name EGX history unavailable; EGX indices via the Indices venue)'
+)
+_HNX_UNSUPPORTED = (
+    'Hanoi HNX unsupported on Yahoo (no Yahoo suffix; history unavailable)'
+)
+_BEIJING_UNSUPPORTED = (
+    'Beijing BSE unsupported on Yahoo (no Yahoo suffix; '
+    'use source china with its bj. prefix, e.g. bj.430047)'
+)
+
+# B3 note (verified 2026-10-14): Yahoo intraday for '.SA' names truncates
+# around ~16:55 local (the closing auction prints separately), so the last
+# intraday bar can look cut off. Intervals pass straight through to Yahoo —
+# no resampling or padding here — so no code change is needed for it.
 _INTERVAL_SECS = {
     '1m': 60, '2m': 120, '5m': 300, '15m': 900, '30m': 1800, '1h': 3600,
     '1d': 86400, '5d': 5 * 86400, '1wk': 7 * 86400,
@@ -89,7 +127,7 @@ _RANGE_STEPS = (  # (range label, span covered in seconds)
 # ---------------------------------------------------------------- venues ---
 
 def venues():
-    """Return [{id, label}] for the 14 contracted venues."""
+    """Return [{id, label}] for the 16 venues."""
     return [dict(v) for v in _VENUES]
 
 
@@ -135,6 +173,20 @@ def build_ticker(venue, symbol):
         raise Exception(
             "invalid symbol %r; use Yahoo-style tickers (letters, digits, "
             "'.-=/^:')" % s)
+    up = s.upper()
+    # Stale-suffix redirect notes (verified 2026-10-14): fail loudly so a
+    # mistyped suffix never charts empty data.
+    for _stale, _note in _STALE_SUFFIX_REDIRECT.items():
+        if up.endswith(_stale):
+            raise Exception('%s (got %r)' % (_note, s))
+    # Egypt .CA is index-only: single names have no Yahoo history.
+    if up.endswith('.CA'):
+        raise Exception('%s (got %r)' % (_EGX_UNSUPPORTED, s))
+    # Hanoi HNX / Beijing BSE have no Yahoo suffix: never silent empty.
+    if up.endswith('.HN') or up.endswith('.HNX') or up.startswith('HNX:'):
+        raise Exception('%s (got %r)' % (_HNX_UNSUPPORTED, s))
+    if up.endswith('.BJ') or up.startswith('BJ.'):
+        raise Exception('%s (got %r)' % (_BEIJING_UNSUPPORTED, s))
     if venue == 'US':
         return s
     if venue == 'FX':
@@ -317,8 +369,14 @@ def _try_hosts(ticker, interval, range_, _fetcher=None):
             continue
         if bars:
             return bars, None
+        # Valid-ticker-but-empty (delisted names, venture/GEM thin listings
+        # such as .V/.CN/.NE/HK-GEM/ASX/B3 smallcaps): a calm 'no data yet'
+        # state, deliberately distinct from the network/upstream error-retry
+        # path above (whose messages never contain 'no data yet').
         last_error = Exception(
-            'empty response for %s (%s/%s): no candles returned'
+            'empty response for %s (%s/%s): no data yet for this listing '
+            '(Yahoo returned no candles; thin venture/GEM/smallcap names '
+            'often list before history appears, delisted names stay empty)'
             % (ticker, interval, range_))
     return [], last_error
 
@@ -347,6 +405,9 @@ def candles(venue, symbol, interval, limit=300, _fetcher=None):
 
     ``_fetcher`` is a test seam (callable url -> decoded JSON); the
     companion server calls with the four public arguments only.
+    Valid-ticker-but-empty raises 'no data yet for this listing' (thin /
+    delisted names); transport and upstream failures keep their retryable
+    error text.
     """
     interval_seconds(interval)  # validates against INTERVALS first
     try:
