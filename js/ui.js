@@ -1731,9 +1731,9 @@ export function initUI(v) {
       saveLayout();
       renderAlerts();
     });
-    dlg.querySelector('button[value="close"]').addEventListener('click', () => {
-      try { dlg.close(); } catch { dlg.removeAttribute('open'); }
-    });
+      dlg.querySelector('button[value="close"]').addEventListener('click', () => {
+        try { dlg.close(); } catch { dlg.removeAttribute('open'); }
+      });
     document.querySelector('#alert-btn')?.addEventListener('click', () => {
       renderAlerts();
       if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); }
@@ -2367,7 +2367,7 @@ export function initUI(v) {
       dlg = document.createElement('dialog');
       dlg.id = 'sym-dialog';
       dlg.innerHTML = '<form method="dialog" style="display:flex;flex-direction:column;gap:8px;font:13px sans-serif;min-width:300px">'
-        + '<strong>Switch market</strong>'
+        + '<div class="sym-head"><strong>Switch market</strong><button type="button" id="sym-x" aria-label="Close">✕</button></div>'
         + '<div id="sym-tabs" role="tablist" aria-label="Market views"></div>'
         + '<div id="sym-recents"></div>'
         + '<div id="sym-pane-markets" style="display:flex;flex-direction:column;gap:8px">'
@@ -2876,6 +2876,9 @@ export function initUI(v) {
       pairInput.addEventListener('input', () => debouncePair(() => refreshPairs()));
       pairInput.addEventListener('focus', () => refreshPairs());
       dlg.querySelector('#sym-apply').addEventListener('click', apply);
+      dlg.querySelector('#sym-x')?.addEventListener('click', () => {
+        try { dlg.close(); } catch { dlg.removeAttribute('open'); }
+      });
       pairInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();

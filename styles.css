@@ -184,6 +184,9 @@ dialog label { display: flex; flex-direction: column; gap: 2px; font-size: 12px;
 .suggest-warn { color: #F23645; font-size: 12px; padding: 4px 8px; }
 .sym-install-link { color: #2962FF; font-size: 12px; margin-left: 6px; text-decoration: none; }
 .sym-install-link:hover { text-decoration: underline; }
+.sym-head { display: flex; align-items: center; }
+#sym-x { margin-left: auto; font-size: 14px; padding: 2px 8px; border-radius: 4px; }
+#sym-x:hover { background: var(--btn-hover); }
 /* Watchlist sidebar (matches captured Symbol/Last/Chg/Chg% structure) */
 #watch { width: 320px; min-width: 280px; border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; overflow-y: auto; font-size: 12px; }
 #watch-head { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
