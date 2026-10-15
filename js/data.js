@@ -89,7 +89,7 @@ export function mergeCandle(rows, candle, cap = 2000) {
   return next;
 }
 
-const TF_MS = { '1m': 6e4, '3m': 18e4, '5m': 3e5, '15m': 9e5, '30m': 18e5, '1h': 36e5, '2h': 72e5, '4h': 144e5, '1d': 864e5, '1w': 6048e5, '1M': 2592e6 };
+const TF_MS = { '1m': 6e4, '2m': 12e4, '3m': 18e4, '5m': 3e5, '10m': 6e5, '15m': 9e5, '30m': 18e5, '1h': 36e5, '2h': 72e5, '4h': 144e5, '6h': 216e5, '12h': 432e5, '1d': 864e5, '5d': 432e6, '24h': 864e5, '1w': 6048e5, '1wk': 6048e5, '1mo': 2592e6, '3mo': 7776e6, '1M': 2592e6 };
 export const timeframeMs = (tf) => TF_MS[String(tf)] || 864e5;
 
 // Live candle subscription. WS (ccxt.pro watchOHLCV) when the exchange

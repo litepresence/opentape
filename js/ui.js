@@ -214,13 +214,16 @@ export function initUI(v) {
     if (q.interval) upatch.interval = q.interval;
     if (q.timeframe) upatch.timeframe = q.timeframe;
     // Companion routing params (kept in ui.js so js/url.js stays untouched):
-    // ?source=yahoo&venue=US carries the tier-1/tier-2 selection.
+    // ?source=yahoo&venue=US carries the tier-1/tier-2 selection. Venue ids
+    // keep their listed case and may contain hyphens (MOEX-SHARES, CN-A,
+    // ECB-FX): lowercasing or rejecting the hyphen would drop the venue and
+    // break companion routing on reload/shared links.
     try {
       const rawQ = new URLSearchParams(location.search);
       const so = String(rawQ.get('source') || '').trim().toLowerCase();
-      const ve = String(rawQ.get('venue') || '').trim().toLowerCase();
+      const ve = String(rawQ.get('venue') || '').trim();
       if (/^[a-z][a-z0-9_]*$/.test(so)) upatch.source = so;
-      if (/^[a-z][a-z0-9_]*$/.test(ve)) upatch.venue = ve;
+      if (/^[A-Za-z][A-Za-z0-9_-]*$/.test(ve)) upatch.venue = ve;
     } catch {}
     if (Object.keys(upatch).length) v.set(upatch);
   } catch {}
@@ -236,12 +239,13 @@ export function initUI(v) {
       const next = new URLSearchParams(formatChartUrl({ symbol: s.symbol, interval: s.interval || '1d', exchange: ex }));
       for (const [k, val] of next) cur.set(k, val);
       // Tier routing survives UI-driven syncs alongside the exchange param
-      // (lowercased in the URL only — state keeps the venue's listed case).
+      // (source ids are lowercase; venue ids keep their listed case so
+      // hyphenated/cased venues like MOEX-SHARES round-trip intact).
       const so = String(s.source || '').toLowerCase();
       if (/^[a-z][a-z0-9_]*$/.test(so)) cur.set('source', so);
       else cur.delete('source');
-      const ve = String(s.venue || '').toLowerCase();
-      if (/^[a-z][a-z0-9_]*$/.test(ve)) cur.set('venue', ve);
+      const ve = String(s.venue || '');
+      if (/^[A-Za-z][A-Za-z0-9_-]*$/.test(ve)) cur.set('venue', ve);
       else cur.delete('venue');
       const url = location.pathname + '?' + cur.toString();
       if (url !== lastUrl) {
@@ -2185,7 +2189,7 @@ export function initUI(v) {
   // disabled with their reason (dead transports are never silently clickable).
   const COMPANION_BASE = 'http://127.0.0.1:8788';
   const CCXT_INTERVALS = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d', '1w', '1M'];
-  const ALL_INTERVALS = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d', '1w', '1wk', '1mo', '1M'];
+  const ALL_INTERVALS = ['1m', '2m', '3m', '5m', '10m', '15m', '30m', '1h', '2h', '4h', '6h', '12h', '1d', '5d', '24h', '1w', '1wk', '1mo', '3mo', '1M'];
   const STATIC_SOURCES = [
     { id: 'ccxt', label: 'Crypto · CCXT', intervals: CCXT_INTERVALS, stream: { mode: 'live', note: 'WS where supported, else poll' }, transport: 'ccxt' },
     { id: 'yahoo', label: 'Stocks & Indices', intervals: ['1m', '5m', '15m', '30m', '1h', '1d', '1wk', '1mo'], stream: { mode: 'poll', cadence: 60, note: 'polls ~60s; intraday ≤60d' }, transport: 'companion' },
@@ -2449,7 +2453,7 @@ export function initUI(v) {
           const id = typeof it === 'string' ? it : it.id;
           if (!id) continue;
           if (!first) first = id;
-          const label = typeof it === 'string' ? it : `${it.id}${it.verified ? ' ✓' : ''}${it.name ? ` — ${it.name}` : ''}`;
+          const label = typeof it === 'string' ? it : `${it.id}${it.verified ? ' ✓' : ''}${(it.name || it.label) ? ` — ${it.name || it.label}` : ''}`;
           const b = document.createElement('button');
           b.type = 'button';
           b.dataset.pick = id;
@@ -2518,14 +2522,18 @@ export function initUI(v) {
         else sourceNote.textContent = `${cur.label} · intervals: ${cur.intervals.join(', ')} · ${cur.stream?.note || streamBadge(cur.stream)}`;
       };
       // Per-source interval select: supported sizes selectable, the rest
-      // rendered unselectable (disabled).
+      // rendered unselectable (disabled). Sources advertise their own sets
+      // (moex 10m, yahoo 2m/5d/3mo, dex 6h/12h/24h, …), so anything outside
+      // the canonical list is appended verbatim — otherwise a supported
+      // size would be unselectable.
       const renderIntervals = () => {
         const cur = sourceById(curSource) || { intervals: CCXT_INTERVALS, stream: {} };
         const supported = new Set(cur.intervals);
         const want = v.get().interval || curInterval();
         intSel.innerHTML = '';
         let marked = false;
-        for (const iv of ALL_INTERVALS) {
+        const list = [...ALL_INTERVALS, ...cur.intervals.filter((x) => !ALL_INTERVALS.includes(x))];
+        for (const iv of list) {
           const op = document.createElement('option');
           op.value = iv;
           op.textContent = iv;
@@ -2609,7 +2617,7 @@ export function initUI(v) {
           venues = await venueListFor(curSource);
         } catch { venues = []; }
         if (myReq !== venueReq) return;
-        renderList(exList, venues.filter((e) => !q || e.id.includes(q)), (id) => {
+        renderList(exList, venues.filter((e) => !q || e.id.toLowerCase().includes(q)), (id) => {
           exInput.value = id;
           // Companion lists are server-filtered per venue: drop the stale
           // pair filter (same rule as tab switches above) so the list isn't
@@ -2829,12 +2837,17 @@ export function initUI(v) {
         // Companion tiers route to the companion loader; the ccxt path below
         // keeps the byte-identical reload call for ccxt symbols.
         if (curSource && curSource !== 'ccxt') {
-          let sym = normalizeSymbol(pairInput.value) || String(pairInput.value || '').trim();
-          if (!sym) { pairInput.focus(); return; }
+          // Companion symbols travel verbatim: normalizeSymbol uppercases the
+          // input and splits quotes, which corrupts case-sensitive ids
+          // (dex network:address pools) and slash-joins BASE:QUOTE pairs
+          // (bitshares BTS:bitUSD). The companion validates honestly.
+          const raw = String(pairInput.value || '').trim();
+          if (!raw) { pairInput.focus(); return; }
           // A pasted `source:SYM` qualifier would double up (`stub:stub:X`)
           // since loadCompanion qualifies itself — strip it to the raw symbol.
           const pre = `${curSource}:`.toLowerCase();
-          if (sym.toLowerCase().startsWith(pre)) sym = sym.slice(pre.length);
+          let sym = raw;
+          if (sym.toLowerCase().startsWith(pre)) sym = sym.slice(pre.length).trim();
           if (!sym) { pairInput.focus(); return; }
           const venue = (exInput.value || '').trim();
           const ok = await loadCompanion(curSource, venue, sym, intSel.value || curInterval());
