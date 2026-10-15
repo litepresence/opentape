@@ -47,9 +47,13 @@ BitShares. Evidence and per-source plan:
 - **Source notes worth remembering:** Naver `siseJson` + polling is the Korean
   workhorse (KRX official needs keys/login; pykrx KRX leg is credential-gated;
   Yahoo `.KS` is delayed fallback). China = baostock primary + akshare
-  secondary, Yahoo last resort. Europe directs worth integrating: SIX
-  `charts.json`, Nasdaq Nordic `DataFeedProxy`, Borsa Italiana `grafici.` API
-  (WAF warmup); Euronext/Xetra proper are keyed. MOEX ISS is keyless and open
+  secondary, Yahoo last resort. Europe directs that verify live: SIX
+  `charts.json` (needs `select=ValorId` + full `CH…CHF4` form via `ref.csv`
+  resolution + `todate`), Borsa Italiana `grafici.` API (WAF warmup,
+  best-effort); **Nasdaq Nordic `DataFeedProxy` is RETIRED 2026
+  (nasdaqomxnordic.com redirects to nasdaq.com — venue kept with an honest
+  retired error pointing at Yahoo `.ST/.HE/.CO/.OL`) — verified dead, not
+  inferred. Euronext/Xetra proper are keyed. MOEX ISS is keyless and open
   (`iss.moex.com`, candles/orderbook/FX/OFZ/FORTS) — display with a
   jurisdiction note (MOEX/NCC/NSD are US/UK SDN-listed; read-only display,
   never execution/custody). Suffix fixes shipped: Tadawul `.SAU` (not `.SR`),
